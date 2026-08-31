@@ -1,6 +1,7 @@
-﻿import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import pdfParse from 'pdf-parse';
+import { OcrEngine } from '../ocr/ocr-engine';
 
 export interface ProcessedDocumentResult {
   mimeType: string;
@@ -126,19 +127,21 @@ export class MultiModalFileProcessor {
   }
 
   /**
-   * Image Metadata Preparation for Multimodal OCR
+   * Image OCR Extraction using Tesseract.js Optical Engine
    */
   public static async processImage(
     buffer: Buffer,
     mimeType: string
   ): Promise<ProcessedDocumentResult> {
-    const base64Data = buffer.toString('base64');
+    const ocrResult = await OcrEngine.recognizeText(buffer);
     return {
       mimeType: mimeType || 'image/png',
-      extractedText: `[IMAGE_ATTACHMENT: ${mimeType}, Size: ${buffer.length} bytes]`,
+      extractedText: ocrResult.text,
       metadata: {
         isImage: true,
-        base64Length: base64Data.length,
+        ocrConfidence: ocrResult.confidence,
+        lineCount: ocrResult.lines.length,
+        processingTimeMs: ocrResult.processingTimeMs,
       },
     };
   }
