@@ -53,18 +53,19 @@ export class OcrEngine {
       const ret = await worker.recognize(imageBuffer);
       await worker.terminate();
 
-      const words: OcrWordToken[] = (ret.data.words || []).map((w: any) => ({
+      const dataAny = ret.data as any;
+      const words: OcrWordToken[] = (dataAny.words || []).map((w: any) => ({
         text: w.text,
         confidence: w.confidence,
         bbox: {
-          x0: w.bbox.x0,
-          y0: w.bbox.y0,
-          x1: w.bbox.x1,
-          y1: w.bbox.y1,
+          x0: w.bbox?.x0 ?? 0,
+          y0: w.bbox?.y0 ?? 0,
+          x1: w.bbox?.x1 ?? 0,
+          y1: w.bbox?.y1 ?? 0,
         },
       }));
 
-      const lines = (ret.data.lines || []).map((l: any) => l.text.trim());
+      const lines = (dataAny.lines || []).map((l: any) => l.text.trim());
 
       return {
         text: ret.data.text.trim(),

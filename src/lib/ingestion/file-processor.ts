@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import pdfParse from 'pdf-parse';
-import { OcrEngine } from '../ocr/ocr-engine';
+import { PaddleOcrEngine } from '../ocr/paddle-ocr-engine';
 
 export interface ProcessedDocumentResult {
   mimeType: string;
@@ -127,21 +127,31 @@ export class MultiModalFileProcessor {
   }
 
   /**
-   * Image OCR Extraction using Tesseract.js Optical Engine
+   * PaddleOCR PP-OCRv4 & PP-Structure Image Analysis
+   * Reference: https://github.com/PaddlePaddle/PaddleOCR
    */
   public static async processImage(
     buffer: Buffer,
     mimeType: string
   ): Promise<ProcessedDocumentResult> {
-    const ocrResult = await OcrEngine.recognizeText(buffer);
+    const paddleResult = await PaddleOcrEngine.analyzeDocument(buffer, {
+      useServerModel: true,
+      extractTables: true,
+      detectOrientation: true,
+    });
+
     return {
       mimeType: mimeType || 'image/png',
-      extractedText: ocrResult.text,
+      extractedText: paddleResult.rawText,
       metadata: {
         isImage: true,
-        ocrConfidence: ocrResult.confidence,
-        lineCount: ocrResult.lines.length,
-        processingTimeMs: ocrResult.processingTimeMs,
+        ocrEngine: paddleResult.engine,
+        modelType: paddleResult.modelType,
+        ocrConfidence: paddleResult.averageConfidence * 100,
+        lineCount: paddleResult.lines.length,
+        tableCount: paddleResult.tables.length,
+        processingTimeMs: paddleResult.processingTimeMs,
+        tablesHtml: paddleResult.tables.map((t) => t.html),
       },
     };
   }
