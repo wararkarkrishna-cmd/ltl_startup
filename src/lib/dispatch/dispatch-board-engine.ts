@@ -1,4 +1,4 @@
-﻿import { Shipment, ShipmentStatus, DispatchBoardColumn } from '../../db/schema';
+import { Shipment, ShipmentStatus, DispatchBoardColumn } from '../../db/schema';
 import { dbClient } from '../../db/client';
 import { AuditEngine } from '../audit/audit-engine';
 
@@ -102,10 +102,154 @@ export class DispatchBoardEngine {
   }
 
   /**
+   * Seed realistic practice shipments if the board is freshly loaded
+   */
+  public static async seedPracticeLoads(tenantId: string): Promise<void> {
+    dbClient.setTenantContext(tenantId);
+    
+    const sampleShipments = [
+      {
+        referenceNumber: 'LTL-2026-TEST-0001',
+        status: 'QUOTED' as const,
+        originName: 'ABC Manufacturing Co.',
+        originAddress1: '123 Main St',
+        originCity: 'Dallas',
+        originState: 'TX',
+        originZip: '75201',
+        originCountry: 'US',
+        destName: 'XYZ Retail Inc.',
+        destAddress1: '4500 Oak Ave',
+        destCity: 'Houston',
+        destState: 'TX',
+        destZip: '77001',
+        destCountry: 'US',
+        totalPallets: 4,
+        totalWeightLbs: 1200,
+        pickupDateReady: '2026-09-02',
+      },
+      {
+        referenceNumber: 'LTL-2026-SAIA-4402',
+        status: 'TENDERED' as const,
+        originName: 'Midwest Heavy Industrial',
+        originAddress1: '100 Industrial Pkwy',
+        originCity: 'Los Angeles',
+        originState: 'CA',
+        originZip: '90001',
+        originCountry: 'US',
+        destName: 'Apex Midwest Logistics Hub',
+        destAddress1: '500 Logistics Way',
+        destCity: 'Chicago',
+        destState: 'IL',
+        destZip: '60601',
+        destCountry: 'US',
+        totalPallets: 2,
+        totalWeightLbs: 2400,
+        pickupDateReady: '2026-09-01',
+      },
+      {
+        referenceNumber: 'LTL-2026-ESTES-8812',
+        status: 'TENDER_ACCEPTED' as const,
+        originName: 'Titan Tool & Hardware Co.',
+        originAddress1: '800 Manufacturing Blvd',
+        originCity: 'Atlanta',
+        originState: 'GA',
+        originZip: '30301',
+        originCountry: 'US',
+        destName: 'Carolina Distribution Center',
+        destAddress1: '1200 Commerce Dr',
+        destCity: 'Charlotte',
+        destState: 'NC',
+        destZip: '28202',
+        destCountry: 'US',
+        totalPallets: 3,
+        totalWeightLbs: 3400,
+        pickupDateReady: '2026-09-01',
+      },
+      {
+        referenceNumber: 'LTL-2026-XPO-9921',
+        status: 'DISPATCHED' as const,
+        originName: 'Gulf Coast Industrial Parts',
+        originAddress1: '700 Harbor Road',
+        originCity: 'Houston',
+        originState: 'TX',
+        originZip: '77001',
+        originCountry: 'US',
+        destName: 'North Texas Freight Depot',
+        destAddress1: '900 Freightway St',
+        destCity: 'Dallas',
+        destState: 'TX',
+        destZip: '75201',
+        destCountry: 'US',
+        totalPallets: 5,
+        totalWeightLbs: 4800,
+        pickupDateReady: '2026-08-31',
+      },
+      {
+        referenceNumber: 'LTL-2026-ABF-7731',
+        status: 'IN_TRANSIT' as const,
+        originName: 'Apex Midwest Electronics',
+        originAddress1: '400 Tech Park',
+        originCity: 'Chicago',
+        originState: 'IL',
+        originZip: '60601',
+        originCountry: 'US',
+        destName: 'Empire Logistics Center',
+        destAddress1: '100 Distribution Ave',
+        destCity: 'New York',
+        destState: 'NY',
+        destZip: '10001',
+        destCountry: 'US',
+        totalPallets: 4,
+        totalWeightLbs: 3600,
+        pickupDateReady: '2026-08-30',
+      },
+      {
+        referenceNumber: 'LTL-2026-RL-5520',
+        status: 'DELIVERED' as const,
+        originName: 'Pacific Coast Supply Co.',
+        originAddress1: '300 Pacific Ave',
+        originCity: 'Ontario',
+        originState: 'CA',
+        originZip: '91761',
+        originCountry: 'US',
+        destName: 'Sierra Nevada Logistics',
+        destAddress1: '600 Sierra Way',
+        destCity: 'Reno',
+        destState: 'NV',
+        destZip: '89502',
+        destCountry: 'US',
+        totalPallets: 6,
+        totalWeightLbs: 5800,
+        pickupDateReady: '2026-08-29',
+      },
+    ];
+
+    for (const data of sampleShipments) {
+      await dbClient.insertShipment({
+        tenantId,
+        ...data,
+      });
+    }
+  }
+
+  /**
    * Get full Kanban Board State for a tenant
    */
   public static async getBoardState(tenantId: string): Promise<KanbanBoardState> {
     dbClient.setTenantContext(tenantId);
+
+    // Auto-seed if database has no shipments for this tenant
+    let hasTenantShipment = false;
+    for (const s of dbClient.shipments.values()) {
+      if (s.tenantId === tenantId) {
+        hasTenantShipment = true;
+        break;
+      }
+    }
+
+    if (!hasTenantShipment) {
+      await this.seedPracticeLoads(tenantId);
+    }
 
     const columns: Record<DispatchBoardColumn, any> = {
       UNASSIGNED: { column: 'UNASSIGNED', label: 'Unassigned / Quoted', totalCount: 0, totalWeightLbs: 0, cards: [] },
