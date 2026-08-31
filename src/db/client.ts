@@ -14,6 +14,16 @@ import {
   CarrierTender,
   DigitalBol,
   QuoteActionToken,
+  PodToken,
+  PodRecord,
+  DeliveryException,
+  CustomerInvoice,
+  AccountingConnection,
+  AccountingSyncLog,
+  SalesRep,
+  CommissionRecord,
+  DunningRecord,
+  WormAuditPackage,
 } from './schema';
 
 /**
@@ -37,6 +47,16 @@ export class FreightDatabaseClient {
   public tenders: Map<string, CarrierTender> = new Map();
   public digitalBols: Map<string, DigitalBol> = new Map();
   public quoteActionTokens: Map<string, QuoteActionToken> = new Map();
+  public podTokens: Map<string, PodToken> = new Map();
+  public podRecords: Map<string, PodRecord> = new Map();
+  public deliveryExceptions: Map<string, DeliveryException> = new Map();
+  public customerInvoices: Map<string, CustomerInvoice> = new Map();
+  public accountingConnections: Map<string, AccountingConnection> = new Map();
+  public accountingSyncLogs: Map<string, AccountingSyncLog> = new Map();
+  public salesReps: Map<string, SalesRep> = new Map();
+  public commissionRecords: Map<string, CommissionRecord> = new Map();
+  public dunningRecords: Map<string, DunningRecord> = new Map();
+  public wormAuditPackages: Map<string, WormAuditPackage> = new Map();
   public auditEvents: Map<string, any> = new Map();
 
   constructor(tenantId?: string) {
@@ -64,6 +84,43 @@ export class FreightDatabaseClient {
     if (this.currentTenantId !== tenantId) {
       throw new Error(`RLS Violation: Attempted cross-tenant access (${tenantId} vs ${this.currentTenantId})`);
     }
+  }
+
+  // Accounts Operations
+  public async insertAccount(
+    account: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<Account> {
+    this.enforceTenantCheck(account.tenantId);
+    const id = generateUuidV7();
+    const now = new Date();
+    const record: Account = {
+      ...account,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.accounts.set(id, record);
+    return record;
+  }
+
+  public async getAccountById(id: string): Promise<Account | null> {
+    const record = this.accounts.get(id);
+    if (!record) return null;
+    if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
+      return null;
+    }
+    return record;
+  }
+
+  public async getAccounts(tenantId: string): Promise<Account[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: Account[] = [];
+    for (const acc of this.accounts.values()) {
+      if (acc.tenantId === tenantId) {
+        results.push(acc);
+      }
+    }
+    return results;
   }
 
   // Shipments Operations
@@ -295,6 +352,366 @@ export class FreightDatabaseClient {
     record.poNumber = poNumber || null;
     this.quoteActionTokens.set(tokenString, record);
     return record;
+  }
+
+  // Phase 4.1: POD Tokens Operations
+  public async insertPodToken(token: PodToken): Promise<PodToken> {
+    this.podTokens.set(token.token, token);
+    return token;
+  }
+
+  public async getPodToken(tokenString: string): Promise<PodToken | null> {
+    return this.podTokens.get(tokenString) || null;
+  }
+
+  public async markPodTokenUsed(tokenString: string): Promise<PodToken | null> {
+    const record = this.podTokens.get(tokenString);
+    if (!record) return null;
+    record.isUsed = true;
+    record.usedAt = new Date();
+    this.podTokens.set(tokenString, record);
+    return record;
+  }
+
+  // Phase 4.2 & 4.3: POD Records Operations
+  public async insertPodRecord(
+    record: Partial<PodRecord> & Pick<PodRecord, 'tenantId' | 'shipmentId' | 'imageUrl' | 'imageHash' | 'fileSizeBytes' | 'consigneeName' | 'receivedPieces' | 'expectedPieces'>
+  ): Promise<PodRecord> {
+    this.enforceTenantCheck(record.tenantId);
+    const id = generateUuidV7();
+    const now = new Date();
+    const pod: PodRecord = {
+      imageOrientation: 1,
+      ocrConfidence: 90.0,
+      status: 'VERIFIED',
+      isWithinGeofence: true,
+      signatureDetected: false,
+      pieceCountVerified: true,
+      stampedDateDetected: false,
+      hasDamageException: false,
+      detectedExceptionKeywords: [],
+      exceptionSeverity: 'NONE',
+      claimsAlertSent: false,
+      overallConfidence: 95.0,
+      submittedAt: now,
+      ...record,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.podRecords.set(id, pod);
+    return pod;
+  }
+
+  public async getPodRecordById(id: string): Promise<PodRecord | null> {
+    const record = this.podRecords.get(id);
+    if (!record) return null;
+    if (this.currentTenantId && record.tenantId !== this.currentTenantId) return null;
+    return record;
+  }
+
+  public async getPodRecordByShipmentId(tenantId: string, shipmentId: string): Promise<PodRecord | null> {
+    this.enforceTenantCheck(tenantId);
+    for (const pod of this.podRecords.values()) {
+      if (pod.tenantId === tenantId && pod.shipmentId === shipmentId) {
+        return pod;
+      }
+    }
+    return null;
+  }
+
+  public async getPodRecords(tenantId: string): Promise<PodRecord[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: PodRecord[] = [];
+    for (const pod of this.podRecords.values()) {
+      if (pod.tenantId === tenantId) {
+        results.push(pod);
+      }
+    }
+    return results.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+  }
+
+  // Phase 4.3: Delivery Exceptions Operations
+  public async insertDeliveryException(
+    exc: Omit<DeliveryException, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<DeliveryException> {
+    this.enforceTenantCheck(exc.tenantId);
+    const id = generateUuidV7();
+    const now = new Date();
+    const record: DeliveryException = {
+      ...exc,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.deliveryExceptions.set(id, record);
+    return record;
+  }
+
+  public async getExceptionsByShipmentId(tenantId: string, shipmentId: string): Promise<DeliveryException[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: DeliveryException[] = [];
+    for (const exc of this.deliveryExceptions.values()) {
+      if (exc.tenantId === tenantId && exc.shipmentId === shipmentId) {
+        results.push(exc);
+      }
+    }
+    return results;
+  }
+
+  public async getDeliveryExceptions(tenantId: string): Promise<DeliveryException[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: DeliveryException[] = [];
+    for (const exc of this.deliveryExceptions.values()) {
+      if (exc.tenantId === tenantId) {
+        results.push(exc);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  // Phase 4.4: Customer Invoices Operations
+  public async insertCustomerInvoice(
+    inv: Omit<CustomerInvoice, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<CustomerInvoice> {
+    this.enforceTenantCheck(inv.tenantId);
+    const id = generateUuidV7();
+    const now = new Date();
+    const record: CustomerInvoice = {
+      ...inv,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.customerInvoices.set(id, record);
+    return record;
+  }
+
+  public async getCustomerInvoiceById(id: string): Promise<CustomerInvoice | null> {
+    const record = this.customerInvoices.get(id);
+    if (!record) return null;
+    if (this.currentTenantId && record.tenantId !== this.currentTenantId) return null;
+    return record;
+  }
+
+  public async getCustomerInvoiceByShipmentId(tenantId: string, shipmentId: string): Promise<CustomerInvoice | null> {
+    this.enforceTenantCheck(tenantId);
+    for (const inv of this.customerInvoices.values()) {
+      if (inv.tenantId === tenantId && inv.shipmentId === shipmentId) {
+        return inv;
+      }
+    }
+    return null;
+  }
+
+  public async getCustomerInvoices(tenantId: string): Promise<CustomerInvoice[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: CustomerInvoice[] = [];
+    for (const inv of this.customerInvoices.values()) {
+      if (inv.tenantId === tenantId) {
+        results.push(inv);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  // Phase 4.5: Accounting Connections & Sync Logs
+  public async insertAccountingConnection(
+    conn: Omit<AccountingConnection, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<AccountingConnection> {
+    this.enforceTenantCheck(conn.tenantId);
+    const id = generateUuidV7();
+    const now = new Date();
+    const record: AccountingConnection = {
+      ...conn,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.accountingConnections.set(id, record);
+    return record;
+  }
+
+  public async getAccountingConnection(tenantId: string, platform?: string): Promise<AccountingConnection | null> {
+    this.enforceTenantCheck(tenantId);
+    for (const conn of this.accountingConnections.values()) {
+      if (conn.tenantId === tenantId && (!platform || conn.platform === platform) && conn.isActive) {
+        return conn;
+      }
+    }
+    return null;
+  }
+
+  public async insertAccountingSyncLog(
+    log: Omit<AccountingSyncLog, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<AccountingSyncLog> {
+    this.enforceTenantCheck(log.tenantId);
+    const id = generateUuidV7();
+    const now = new Date();
+    const record: AccountingSyncLog = {
+      ...log,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.accountingSyncLogs.set(id, record);
+    return record;
+  }
+
+  public async getAccountingSyncLogsByTenant(tenantId: string): Promise<AccountingSyncLog[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: AccountingSyncLog[] = [];
+    for (const log of this.accountingSyncLogs.values()) {
+      if (log.tenantId === tenantId) {
+        results.push(log);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  // Phase 4.6: Sales Reps & Commission Records
+  public async insertSalesRep(
+    rep: Omit<SalesRep, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<SalesRep> {
+    this.enforceTenantCheck(rep.tenantId);
+    const id = generateUuidV7();
+    const now = new Date();
+    const record: SalesRep = {
+      ...rep,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.salesReps.set(id, record);
+    return record;
+  }
+
+  public async getSalesRepById(id: string): Promise<SalesRep | null> {
+    return this.salesReps.get(id) || null;
+  }
+
+  public async getSalesReps(tenantId: string): Promise<SalesRep[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: SalesRep[] = [];
+    for (const rep of this.salesReps.values()) {
+      if (rep.tenantId === tenantId) {
+        results.push(rep);
+      }
+    }
+    return results;
+  }
+
+  public async insertCommissionRecord(
+    record: Omit<CommissionRecord, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<CommissionRecord> {
+    this.enforceTenantCheck(record.tenantId);
+    const id = generateUuidV7();
+    const now = new Date();
+    const comm: CommissionRecord = {
+      ...record,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.commissionRecords.set(id, comm);
+    return comm;
+  }
+
+  public async getCommissionRecordsByTenant(tenantId: string): Promise<CommissionRecord[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: CommissionRecord[] = [];
+    for (const comm of this.commissionRecords.values()) {
+      if (comm.tenantId === tenantId) {
+        results.push(comm);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async getCommissionRecordsByRep(tenantId: string, salesRepId: string): Promise<CommissionRecord[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: CommissionRecord[] = [];
+    for (const comm of this.commissionRecords.values()) {
+      if (comm.tenantId === tenantId && comm.salesRepId === salesRepId) {
+        results.push(comm);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  // Phase 4.7: Dunning Records
+  public async insertDunningRecord(
+    record: Omit<DunningRecord, 'id' | 'createdAt'>
+  ): Promise<DunningRecord> {
+    this.enforceTenantCheck(record.tenantId);
+    const id = generateUuidV7();
+    const now = new Date();
+    const dunning: DunningRecord = {
+      ...record,
+      id,
+      createdAt: now,
+    };
+    this.dunningRecords.set(id, dunning);
+    return dunning;
+  }
+
+  public async getDunningRecordsByTenant(tenantId: string): Promise<DunningRecord[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: DunningRecord[] = [];
+    for (const d of this.dunningRecords.values()) {
+      if (d.tenantId === tenantId) {
+        results.push(d);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async getDunningRecordsByInvoice(tenantId: string, invoiceId: string): Promise<DunningRecord[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: DunningRecord[] = [];
+    for (const d of this.dunningRecords.values()) {
+      if (d.tenantId === tenantId && d.invoiceId === invoiceId) {
+        results.push(d);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  // Phase 4.8: S3 WORM Audit Packages
+  public async insertWormAuditPackage(
+    pkg: Omit<WormAuditPackage, 'id' | 'createdAt'>
+  ): Promise<WormAuditPackage> {
+    this.enforceTenantCheck(pkg.tenantId);
+    const id = generateUuidV7();
+    const now = new Date();
+    const worm: WormAuditPackage = {
+      ...pkg,
+      id,
+      createdAt: now,
+    };
+    this.wormAuditPackages.set(id, worm);
+    return worm;
+  }
+
+  public async getWormAuditPackageByShipmentId(tenantId: string, shipmentId: string): Promise<WormAuditPackage | null> {
+    this.enforceTenantCheck(tenantId);
+    for (const pkg of this.wormAuditPackages.values()) {
+      if (pkg.tenantId === tenantId && pkg.shipmentId === shipmentId) {
+        return pkg;
+      }
+    }
+    return null;
+  }
+
+  public async getWormAuditPackagesByTenant(tenantId: string): Promise<WormAuditPackage[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: WormAuditPackage[] = [];
+    for (const pkg of this.wormAuditPackages.values()) {
+      if (pkg.tenantId === tenantId) {
+        results.push(pkg);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 }
 

@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { DispatchBoardEngine } from '../src/lib/dispatch/dispatch-board-engine';
 import { dbClient } from '../src/db/client';
 
@@ -17,16 +17,15 @@ describe('Phase 3.5: Real-Time Kanban Dispatch Board State Machine', () => {
       originCity: 'Dallas',
       originState: 'TX',
       originZip: '75201',
+      originCountry: 'US',
       destAddress1: '500 Commerce Way',
       destCity: 'Atlanta',
       destState: 'GA',
       destZip: '30301',
+      destCountry: 'US',
       totalPallets: 4,
       totalWeightLbs: 3000,
       pickupDateReady: '2026-09-01',
-      isDisputed: false,
-      confidenceScore: 1.0,
-      documentHash: null,
     });
   });
 

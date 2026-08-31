@@ -548,4 +548,347 @@ export const CarrierVettingRecordSchema = z.object({
 });
 export type CarrierVettingRecord = z.infer<typeof CarrierVettingRecordSchema>;
 
+// ============================================================================
+// PHASE 4: GEOTAGGED POD CAPTURE, SETTLEMENT & CUSTOMER INVOICING
+// ============================================================================
 
+export const POD_STATUSES = [
+  'PENDING',
+  'VERIFIED',
+  'FLAGGED_EXCEPTION',
+  'REJECTED',
+] as const;
+export type PodStatus = (typeof POD_STATUSES)[number];
+
+export const EXCEPTION_SEVERITIES = [
+  'NONE',
+  'LOW',
+  'MEDIUM',
+  'HIGH',
+  'CRITICAL',
+] as const;
+export type ExceptionSeverity = (typeof EXCEPTION_SEVERITIES)[number];
+
+export const INVOICE_STATUSES = [
+  'DRAFT',
+  'ISSUED',
+  'SENT',
+  'PAID',
+  'OVERDUE',
+  'DISPUTED',
+] as const;
+export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
+
+// Phase 4.1: Driver Mobile POD Action Token
+export const PodTokenSchema = z.object({
+  token: z.string().min(16),
+  tenantId: z.string().uuid(),
+  shipmentId: z.string().uuid(),
+  carrierCode: z.string().optional().nullable(),
+  driverPhone: z.string().optional().nullable(),
+  expiresAt: z.date(),
+  isUsed: z.boolean().default(false),
+  usedAt: z.date().optional().nullable(),
+  createdAt: z.date().default(() => new Date()),
+});
+export type PodToken = z.infer<typeof PodTokenSchema>;
+
+// Phase 4.2 & 4.3: Proof of Delivery (POD) Master Record
+export const PodRecordSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  shipmentId: z.string().uuid(),
+  podToken: z.string().optional().nullable(),
+  
+  // Image & File
+  imageUrl: z.string().min(1),
+  imageHash: z.string().length(64), // SHA-256
+  fileSizeBytes: z.number().int().nonnegative(),
+  
+  // Consignee Delivery Signature
+  consigneeName: z.string().min(1).max(255),
+  consigneeSignatureDataUrl: z.string().optional().nullable(),
+  receivedPieces: z.number().int().nonnegative(),
+  expectedPieces: z.number().int().positive(),
+  
+  // EXIF Metadata
+  gpsLatitude: z.number().optional().nullable(),
+  gpsLongitude: z.number().optional().nullable(),
+  photoTimestamp: z.date().optional().nullable(),
+  deviceModel: z.string().optional().nullable(),
+  imageOrientation: z.number().int().default(1),
+  
+  // Geofence Evaluation
+  destLatitude: z.number().optional().nullable(),
+  destLongitude: z.number().optional().nullable(),
+  geofenceDistanceMiles: z.number().nonnegative().optional().nullable(),
+  isWithinGeofence: z.boolean().default(true),
+  geofenceWarning: z.string().optional().nullable(),
+  
+  // OCR & Document Authenticity
+  ocrRawText: z.string().optional().nullable(),
+  ocrConfidence: z.number().nonnegative().default(90.0),
+  signatureDetected: z.boolean().default(false),
+  pieceCountVerified: z.boolean().default(true),
+  pieceCountFound: z.number().int().optional().nullable(),
+  stampedDateDetected: z.boolean().default(false),
+  stampedDate: z.string().optional().nullable(),
+  
+  // Damage & Shortage Detection
+  hasDamageException: z.boolean().default(false),
+  detectedExceptionKeywords: z.array(z.string()).default([]),
+  exceptionSeverity: z.enum(EXCEPTION_SEVERITIES).default('NONE'),
+  exceptionNotes: z.string().optional().nullable(),
+  claimsAlertSent: z.boolean().default(false),
+  
+  // Status & Scores
+  status: z.enum(POD_STATUSES).default('VERIFIED'),
+  overallConfidence: z.number().nonnegative().default(95.0),
+  
+  submittedAt: z.date().default(() => new Date()),
+  reviewedBy: z.string().uuid().optional().nullable(),
+  reviewedAt: z.date().optional().nullable(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type PodRecord = z.infer<typeof PodRecordSchema>;
+
+// Phase 4.3: Delivery Exception / Damage Claims Record
+export const DeliveryExceptionSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  shipmentId: z.string().uuid(),
+  podId: z.string().uuid().optional().nullable(),
+  severity: z.enum(EXCEPTION_SEVERITIES).default('HIGH'),
+  keywordsDetected: z.array(z.string()).default([]),
+  notationSnippets: z.array(z.string()).default([]),
+  description: z.string().min(1),
+  reportedPiecesShort: z.number().int().default(0),
+  claimAmountCents: z.number().int().default(0),
+  alertSentTo: z.string().optional().nullable(),
+  alertSentAt: z.date().default(() => new Date()),
+  status: z.enum(['OPEN', 'INVESTIGATING', 'CLAIM_FILED', 'SETTLED', 'RESOLVED', 'DISMISSED']).default('OPEN'),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type DeliveryException = z.infer<typeof DeliveryExceptionSchema>;
+
+// Phase 4.4: Customer Invoice Record
+export const CustomerInvoiceSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  shipmentId: z.string().uuid(),
+  podId: z.string().uuid().optional().nullable(),
+  customerAccountId: z.string().uuid().optional().nullable(),
+  
+  invoiceNumber: z.string().min(1).max(64),
+  customerPoNumber: z.string().optional().nullable(),
+  shipperName: z.string().min(1).max(255),
+  shipperEmail: z.string().email(),
+  shipperAddress: z.string().min(1),
+  
+  // Exact Integer Cents
+  linehaulAmountCents: z.number().int().nonnegative(),
+  fuelSurchargeCents: z.number().int().nonnegative(),
+  accessorialAmountCents: z.number().int().nonnegative().default(0),
+  accessorialBreakdown: z.record(z.number().int()).default({}),
+  totalAmountCents: z.number().int().positive(),
+  currency: z.enum(['USD', 'CAD']).default('USD'),
+  
+  paymentTermsDays: z.number().int().positive().default(30),
+  invoiceDate: z.string(), // YYYY-MM-DD
+  dueDate: z.string(),     // YYYY-MM-DD
+  
+  remitInstructions: z.object({
+    bankName: z.string(),
+    routingNumber: z.string(),
+    accountNumber: z.string(),
+    remitEmail: z.string(),
+    remitAddress: z.string(),
+  }),
+  
+  pdfUrl: z.string().optional().nullable(),
+  status: z.enum(INVOICE_STATUSES).default('ISSUED'),
+  emailSentTo: z.string().optional().nullable(),
+  emailSentAt: z.date().optional().nullable(),
+  paidAt: z.date().optional().nullable(),
+  
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type CustomerInvoice = z.infer<typeof CustomerInvoiceSchema>;
+
+// ==============================================================================
+// PHASE 4.5: ACCOUNTING SYSTEM INTEGRATION (QUICKBOOKS, XERO, ERP)
+// ==============================================================================
+export const ACCOUNTING_PLATFORMS = ['QUICKBOOKS_ONLINE', 'XERO', 'NETSUITE', 'GENERIC_ERP'] as const;
+export type AccountingPlatform = (typeof ACCOUNTING_PLATFORMS)[number];
+
+export const ACCOUNTING_SYNC_TYPES = [
+  'AR_INVOICE',
+  'AP_BILL',
+  'PAYMENT_RECON',
+  'CUSTOMER_SYNC',
+  'VENDOR_SYNC',
+] as const;
+export type AccountingSyncType = (typeof ACCOUNTING_SYNC_TYPES)[number];
+
+export const ACCOUNTING_SYNC_STATUSES = ['PENDING', 'SUCCESS', 'FAILED', 'SKIPPED'] as const;
+export type AccountingSyncStatus = (typeof ACCOUNTING_SYNC_STATUSES)[number];
+
+export const AccountingConnectionSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  platform: z.enum(ACCOUNTING_PLATFORMS),
+  realmId: z.string().optional().nullable(),
+  companyName: z.string().optional().nullable(),
+  accessToken: z.string().min(1),
+  refreshToken: z.string().optional().nullable(),
+  tokenExpiresAt: z.date(),
+  isActive: z.boolean().default(true),
+  glFreightRevenueAccountId: z.string().default('4000'),
+  glCarrierExpenseAccountId: z.string().default('5000'),
+  glAccountsReceivableAccountId: z.string().default('1200'),
+  glAccountsPayableAccountId: z.string().default('2000'),
+  syncSettings: z.record(z.unknown()).default({}),
+  lastSyncAt: z.date().optional().nullable(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type AccountingConnection = z.infer<typeof AccountingConnectionSchema>;
+
+export const AccountingSyncLogSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  connectionId: z.string().uuid().optional().nullable(),
+  syncType: z.enum(ACCOUNTING_SYNC_TYPES),
+  entityId: z.string().uuid(),
+  referenceNumber: z.string().min(1).max(64),
+  externalPlatformId: z.string().optional().nullable(),
+  externalSyncNumber: z.string().optional().nullable(),
+  status: z.enum(ACCOUNTING_SYNC_STATUSES).default('PENDING'),
+  amountCents: z.number().int().nonnegative(),
+  currency: z.enum(['USD', 'CAD']).default('USD'),
+  requestPayload: z.record(z.unknown()).optional().nullable(),
+  responsePayload: z.record(z.unknown()).optional().nullable(),
+  errorMessage: z.string().optional().nullable(),
+  retryCount: z.number().int().nonnegative().default(0),
+  syncedAt: z.date().optional().nullable(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type AccountingSyncLog = z.infer<typeof AccountingSyncLogSchema>;
+
+// ==============================================================================
+// PHASE 4.6: BROKER GROSS MARGIN & COMMISSION CALCULATION
+// ==============================================================================
+export const COMMISSION_STATUSES = ['ACCRUED', 'APPROVED', 'PAID', 'CLAWED_BACK'] as const;
+export type CommissionStatus = (typeof COMMISSION_STATUSES)[number];
+
+export const SalesRepSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  name: z.string().min(1).max(128),
+  email: z.string().email(),
+  phone: z.string().optional().nullable(),
+  defaultCommissionTierId: z.string().default('STANDARD_TIER'),
+  baseCommissionPercent: z.number().nonnegative().default(10.0),
+  monthlyProfitQuotaCents: z.number().int().nonnegative().default(1000000), // $10,000.00
+  isActive: z.boolean().default(true),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type SalesRep = z.infer<typeof SalesRepSchema>;
+
+export const CommissionRecordSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  shipmentId: z.string().uuid(),
+  invoiceId: z.string().uuid().optional().nullable(),
+  salesRepId: z.string().uuid(),
+  customerInvoicedCents: z.number().int().nonnegative(),
+  carrierSettlementCents: z.number().int().nonnegative(),
+  realizedGrossProfitCents: z.number().int(),
+  realizedMarginPercent: z.number(),
+  appliedCommissionPercent: z.number().nonnegative(),
+  commissionEarnedCents: z.number().int().nonnegative(),
+  status: z.enum(COMMISSION_STATUSES).default('ACCRUED'),
+  notes: z.string().optional().nullable(),
+  paidAt: z.date().optional().nullable(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type CommissionRecord = z.infer<typeof CommissionRecordSchema>;
+
+// ==============================================================================
+// PHASE 4.7: ACCOUNTS RECEIVABLE (AR) AGING & AUTOMATED DUNNING
+// ==============================================================================
+export const AR_AGING_BUCKETS = [
+  'CURRENT',
+  'PAST_DUE_1_30',
+  'PAST_DUE_31_60',
+  'PAST_DUE_61_90',
+  'PAST_DUE_90_PLUS',
+] as const;
+export type ArAgingBucket = (typeof AR_AGING_BUCKETS)[number];
+
+export const DUNNING_STAGES = [
+  'REMINDER_T_MINUS_5',
+  'DUE_TODAY_T_0',
+  'PAST_DUE_T_PLUS_7',
+  'URGENT_T_PLUS_14',
+  'FINAL_DEMAND_T_PLUS_30',
+] as const;
+export type DunningStage = (typeof DUNNING_STAGES)[number];
+
+export const DUNNING_STATUSES = ['QUEUED', 'DISPATCHED', 'FAILED', 'PAUSED_DISPUTE'] as const;
+export type DunningStatus = (typeof DUNNING_STATUSES)[number];
+
+export const DunningRecordSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  invoiceId: z.string().uuid(),
+  customerAccountId: z.string().uuid().optional().nullable(),
+  dunningStage: z.enum(DUNNING_STAGES),
+  daysPastDue: z.number().int(),
+  recipientEmail: z.string().email(),
+  subject: z.string().min(1).max(255),
+  bodySnippet: z.string().optional().nullable(),
+  status: z.enum(DUNNING_STATUSES).default('DISPATCHED'),
+  creditHoldTriggered: z.boolean().default(false),
+  dispatchedAt: z.date().default(() => new Date()),
+  createdAt: z.date().default(() => new Date()),
+});
+export type DunningRecord = z.infer<typeof DunningRecordSchema>;
+
+// ==============================================================================
+// PHASE 4.8: SETTLEMENT DOCUMENT VAULT & S3 WORM COMPLIANCE
+// ==============================================================================
+export const RETENTION_MODES = ['COMPLIANCE', 'GOVERNANCE'] as const;
+export type RetentionMode = (typeof RETENTION_MODES)[number];
+
+export const WormAuditPackageSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  shipmentId: z.string().uuid(),
+  invoiceId: z.string().uuid().optional().nullable(),
+  packageReference: z.string().min(1).max(64),
+  bundleManifest: z.array(
+    z.object({
+      documentType: z.string(),
+      documentName: z.string(),
+      fileHashSha256: z.string(),
+      sizeBytes: z.number().int().nonnegative(),
+    })
+  ),
+  merkleRootHash: z.string().length(64),
+  s3Bucket: z.string().min(1),
+  s3ObjectKey: z.string().min(1),
+  s3VersionId: z.string().optional().nullable(),
+  retentionMode: z.enum(RETENTION_MODES).default('COMPLIANCE'),
+  retainUntilDate: z.date(),
+  isLegalHoldActive: z.boolean().default(false),
+  sealedAt: z.date().default(() => new Date()),
+  createdAt: z.date().default(() => new Date()),
+});
+export type WormAuditPackage = z.infer<typeof WormAuditPackageSchema>;

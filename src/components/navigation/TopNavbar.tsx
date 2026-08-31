@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -14,6 +14,7 @@ import {
   FileText,
   Ship,
   Database,
+  Camera,
 } from 'lucide-react';
 
 export const TopNavbar: React.FC = () => {
@@ -43,6 +44,12 @@ export const TopNavbar: React.FC = () => {
       href: '/dispatch',
       icon: KanbanSquare,
       active: pathname.startsWith('/dispatch'),
+    },
+    {
+      label: 'Invoicing & POD Settlement',
+      href: '/invoices',
+      icon: FileText,
+      active: pathname.startsWith('/invoices'),
     },
     {
       label: '1-Click Shipper Portal',
@@ -102,6 +109,13 @@ export const TopNavbar: React.FC = () => {
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-2.5">
+            <Link
+              href="/pod/demo-pod-token-2026"
+              className="hidden md:flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 transition shadow"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              Driver POD
+            </Link>
             <a
               href="/api/v1/shipments/01916362-7901-7080-867c-9b8895092s01/ebol?format=pdf"
               target="_blank"
