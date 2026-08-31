@@ -107,10 +107,10 @@ export class DispatchBoardEngine {
   public static async seedPracticeLoads(tenantId: string): Promise<void> {
     dbClient.setTenantContext(tenantId);
     
-    const sampleShipments = [
+    const sampleShipments: Array<Parameters<typeof dbClient.insertShipment>[0] extends infer T ? Omit<T, 'id' | 'tenantId' | 'createdAt' | 'updatedAt'> : never> = [
       {
         referenceNumber: 'LTL-2026-TEST-0001',
-        status: 'QUOTED' as const,
+        status: 'QUOTED',
         originName: 'ABC Manufacturing Co.',
         originAddress1: '123 Main St',
         originCity: 'Dallas',
@@ -129,7 +129,7 @@ export class DispatchBoardEngine {
       },
       {
         referenceNumber: 'LTL-2026-SAIA-4402',
-        status: 'TENDERED' as const,
+        status: 'TENDERED',
         originName: 'Midwest Heavy Industrial',
         originAddress1: '100 Industrial Pkwy',
         originCity: 'Los Angeles',
@@ -148,7 +148,7 @@ export class DispatchBoardEngine {
       },
       {
         referenceNumber: 'LTL-2026-ESTES-8812',
-        status: 'TENDER_ACCEPTED' as const,
+        status: 'PICKED_UP',
         originName: 'Titan Tool & Hardware Co.',
         originAddress1: '800 Manufacturing Blvd',
         originCity: 'Atlanta',
@@ -167,7 +167,7 @@ export class DispatchBoardEngine {
       },
       {
         referenceNumber: 'LTL-2026-XPO-9921',
-        status: 'DISPATCHED' as const,
+        status: 'DISPATCHED',
         originName: 'Gulf Coast Industrial Parts',
         originAddress1: '700 Harbor Road',
         originCity: 'Houston',
@@ -186,7 +186,7 @@ export class DispatchBoardEngine {
       },
       {
         referenceNumber: 'LTL-2026-ABF-7731',
-        status: 'IN_TRANSIT' as const,
+        status: 'IN_TRANSIT',
         originName: 'Apex Midwest Electronics',
         originAddress1: '400 Tech Park',
         originCity: 'Chicago',
@@ -205,7 +205,7 @@ export class DispatchBoardEngine {
       },
       {
         referenceNumber: 'LTL-2026-RL-5520',
-        status: 'DELIVERED' as const,
+        status: 'DELIVERED',
         originName: 'Pacific Coast Supply Co.',
         originAddress1: '300 Pacific Ave',
         originCity: 'Ontario',
