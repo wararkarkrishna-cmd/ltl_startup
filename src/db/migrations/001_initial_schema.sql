@@ -1,4 +1,4 @@
-﻿-- ====================================================================================================================
+-- ====================================================================================================================
 -- MASTER LTL FREIGHT OPERATING SYSTEM & FINANCIAL ENGINE
 -- MIGRATION: 001_initial_schema.sql
 -- TARGET: PostgreSQL 14+ / Supabase with Row Level Security (RLS) & UUIDv7
@@ -9,26 +9,36 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- 2. PostgreSQL UUIDv7 Native Function (RFC 9562)
 CREATE OR REPLACE FUNCTION generate_uuid_v7()
-RETURNS UUID AS 
+RETURNS UUID AS $$
 DECLARE
   unix_time_ms BIGINT;
   retval UUID;
+  h_time VARCHAR(12);
+  h_rand1 VARCHAR(3);
+  h_var VARCHAR(1);
+  h_rand2 VARCHAR(3);
+  h_node VARCHAR(12);
 BEGIN
   unix_time_ms := FLOOR(EXTRACT(EPOCH FROM clock_timestamp()) * 1000);
+  h_time := LPAD(TO_HEX(unix_time_ms), 12, '0');
+  h_rand1 := LPAD(TO_HEX(FLOOR(RANDOM() * 4096)::INT), 3, '0');
+  h_var := LPAD(TO_HEX((8 + FLOOR(RANDOM() * 4)::INT)::INT), 1, '0');
+  h_rand2 := LPAD(TO_HEX(FLOOR(RANDOM() * 4096)::INT), 3, '0');
+  h_node := LPAD(TO_HEX(FLOOR(RANDOM() * 281474976710656)::BIGINT), 12, '0');
+
   retval := (
-    LPAD(TO_HEX(unix_time_ms), 12, '0') ||
-    '7' ||
-    SUBSTRING(TO_HEX(FLOOR(RANDOM() * 4096)::INT), 1, 3) ||
-    LPAD(TO_HEX((8 + FLOOR(RANDOM() * 4)::INT)::INT), 1, '0') ||
-    SUBSTRING(TO_HEX(FLOOR(RANDOM() * 4096)::INT), 1, 3) ||
-    LPAD(TO_HEX(FLOOR(RANDOM() * 281474976710656)::BIGINT), 12, '0')
+    SUBSTRING(h_time, 1, 8) || '-' ||
+    SUBSTRING(h_time, 9, 4) || '-' ||
+    '7' || h_rand1 || '-' ||
+    h_var || h_rand2 || '-' ||
+    h_node
   )::UUID;
   RETURN retval;
 END;
- LANGUAGE plpgsql VOLATILE;
+$$ LANGUAGE plpgsql VOLATILE;
 
 -- 3. Core Multi-Tenant Organizations
-CREATE TABLE tenants (
+CREATE TABLE IF NOT EXISTS tenants (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(64) NOT NULL UNIQUE,
@@ -39,7 +49,7 @@ CREATE TABLE tenants (
 );
 
 -- 4. User Profiles & Role-Based Access Control (RBAC)
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
     email VARCHAR(255) NOT NULL,
@@ -53,7 +63,7 @@ CREATE TABLE users (
 );
 
 -- 5. Business Accounts (Shippers, Carriers, 3PLs, Factoring Companies)
-CREATE TABLE accounts (
+CREATE TABLE IF NOT EXISTS accounts (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
     name VARCHAR(255) NOT NULL,
@@ -75,7 +85,7 @@ CREATE TABLE accounts (
 );
 
 -- 6. Core Shipments Table
-CREATE TABLE shipments (
+CREATE TABLE IF NOT EXISTS shipments (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
     shipper_account_id UUID REFERENCES accounts(id),
@@ -135,7 +145,7 @@ CREATE TABLE shipments (
 );
 
 -- 7. Shipment Line Items (Pieces, Dimensions, Weights, PCF, NMFC)
-CREATE TABLE shipment_items (
+CREATE TABLE IF NOT EXISTS shipment_items (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     shipment_id UUID NOT NULL REFERENCES shipments(id) ON DELETE CASCADE,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
@@ -165,7 +175,7 @@ CREATE TABLE shipment_items (
 );
 
 -- 8. Accessorial Master Dictionary
-CREATE TABLE accessorial_lookups (
+CREATE TABLE IF NOT EXISTS accessorial_lookups (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     code VARCHAR(32) NOT NULL UNIQUE,
     name VARCHAR(128) NOT NULL,
@@ -176,7 +186,7 @@ CREATE TABLE accessorial_lookups (
 );
 
 -- 9. Shipment Accessorial Requests
-CREATE TABLE shipment_accessorials (
+CREATE TABLE IF NOT EXISTS shipment_accessorials (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     shipment_id UUID NOT NULL REFERENCES shipments(id) ON DELETE CASCADE,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
@@ -187,7 +197,7 @@ CREATE TABLE shipment_accessorials (
 );
 
 -- 10. Rate Quotes & Broker Margin Calculations
-CREATE TABLE quotes (
+CREATE TABLE IF NOT EXISTS quotes (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
     shipment_id UUID NOT NULL REFERENCES shipments(id) ON DELETE CASCADE,
@@ -205,7 +215,7 @@ CREATE TABLE quotes (
 );
 
 -- 11. Carrier Rate Quotes Returned from APIs / Tariffs
-CREATE TABLE carrier_rates (
+CREATE TABLE IF NOT EXISTS carrier_rates (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     quote_id UUID NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
@@ -225,7 +235,7 @@ CREATE TABLE carrier_rates (
 );
 
 -- 12. Carrier API Credentials & BYOC Vault
-CREATE TABLE carrier_credentials (
+CREATE TABLE IF NOT EXISTS carrier_credentials (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
     carrier_scac VARCHAR(8) NOT NULL,
@@ -239,7 +249,7 @@ CREATE TABLE carrier_credentials (
 );
 
 -- 13. Carrier Final Settlement Invoices (EDI 210 / PDF Ingestion)
-CREATE TABLE carrier_invoices (
+CREATE TABLE IF NOT EXISTS carrier_invoices (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
     shipment_id UUID NOT NULL REFERENCES shipments(id) ON DELETE RESTRICT,
@@ -258,7 +268,7 @@ CREATE TABLE carrier_invoices (
 );
 
 -- 14. Carrier Discrepancy & Dispute Records
-CREATE TABLE discrepancy_records (
+CREATE TABLE IF NOT EXISTS discrepancy_records (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
     carrier_invoice_id UUID NOT NULL REFERENCES carrier_invoices(id) ON DELETE RESTRICT,
@@ -283,7 +293,7 @@ CREATE TABLE discrepancy_records (
 );
 
 -- 15. Carrier QuickPay Payouts & Float Management
-CREATE TABLE carrier_payouts (
+CREATE TABLE IF NOT EXISTS carrier_payouts (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
     shipment_id UUID NOT NULL REFERENCES shipments(id) ON DELETE RESTRICT,
@@ -303,7 +313,7 @@ CREATE TABLE carrier_payouts (
 );
 
 -- 16. Double-Entry Financial Ledger
-CREATE TABLE financial_ledger_entries (
+CREATE TABLE IF NOT EXISTS financial_ledger_entries (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
     transaction_id UUID NOT NULL,
@@ -321,7 +331,7 @@ CREATE TABLE financial_ledger_entries (
 );
 
 -- 17. Immutable Audit Trail & CDC Events
-CREATE TABLE audit_events (
+CREATE TABLE IF NOT EXISTS audit_events (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
     shipment_id UUID REFERENCES shipments(id) ON DELETE SET NULL,
@@ -336,7 +346,7 @@ CREATE TABLE audit_events (
 );
 
 -- 18. Multi-Modal Ingestion Documents
-CREATE TABLE ingestion_documents (
+CREATE TABLE IF NOT EXISTS ingestion_documents (
     id UUID PRIMARY KEY DEFAULT generate_uuid_v7(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
     file_name VARCHAR(255) NOT NULL,
@@ -358,15 +368,15 @@ CREATE TABLE ingestion_documents (
 -- ====================================================================================================================
 -- INDEXES FOR HIGH-PERFORMANCE QUERYING & COMPLIANCE
 -- ====================================================================================================================
-CREATE INDEX idx_shipments_tenant_status ON shipments(tenant_id, status);
-CREATE INDEX idx_shipments_created_at ON shipments(created_at DESC);
-CREATE INDEX idx_shipment_items_shipment ON shipment_items(shipment_id);
-CREATE INDEX idx_quotes_shipment ON quotes(shipment_id);
-CREATE INDEX idx_carrier_rates_quote ON carrier_rates(quote_id);
-CREATE INDEX idx_carrier_invoices_pro ON carrier_invoices(carrier_scac, pro_number);
-CREATE INDEX idx_ledger_transaction ON financial_ledger_entries(transaction_id);
-CREATE INDEX idx_audit_shipment ON audit_events(shipment_id, created_at DESC);
-CREATE INDEX idx_ingestion_sha256 ON ingestion_documents(tenant_id, sha256_hash);
+CREATE INDEX IF NOT EXISTS idx_shipments_tenant_status ON shipments(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_shipments_created_at ON shipments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_shipment_items_shipment ON shipment_items(shipment_id);
+CREATE INDEX IF NOT EXISTS idx_quotes_shipment ON quotes(shipment_id);
+CREATE INDEX IF NOT EXISTS idx_carrier_rates_quote ON carrier_rates(quote_id);
+CREATE INDEX IF NOT EXISTS idx_carrier_invoices_pro ON carrier_invoices(carrier_scac, pro_number);
+CREATE INDEX IF NOT EXISTS idx_ledger_transaction ON financial_ledger_entries(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_audit_shipment ON audit_events(shipment_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ingestion_sha256 ON ingestion_documents(tenant_id, sha256_hash);
 
 -- ====================================================================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
@@ -386,38 +396,50 @@ ALTER TABLE financial_ledger_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ingestion_documents ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS tenant_isolation_users ON users;
 CREATE POLICY tenant_isolation_users ON users
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
 
+DROP POLICY IF EXISTS tenant_isolation_accounts ON accounts;
 CREATE POLICY tenant_isolation_accounts ON accounts
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
 
+DROP POLICY IF EXISTS tenant_isolation_shipments ON shipments;
 CREATE POLICY tenant_isolation_shipments ON shipments
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
 
+DROP POLICY IF EXISTS tenant_isolation_shipment_items ON shipment_items;
 CREATE POLICY tenant_isolation_shipment_items ON shipment_items
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
 
+DROP POLICY IF EXISTS tenant_isolation_quotes ON quotes;
 CREATE POLICY tenant_isolation_quotes ON quotes
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
 
+DROP POLICY IF EXISTS tenant_isolation_carrier_rates ON carrier_rates;
 CREATE POLICY tenant_isolation_carrier_rates ON carrier_rates
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
 
+DROP POLICY IF EXISTS tenant_isolation_carrier_invoices ON carrier_invoices;
 CREATE POLICY tenant_isolation_carrier_invoices ON carrier_invoices
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
 
+DROP POLICY IF EXISTS tenant_isolation_discrepancies ON discrepancy_records;
 CREATE POLICY tenant_isolation_discrepancies ON discrepancy_records
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
 
+DROP POLICY IF EXISTS tenant_isolation_carrier_payouts ON carrier_payouts;
 CREATE POLICY tenant_isolation_carrier_payouts ON carrier_payouts
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
 
+DROP POLICY IF EXISTS tenant_isolation_ledger ON financial_ledger_entries;
 CREATE POLICY tenant_isolation_ledger ON financial_ledger_entries
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
 
+DROP POLICY IF EXISTS tenant_isolation_audit ON audit_events;
 CREATE POLICY tenant_isolation_audit ON audit_events
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
 
+DROP POLICY IF EXISTS tenant_isolation_docs ON ingestion_documents;
 CREATE POLICY tenant_isolation_docs ON ingestion_documents
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
