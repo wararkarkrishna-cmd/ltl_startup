@@ -57,13 +57,23 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     };
 
     if (format === 'pdf') {
-      const pdfBuffer = await VicsEbolGenerator.generatePdfBuffer(ebolData);
-      return new Response(pdfBuffer as any, {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `inline; filename="eBOL_${masterBolNumber}.pdf"`,
-        },
-      });
+      try {
+        const pdfBuffer = await VicsEbolGenerator.generatePdfBuffer(ebolData);
+        return new Response(pdfBuffer as any, {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="eBOL_${masterBolNumber}.pdf"`,
+          },
+        });
+      } catch (pdfErr) {
+        console.warn('PDFKit binary generation fallback to print-ready HTML:', pdfErr);
+        const html = VicsEbolGenerator.renderVicsHtml(ebolData);
+        return new Response(html, {
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+          },
+        });
+      }
     }
 
     const html = VicsEbolGenerator.renderVicsHtml(ebolData);

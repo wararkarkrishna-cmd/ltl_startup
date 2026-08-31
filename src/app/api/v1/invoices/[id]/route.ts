@@ -103,13 +103,23 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     };
 
     if (format === 'pdf') {
-      const pdfBuffer = await InvoiceGenerator.generateInvoicePdf(invoicePdfData);
-      return new Response(pdfBuffer as any, {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `inline; filename="${invoice.invoiceNumber}.pdf"`,
-        },
-      });
+      try {
+        const pdfBuffer = await InvoiceGenerator.generateInvoicePdf(invoicePdfData);
+        return new Response(pdfBuffer as any, {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="${invoice.invoiceNumber}.pdf"`,
+          },
+        });
+      } catch (pdfErr) {
+        console.warn('PDFKit invoice binary generation fallback to print-ready HTML:', pdfErr);
+        const html = InvoiceGenerator.renderInvoiceHtml(invoicePdfData);
+        return new Response(html, {
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+          },
+        });
+      }
     }
 
     const html = InvoiceGenerator.renderInvoiceHtml(invoicePdfData);

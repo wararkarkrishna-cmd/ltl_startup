@@ -1,4 +1,4 @@
-﻿import PDFDocument from 'pdfkit';
+import PDFDocument from 'pdfkit';
 import { Shipment, ShipmentItem, DigitalBol } from '../../db/schema';
 import { dbClient } from '../../db/client';
 
@@ -103,17 +103,42 @@ export class VicsEbolGenerator {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VICS Standard Bill of Lading - ${data.bolNumber}</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; font-size: 11px; color: #000; background: #fff; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 20px; font-size: 11px; color: #000; background: #f8fafc; }
+    .page-container { max-width: 900px; margin: 0 auto; background: #fff; padding: 24px; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border-radius: 8px; }
     .vics-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
     .vics-table th, .vics-table td { border: 1px solid #000; padding: 5px; }
     .vics-header { font-weight: bold; background: #f1f5f9; text-transform: uppercase; font-size: 10px; }
     .title-box { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; }
     .barcode-box { text-align: center; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; max-width: 900px; margin: 0 auto 16px auto; padding: 12px 18px; background: #0f172a; color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    @media print {
+      body { background: #fff; margin: 0; padding: 0; }
+      .page-container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+      .no-print { display: none !important; }
+    }
   </style>
 </head>
 <body>
+  <!-- Print Control Bar -->
+  <div class="toolbar no-print">
+    <div style="font-weight:bold;font-size:13px;display:flex;align-items:center;gap:8px;">
+      <span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:50%;"></span>
+      Official VICS eBOL Document (eBOL-${data.bolNumber})
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="window.print()" style="background:#4f46e5;color:#fff;border:none;padding:7px 16px;border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:6px;">
+        🖨️ Print / Save as PDF
+      </button>
+      <button onclick="window.close()" style="background:#334155;color:#cbd5e1;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;">
+        Close
+      </button>
+    </div>
+  </div>
+
+  <div class="page-container">
   <!-- Header Bar -->
   <table class="vics-table">
     <tr>
@@ -225,6 +250,7 @@ export class VicsEbolGenerator {
       </td>
     </tr>
   </table>
+  </div>
 </body>
 </html>
     `.trim();
