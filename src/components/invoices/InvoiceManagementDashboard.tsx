@@ -34,11 +34,29 @@ import {
   FolderLock,
   ArrowUpRight,
   HelpCircle,
+  Scale,
+  ShieldAlert,
+  PlusCircle,
+  Percent,
 } from 'lucide-react';
+import { Phase5DisputeWorkspace } from './Phase5DisputeWorkspace';
 
 export const InvoiceManagementDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'invoices' | 'pods' | 'exceptions' | 'accounting' | 'aging' | 'commissions' | 'worm'
+    | 'overview'
+    | 'invoices'
+    | 'rebill'
+    | 'disputes'
+    | 'claims_lifecycle'
+    | 'supplemental'
+    | 'recovery_billing'
+    | 'scorecards'
+    | 'pods'
+    | 'exceptions'
+    | 'accounting'
+    | 'aging'
+    | 'commissions'
+    | 'worm'
   >('overview');
 
   const [searchFilter, setSearchFilter] = useState('');
@@ -581,8 +599,14 @@ export const InvoiceManagementDashboard: React.FC = () => {
         {[
           { id: 'overview', label: 'Overview & KPIs', icon: BarChart3 },
           { id: 'invoices', label: `Customer Invoices (${invoices.length})`, icon: FileText },
+          { id: 'rebill', label: 'Carrier Re-Bill Audit (5.1/5.2)', icon: Scale },
+          { id: 'disputes', label: 'Legal Dispute Desk (5.3/5.4)', icon: ShieldAlert },
+          { id: 'claims_lifecycle', label: 'Claims Lifecycle & 30d SLA (5.5)', icon: Clock },
+          { id: 'supplemental', label: 'Supplemental Invoices (5.6)', icon: PlusCircle },
+          { id: 'recovery_billing', label: '20% Contingency Fees (5.7)', icon: Percent },
+          { id: 'scorecards', label: 'Carrier Scorecards (5.8)', icon: Award },
           { id: 'pods', label: `Verified PODs (${podRecords.length})`, icon: CheckCircle2 },
-          { id: 'exceptions', label: `Claims Desk (${exceptions.length})`, icon: AlertTriangle },
+          { id: 'exceptions', label: `Damage Claims (${exceptions.length})`, icon: AlertTriangle },
           { id: 'accounting', label: 'Accounting Sync (QBO)', icon: Database },
           { id: 'aging', label: 'AR Aging & Dunning', icon: Calendar },
           { id: 'commissions', label: 'Gross Margin & Sales Reps', icon: Award },
@@ -606,6 +630,18 @@ export const InvoiceManagementDashboard: React.FC = () => {
           );
         })}
       </div>
+
+      {/* ========================================================================= */}
+      {/* PHASE 5: RE-BILL AUDIT, DISPUTES, CLAIMS, SUPPLEMENTAL, RECOVERY & SCORECARDS */}
+      {/* ========================================================================= */}
+      {(activeTab === 'rebill' ||
+        activeTab === 'disputes' ||
+        activeTab === 'claims_lifecycle' ||
+        activeTab === 'supplemental' ||
+        activeTab === 'recovery_billing' ||
+        activeTab === 'scorecards') && (
+        <Phase5DisputeWorkspace activeSubTab={activeTab} />
+      )}
 
       {/* ========================================================================= */}
       {/* TAB 1: OVERVIEW & DSO KPIS */}
