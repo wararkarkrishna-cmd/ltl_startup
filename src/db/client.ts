@@ -36,6 +36,28 @@ import {
   CarrierDisputeSchema,
   DisputeStatus,
   RateConfirmation,
+  QuickPayToken,
+  QuickPayTokenSchema,
+  CarrierPayout,
+  CarrierPayoutSchema,
+  QuickPayAgreement,
+  QuickPayAgreementSchema,
+  Form1099Record,
+  Form1099RecordSchema,
+  CarrierFraudScore,
+  CarrierFraudScoreSchema,
+  BankStatement,
+  BankStatementSchema,
+  BankStatementLine,
+  BankStatementLineSchema,
+  FactoringCompany,
+  FactoringCompanySchema,
+  CarrierNoaRecord,
+  CarrierNoaRecordSchema,
+  FactoringWaiver,
+  FactoringWaiverSchema,
+  Soc2AuditRecord,
+  Soc2AuditRecordSchema,
 } from './schema';
 
 /**
@@ -73,6 +95,17 @@ export class FreightDatabaseClient {
   public carrierInvoices: Map<string, CarrierInvoice> = new Map();
   public discrepancyRecords: Map<string, DiscrepancyRecord> = new Map();
   public carrierDisputes: Map<string, CarrierDispute> = new Map();
+  public quickpayTokens: Map<string, QuickPayToken> = new Map();
+  public carrierPayouts: Map<string, CarrierPayout> = new Map();
+  public quickpayAgreements: Map<string, QuickPayAgreement> = new Map();
+  public form1099Records: Map<string, Form1099Record> = new Map();
+  public carrierFraudScores: Map<string, CarrierFraudScore> = new Map();
+  public bankStatements: Map<string, BankStatement> = new Map();
+  public bankStatementLines: Map<string, BankStatementLine> = new Map();
+  public factoringCompanies: Map<string, FactoringCompany> = new Map();
+  public carrierNoaRecords: Map<string, CarrierNoaRecord> = new Map();
+  public factoringWaivers: Map<string, FactoringWaiver> = new Map();
+  public soc2AuditLogs: Map<string, Soc2AuditRecord> = new Map();
   public auditEvents: Map<string, any> = new Map();
 
   constructor(tenantId?: string) {
@@ -141,7 +174,7 @@ export class FreightDatabaseClient {
 
   // Shipments Operations
   public async insertShipment(
-    shipment: Omit<Shipment, 'id' | 'createdAt' | 'updatedAt'>
+    shipment: Omit<Shipment, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
   ): Promise<Shipment> {
     this.enforceTenantCheck(shipment.tenantId);
 
@@ -151,14 +184,15 @@ export class FreightDatabaseClient {
     }
 
     // DDL Constraint Check: totalPallets >= 1
-    if (shipment.totalPallets < 1) {
+    if (shipment.totalPallets !== undefined && shipment.totalPallets < 1) {
       throw new Error('DDL Constraint Violation: total_pallets must be >= 1');
     }
 
-    const id = generateUuidV7();
+    const id = shipment.id || generateUuidV7();
     const now = new Date();
     const record: Shipment = {
       ...shipment,
+      totalPallets: shipment.totalPallets ?? ((shipment as any).handlingUnits || 1),
       id,
       createdAt: now,
       updatedAt: now,
@@ -175,6 +209,17 @@ export class FreightDatabaseClient {
       return null; // Enforce RLS isolation
     }
     return record;
+  }
+
+  public async getShipmentsByTenant(tenantId: string): Promise<Shipment[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: Shipment[] = [];
+    for (const s of this.shipments.values()) {
+      if (s.tenantId === tenantId) {
+        results.push(s);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   // Ingestion Documents Operations
@@ -1081,6 +1126,372 @@ export class FreightDatabaseClient {
       }
     }
     return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  // ============================================================================
+  // PHASE 6: QUICKPAY TOKENS, PAYOUTS, AGREEMENTS & 1099 TAX RECORDS
+  // ============================================================================
+
+  // QuickPay Tokens
+  public async insertQuickPayToken(
+    tokenData: Omit<z.input<typeof QuickPayTokenSchema>, 'id' | 'createdAt'> & { id?: string }
+  ): Promise<QuickPayToken> {
+    this.enforceTenantCheck(tokenData.tenantId);
+    const id = tokenData.id || generateUuidV7();
+    const parsed = QuickPayTokenSchema.parse({
+      ...tokenData,
+      id,
+      createdAt: new Date(),
+    });
+    this.quickpayTokens.set(parsed.token, parsed);
+    return parsed;
+  }
+
+  public async getQuickPayToken(token: string): Promise<QuickPayToken | null> {
+    const record = this.quickpayTokens.get(token);
+    if (!record) return null;
+    if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
+      return null;
+    }
+    return record;
+  }
+
+  public async markQuickPayTokenUsed(
+    token: string,
+    usedByIp?: string
+  ): Promise<QuickPayToken | null> {
+    const existing = this.quickpayTokens.get(token);
+    if (!existing) return null;
+    const updated: QuickPayToken = {
+      ...existing,
+      isUsed: true,
+      usedAt: new Date(),
+      usedByIp: usedByIp || existing.usedByIp,
+    };
+    this.quickpayTokens.set(token, updated);
+    return updated;
+  }
+
+  // Carrier Payouts
+  public async insertCarrierPayout(
+    payout: Omit<z.input<typeof CarrierPayoutSchema>, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+  ): Promise<CarrierPayout> {
+    this.enforceTenantCheck(payout.tenantId);
+    const id = payout.id || generateUuidV7();
+    const now = new Date();
+    const parsed = CarrierPayoutSchema.parse({
+      ...payout,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    });
+    this.carrierPayouts.set(id, parsed);
+    return parsed;
+  }
+
+  public async getCarrierPayoutById(id: string): Promise<CarrierPayout | null> {
+    const record = this.carrierPayouts.get(id);
+    if (!record) return null;
+    if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
+      return null;
+    }
+    return record;
+  }
+
+  public async getCarrierPayouts(tenantId: string): Promise<CarrierPayout[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: CarrierPayout[] = [];
+    for (const p of this.carrierPayouts.values()) {
+      if (p.tenantId === tenantId) {
+        results.push(p);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async updateCarrierPayout(
+    id: string,
+    updates: Partial<Omit<CarrierPayout, 'id' | 'tenantId' | 'createdAt'>>
+  ): Promise<CarrierPayout | null> {
+    const existing = this.carrierPayouts.get(id);
+    if (!existing) return null;
+    this.enforceTenantCheck(existing.tenantId);
+    const updated: CarrierPayout = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.carrierPayouts.set(id, updated);
+    return updated;
+  }
+
+  // QuickPay E-SIGN Agreements
+  public async insertQuickPayAgreement(
+    agreement: Omit<z.input<typeof QuickPayAgreementSchema>, 'id' | 'createdAt'> & { id?: string }
+  ): Promise<QuickPayAgreement> {
+    this.enforceTenantCheck(agreement.tenantId);
+    const id = agreement.id || generateUuidV7();
+    const parsed = QuickPayAgreementSchema.parse({
+      ...agreement,
+      id,
+      createdAt: new Date(),
+    });
+    this.quickpayAgreements.set(id, parsed);
+    return parsed;
+  }
+
+  public async getQuickPayAgreementById(id: string): Promise<QuickPayAgreement | null> {
+    const record = this.quickpayAgreements.get(id);
+    if (!record) return null;
+    if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
+      return null;
+    }
+    return record;
+  }
+
+  public async getQuickPayAgreementByPayoutId(
+    tenantId: string,
+    payoutId: string
+  ): Promise<QuickPayAgreement | null> {
+    this.enforceTenantCheck(tenantId);
+    for (const a of this.quickpayAgreements.values()) {
+      if (a.tenantId === tenantId && a.payoutId === payoutId) {
+        return a;
+      }
+    }
+    return null;
+  }
+
+  // IRS Form 1099-NEC Records
+  public async insertForm1099Record(
+    record: Omit<z.input<typeof Form1099RecordSchema>, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+  ): Promise<Form1099Record> {
+    this.enforceTenantCheck(record.tenantId);
+    const id = record.id || generateUuidV7();
+    const now = new Date();
+    const parsed = Form1099RecordSchema.parse({
+      ...record,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    });
+    this.form1099Records.set(id, parsed);
+    return parsed;
+  }
+
+  public async getForm1099RecordById(id: string): Promise<Form1099Record | null> {
+    const record = this.form1099Records.get(id);
+    if (!record) return null;
+    if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
+      return null;
+    }
+    return record;
+  }
+
+  public async getForm1099Records(tenantId: string, taxYear?: number): Promise<Form1099Record[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: Form1099Record[] = [];
+    for (const rec of this.form1099Records.values()) {
+      if (rec.tenantId === tenantId && (!taxYear || rec.taxYear === taxYear)) {
+        results.push(rec);
+      }
+    }
+    return results.sort((a, b) => b.box1NonemployeeCompensationCents - a.box1NonemployeeCompensationCents);
+  }
+
+  // Carrier Fraud Scores
+  public async insertCarrierFraudScore(
+    score: Omit<z.input<typeof CarrierFraudScoreSchema>, 'id'> & { id?: string }
+  ): Promise<CarrierFraudScore> {
+    this.enforceTenantCheck(score.tenantId);
+    const id = score.id || generateUuidV7();
+    const parsed = CarrierFraudScoreSchema.parse({
+      ...score,
+      id,
+    });
+    this.carrierFraudScores.set(id, parsed);
+    return parsed;
+  }
+
+  public async getCarrierFraudScores(tenantId: string): Promise<CarrierFraudScore[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: CarrierFraudScore[] = [];
+    for (const s of this.carrierFraudScores.values()) {
+      if (s.tenantId === tenantId) {
+        results.push(s);
+      }
+    }
+    return results;
+  }
+
+  // Phase 6.5: Bank Statements & Lines
+  public async insertBankStatement(
+    statement: Omit<z.input<typeof BankStatementSchema>, 'id'> & { id?: string }
+  ): Promise<BankStatement> {
+    this.enforceTenantCheck(statement.tenantId);
+    const id = statement.id || generateUuidV7();
+    const parsed = BankStatementSchema.parse({
+      ...statement,
+      id,
+    });
+    this.bankStatements.set(id, parsed);
+    return parsed;
+  }
+
+  public async getBankStatements(tenantId: string): Promise<BankStatement[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: BankStatement[] = [];
+    for (const s of this.bankStatements.values()) {
+      if (s.tenantId === tenantId) {
+        results.push(s);
+      }
+    }
+    return results.sort((a, b) => b.statementDate.getTime() - a.statementDate.getTime());
+  }
+
+  public async getBankStatementById(id: string): Promise<BankStatement | null> {
+    const s = this.bankStatements.get(id);
+    if (!s) return null;
+    if (this.currentTenantId && s.tenantId !== this.currentTenantId) return null;
+    return s;
+  }
+
+  public async insertBankStatementLine(
+    line: Omit<z.input<typeof BankStatementLineSchema>, 'id'> & { id?: string }
+  ): Promise<BankStatementLine> {
+    this.enforceTenantCheck(line.tenantId);
+    const id = line.id || generateUuidV7();
+    const parsed = BankStatementLineSchema.parse({
+      ...line,
+      id,
+    });
+    this.bankStatementLines.set(id, parsed);
+    return parsed;
+  }
+
+  public async getBankStatementLines(statementId: string): Promise<BankStatementLine[]> {
+    const results: BankStatementLine[] = [];
+    for (const l of this.bankStatementLines.values()) {
+      if (l.statementId === statementId) {
+        if (!this.currentTenantId || l.tenantId === this.currentTenantId) {
+          results.push(l);
+        }
+      }
+    }
+    return results.sort((a, b) => a.transactionDate.getTime() - b.transactionDate.getTime());
+  }
+
+  // Phase 6.6: Factoring Companies, NOAs & Waivers
+  public async insertFactoringCompany(
+    company: Omit<z.input<typeof FactoringCompanySchema>, 'id'> & { id?: string }
+  ): Promise<FactoringCompany> {
+    this.enforceTenantCheck(company.tenantId);
+    const id = company.id || generateUuidV7();
+    const parsed = FactoringCompanySchema.parse({
+      ...company,
+      id,
+    });
+    this.factoringCompanies.set(id, parsed);
+    return parsed;
+  }
+
+  public async getFactoringCompanies(tenantId: string): Promise<FactoringCompany[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: FactoringCompany[] = [];
+    for (const f of this.factoringCompanies.values()) {
+      if (f.tenantId === tenantId) {
+        results.push(f);
+      }
+    }
+    return results;
+  }
+
+  public async getFactoringCompanyById(id: string): Promise<FactoringCompany | null> {
+    return this.factoringCompanies.get(id) || null;
+  }
+
+  public async insertCarrierNoaRecord(
+    noa: Omit<z.input<typeof CarrierNoaRecordSchema>, 'id'> & { id?: string }
+  ): Promise<CarrierNoaRecord> {
+    this.enforceTenantCheck(noa.tenantId);
+    const id = noa.id || generateUuidV7();
+    const parsed = CarrierNoaRecordSchema.parse({
+      ...noa,
+      id,
+    });
+    this.carrierNoaRecords.set(id, parsed);
+    return parsed;
+  }
+
+  public async getCarrierNoaRecords(tenantId: string): Promise<CarrierNoaRecord[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: CarrierNoaRecord[] = [];
+    for (const n of this.carrierNoaRecords.values()) {
+      if (n.tenantId === tenantId) {
+        results.push(n);
+      }
+    }
+    return results;
+  }
+
+  public async getCarrierNoaByScac(tenantId: string, scac: string): Promise<CarrierNoaRecord | null> {
+    this.enforceTenantCheck(tenantId);
+    for (const n of this.carrierNoaRecords.values()) {
+      if (n.tenantId === tenantId && n.carrierScac.toUpperCase() === scac.toUpperCase() && n.noaStatus === 'ACTIVE') {
+        return n;
+      }
+    }
+    return null;
+  }
+
+  public async insertFactoringWaiver(
+    waiver: Omit<z.input<typeof FactoringWaiverSchema>, 'id'> & { id?: string }
+  ): Promise<FactoringWaiver> {
+    this.enforceTenantCheck(waiver.tenantId);
+    const id = waiver.id || generateUuidV7();
+    const parsed = FactoringWaiverSchema.parse({
+      ...waiver,
+      id,
+    });
+    this.factoringWaivers.set(id, parsed);
+    return parsed;
+  }
+
+  public async getFactoringWaiverByShipment(tenantId: string, shipmentId: string): Promise<FactoringWaiver | null> {
+    this.enforceTenantCheck(tenantId);
+    for (const w of this.factoringWaivers.values()) {
+      if (w.tenantId === tenantId && w.shipmentId === shipmentId && w.waiverStatus === 'APPROVED') {
+        if (new Date() <= w.expiresAt) {
+          return w;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Phase 6.8: SOC2 Audit Logs
+  public async insertSoc2AuditRecord(
+    log: Omit<z.input<typeof Soc2AuditRecordSchema>, 'id'> & { id?: string }
+  ): Promise<Soc2AuditRecord> {
+    this.enforceTenantCheck(log.tenantId);
+    const id = log.id || generateUuidV7();
+    const parsed = Soc2AuditRecordSchema.parse({
+      ...log,
+      id,
+    });
+    this.soc2AuditLogs.set(id, parsed);
+    return parsed;
+  }
+
+  public async getSoc2AuditRecords(tenantId: string): Promise<Soc2AuditRecord[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: Soc2AuditRecord[] = [];
+    for (const l of this.soc2AuditLogs.values()) {
+      if (l.tenantId === tenantId) {
+        results.push(l);
+      }
+    }
+    return results.sort((a, b) => b.assessedAt.getTime() - a.assessedAt.getTime());
   }
 }
 

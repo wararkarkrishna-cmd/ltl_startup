@@ -29,9 +29,10 @@ import { AccessorialDetector } from '../lib/classification/accessorial-detector'
 import { FmcsaCarrierVettingEngine } from '../lib/vetting/fmcsa-vetting-engine';
 import { DamageDetectorEngine } from '../lib/pod/damage-detector-engine';
 import { GeofenceValidator } from '../lib/pod/geofence-validator';
+import { QuickPayFeeEngine } from '../lib/quickpay/quickpay-fee-engine';
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'ingestion' | 'quoting' | 'dispatch' | 'vetting' | 'pod-invoicing'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'ingestion' | 'quoting' | 'dispatch' | 'vetting' | 'pod-invoicing' | 'quickpay'>('overview');
 
   // Ingestion Interactive State
   const sampleEmail = `RFQ: Need rate for 4 pallets HVAC units from Los Angeles, CA 90001 to Chicago, IL 60601. Total weight 3,200 lbs, dims 48x40x48 in. Liftgate required on delivery and mandatory appointment needed.`;
@@ -271,6 +272,7 @@ export default function HomePage() {
           { id: 'dispatch', label: '🚚 Phase 3: Dispatch & eBOL', icon: KanbanSquare },
           { id: 'vetting', label: '🛡️ Phase 3.8: FMCSA Safety Gatekeeper', icon: ShieldCheck },
           { id: 'pod-invoicing', label: '📸 Phase 4: Geotagged POD & Invoicing', icon: Camera },
+          { id: 'quickpay', label: '💸 Phase 6: Embedded QuickPay & Fintech', icon: Zap },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -883,6 +885,73 @@ export default function HomePage() {
                   Click "Run Multi-Point POD Validation &amp; Invoicing" to execute simulation.
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* TAB CONTENT: PHASE 6 QUICKPAY FINTECH */}
+      {activeTab === 'quickpay' && (
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-bold">
+                  PHASE 6.1 – 6.4 ACTIVE
+                </span>
+                <span className="text-xs text-slate-400 font-mono">Monetization Engine #2</span>
+              </div>
+              <h3 className="text-xl font-black text-white">Embedded Carrier QuickPay &amp; Double-Entry Ledger</h3>
+              <p className="text-xs text-slate-400">
+                1-Click accelerated payout (<span className="text-emerald-400 font-bold">&lt; 2 hrs via RTP/FedNow</span>) in exchange for 2.0%–2.5% discount fee spread.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Link
+                href="/quickpay/demo-qp-token-2026"
+                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition shadow flex items-center gap-1.5"
+              >
+                <Zap className="w-4 h-4 fill-current" />
+                Launch Carrier 1-Click Portal
+              </Link>
+              <Link
+                href="/quickpay"
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition flex items-center gap-1.5"
+              >
+                Fintech Management Hub
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-slate-950 rounded-2xl p-5 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase">Instant Same-Day (2.5%)</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold">&lt; 2 Hours</span>
+              </div>
+              <div className="text-2xl font-black text-emerald-400 font-mono">$780.00 Net</div>
+              <div className="text-xs text-slate-400 font-mono">Gross: $800.00 • Fee: -$20.00</div>
+              <div className="text-[11px] text-slate-300">RTP / FedNow direct to JPMorgan Chase</div>
+            </div>
+
+            <div className="bg-slate-950 rounded-2xl p-5 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase">Next-Day ACH (2.0%)</span>
+                <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-mono font-bold">Next Morning</span>
+              </div>
+              <div className="text-2xl font-black text-indigo-300 font-mono">$784.00 Net</div>
+              <div className="text-xs text-slate-400 font-mono">Gross: $800.00 • Fee: -$16.00</div>
+              <div className="text-[11px] text-slate-300">Same-Day ACH electronic disbursement</div>
+            </div>
+
+            <div className="bg-slate-950 rounded-2xl p-5 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase">Standard Terms (0.0%)</span>
+                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-mono font-bold">Net 30</span>
+              </div>
+              <div className="text-2xl font-black text-white font-mono">$800.00 Net</div>
+              <div className="text-xs text-slate-400 font-mono">Gross: $800.00 • Fee: $0.00</div>
+              <div className="text-[11px] text-slate-300">Standard 30-day payout schedule</div>
             </div>
           </div>
         </div>

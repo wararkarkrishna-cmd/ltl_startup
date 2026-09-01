@@ -129,6 +129,7 @@ export const PAYOUT_RAILS = [
   'FEDNOW',
   'SAME_DAY_ACH',
   'STANDARD_ACH',
+  'PUSH_TO_CARD',
   'CHECK',
 ] as const;
 export type PayoutRail = (typeof PAYOUT_RAILS)[number];
@@ -1063,5 +1064,379 @@ export const CarrierDisputeSchema = z.object({
   updatedAt: z.date().default(() => new Date()),
 });
 export type CarrierDispute = z.infer<typeof CarrierDisputeSchema>;
+
+// ==============================================================================
+// PHASE 6: EMBEDDED CARRIER QUICKPAY FINTECH RAILS & FINANCIAL LEDGER
+// ==============================================================================
+
+export const QUICKPAY_TIERS = [
+  'INSTANT_SAME_DAY',
+  'NEXT_DAY_ACH',
+  'STANDARD_NET_30',
+] as const;
+export type QuickPayTier = (typeof QUICKPAY_TIERS)[number];
+
+export const PAYOUT_STATUSES = [
+  'SCHEDULED',
+  'PROCESSING',
+  'SETTLED',
+  'FAILED',
+  'REVERSED',
+] as const;
+export type PayoutStatus = (typeof PAYOUT_STATUSES)[number];
+
+export const BANKING_PROVIDERS = [
+  'STRIPE_TREASURY',
+  'MODERN_TREASURY',
+  'COLUMN_BANK',
+  'SIMULATED',
+] as const;
+export type BankingProvider = (typeof BANKING_PROVIDERS)[number];
+
+export const FORM_1099_FILING_STATUSES = [
+  'DRAFT',
+  'READY_TO_FILE',
+  'FILED_IRS',
+  'CORRECTED',
+] as const;
+export type Form1099FilingStatus = (typeof FORM_1099_FILING_STATUSES)[number];
+
+// Phase 6.1: Carrier Fraud & Safety Risk Score
+export const CarrierFraudScoreSchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  carrierScac: z.string().min(2).max(10),
+  carrierName: z.string().min(1),
+  dotNumber: z.string().min(1),
+  mcNumber: z.string().min(1),
+  
+  // Safety checks
+  hasActiveAuthority: z.boolean().default(true),
+  hasSufficientAutoLiability: z.boolean().default(true),
+  hasSufficientCargoInsurance: z.boolean().default(true),
+  isSatisfactorySafetyRating: z.boolean().default(true),
+  isOosRateCompliant: z.boolean().default(true),
+  
+  // Fraud heuristics
+  isRecentRoutingNumberChange: z.boolean().default(false), // Changed within 30 days
+  isNewlyRegisteredMc: z.boolean().default(false),         // MC registered < 90 days
+  hasFactoringNoticeOfAssignment: z.boolean().default(false),
+  factoringCompany: z.string().optional().nullable(),
+  hasFactoringWaiver: z.boolean().default(false),
+  isChameleonCarrierRisk: z.boolean().default(false),
+  
+  fraudRiskScore: z.number().min(0).max(100).default(0), // 0=Clean, 100=Extreme Fraud
+  safetyScore: z.number().min(0).max(100).default(100),   // 100=Pristine
+  riskTier: z.enum(['LOW', 'MEDIUM', 'HIGH', 'BLOCKED']).default('LOW'),
+  isQuickPayEligible: z.boolean().default(true),
+  ineligibilityReasons: z.array(z.string()).default([]),
+  
+  assessedAt: z.date().default(() => new Date()),
+});
+export type CarrierFraudScore = z.infer<typeof CarrierFraudScoreSchema>;
+
+// Phase 6.2 & 6.3: 1-Click QuickPay Token Record
+export const QuickPayTokenSchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  shipmentId: z.string().min(1),
+  carrierAccountId: z.string().optional().nullable(),
+  token: z.string().min(16).max(64),
+  carrierScac: z.string().min(2).max(10),
+  carrierName: z.string().min(1).max(128),
+  carrierEmail: z.string().email().optional().nullable(),
+  proNumber: z.string().optional().nullable(),
+  bolNumber: z.string().optional().nullable(),
+  
+  grossAmountCents: z.number().int().positive(),
+  defaultTier: z.enum(QUICKPAY_TIERS).default('INSTANT_SAME_DAY'),
+  
+  // Bank verification details
+  bankName: z.string().default('JPMorgan Chase'),
+  routingNumberMasked: z.string().default('*****0021'),
+  accountNumberMasked: z.string().default('*****4829'),
+  
+  expiresAt: z.date(),
+  isUsed: z.boolean().default(false),
+  usedAt: z.date().optional().nullable(),
+  usedByIp: z.string().optional().nullable(),
+  createdAt: z.date().default(() => new Date()),
+});
+export type QuickPayToken = z.infer<typeof QuickPayTokenSchema>;
+
+// Phase 6.2 & 6.4: Carrier Payout Record
+export const CarrierPayoutSchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  shipmentId: z.string().min(1),
+  carrierAccountId: z.string().optional().nullable(),
+  quickpayTokenId: z.string().optional().nullable(),
+  
+  carrierScac: z.string().min(2).max(10),
+  carrierName: z.string().min(1).max(128),
+  carrierEmail: z.string().email().optional().nullable(),
+  carrierTin: z.string().optional().nullable(),
+  proNumber: z.string().optional().nullable(),
+  bolNumber: z.string().optional().nullable(),
+  
+  selectedTier: z.enum(QUICKPAY_TIERS).default('INSTANT_SAME_DAY'),
+  payoutRail: z.enum(PAYOUT_RAILS).default('INSTANT_RTP'),
+  
+  grossAmountCents: z.number().int().positive(),
+  feePercentage: z.number().nonnegative().default(2.5),
+  feeAmountCents: z.number().int().nonnegative().default(0),
+  netPayoutCents: z.number().int().positive(),
+  currency: z.enum(['USD', 'CAD']).default('USD'),
+  
+  bankingProvider: z.enum(BANKING_PROVIDERS).default('STRIPE_TREASURY'),
+  externalDisbursementId: z.string().optional().nullable(),
+  destinationBankName: z.string().optional().nullable(),
+  destinationRoutingMasked: z.string().optional().nullable(),
+  destinationAccountMasked: z.string().optional().nullable(),
+  
+  status: z.enum(PAYOUT_STATUSES).default('SCHEDULED'),
+  initiatedAt: z.date().optional().nullable(),
+  settledAt: z.date().optional().nullable(),
+  failureReason: z.string().optional().nullable(),
+  
+  ledgerTransactionId: z.string().optional().nullable(),
+  agreementId: z.string().optional().nullable(),
+  
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type CarrierPayout = z.infer<typeof CarrierPayoutSchema>;
+
+// Phase 6.3: E-SIGN Digital Assignment Agreement Record
+export const QuickPayAgreementSchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  payoutId: z.string().min(1),
+  shipmentId: z.string().min(1),
+  
+  agreementReference: z.string().min(1).max(64),
+  carrierScac: z.string().min(2).max(10),
+  carrierName: z.string().min(1).max(128),
+  
+  signerName: z.string().min(1).max(128),
+  signerTitle: z.string().min(1).max(128),
+  signerEmail: z.string().email(),
+  signerIp: z.string().min(1),
+  signerUserAgent: z.string().optional().nullable(),
+  
+  selectedTier: z.enum(QUICKPAY_TIERS),
+  grossAmountCents: z.number().int().positive(),
+  discountFeeCents: z.number().int().nonnegative(),
+  netSettlementCents: z.number().int().positive(),
+  
+  agreementSha256Hash: z.string().length(64),
+  legalContractTerms: z.string().min(1),
+  pdfDocumentUrl: z.string().optional().nullable(),
+  
+  signedAt: z.date().default(() => new Date()),
+  createdAt: z.date().default(() => new Date()),
+});
+export type QuickPayAgreement = z.infer<typeof QuickPayAgreementSchema>;
+
+// Phase 6.4: IRS Form 1099-NEC Annual Record
+export const Form1099RecordSchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  carrierAccountId: z.string().optional().nullable(),
+  carrierScac: z.string().min(2).max(10),
+  
+  taxYear: z.number().int().min(2020).max(2099),
+  carrierName: z.string().min(1).max(128),
+  carrierTinEin: z.string().min(9).max(32),
+  carrierAddress: z.string().min(1),
+  carrierCity: z.string().default('Dallas'),
+  carrierState: z.string().length(2).default('TX'),
+  carrierZip: z.string().default('75201'),
+  
+  box1NonemployeeCompensationCents: z.number().int().nonnegative(),
+  box4FederalTaxWithheldCents: z.number().int().nonnegative().default(0),
+  totalPayoutCount: z.number().int().positive().default(1),
+  
+  isThresholdMet: z.boolean().default(true), // >= $600.00
+  filingStatus: z.enum(FORM_1099_FILING_STATUSES).default('DRAFT'),
+  generatedPdfUrl: z.string().optional().nullable(),
+  
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type Form1099Record = z.infer<typeof Form1099RecordSchema>;
+
+// Phase 6.5: Physical Bank Statement & Float Reconciliation Enums
+export const BANK_STATEMENT_FORMATS = [
+  'BAI2',
+  'CAMT053',
+  'MT940',
+  'PLAID_STREAM',
+  'STRIPE_FEED',
+  'CSV',
+] as const;
+export type BankStatementFormat = (typeof BANK_STATEMENT_FORMATS)[number];
+
+export const BANK_RECONCILIATION_STATUSES = [
+  'UNRECONCILED',
+  'PARTIALLY_RECONCILED',
+  'FULLY_RECONCILED',
+  'DISCREPANCY_FLAGGED',
+] as const;
+export type BankReconciliationStatus = (typeof BANK_RECONCILIATION_STATUSES)[number];
+
+export const BANK_LINE_MATCH_STATUSES = [
+  'UNMATCHED',
+  'MATCHED',
+  'PROVISIONAL',
+  'TIMING_DIFFERENCE',
+] as const;
+export type BankLineMatchStatus = (typeof BANK_LINE_MATCH_STATUSES)[number];
+
+export const BankStatementSchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  statementDate: z.date(),
+  bankName: z.string().min(1),
+  accountNumberMasked: z.string().min(4),
+  openingBalanceCents: z.number().int(),
+  closingBalanceCents: z.number().int(),
+  totalDebitsCents: z.number().int().default(0),
+  totalCreditsCents: z.number().int().default(0),
+  feedFormat: z.enum(BANK_STATEMENT_FORMATS).default('PLAID_STREAM'),
+  reconciliationStatus: z.enum(BANK_RECONCILIATION_STATUSES).default('UNRECONCILED'),
+  unreconciledVarianceCents: z.number().int().default(0),
+  reconciledAt: z.date().optional().nullable(),
+  reconciledBy: z.string().optional().nullable(),
+  createdAt: z.date().default(() => new Date()),
+});
+export type BankStatement = z.infer<typeof BankStatementSchema>;
+
+export const BankStatementLineSchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  statementId: z.string().min(1),
+  transactionDate: z.date(),
+  valueDate: z.date(),
+  amountCents: z.number().int().positive(),
+  entryType: z.enum(LEDGER_ENTRY_TYPES), // DEBIT, CREDIT
+  bankReferenceNumber: z.string().optional().nullable(),
+  description: z.string().min(1),
+  matchStatus: z.enum(BANK_LINE_MATCH_STATUSES).default('UNMATCHED'),
+  matchedLedgerEntryId: z.string().optional().nullable(),
+  matchedAt: z.date().optional().nullable(),
+  createdAt: z.date().default(() => new Date()),
+});
+export type BankStatementLine = z.infer<typeof BankStatementLineSchema>;
+
+// Phase 6.6: Factoring Company & Notice of Assignment (NOA) Enums
+export const NOA_STATUSES = [
+  'ACTIVE',
+  'RELEASED',
+  'CONDITIONAL_WAIVER',
+  'REVOKED',
+] as const;
+export type NoaStatus = (typeof NOA_STATUSES)[number];
+
+export const WAIVER_STATUSES = [
+  'PENDING',
+  'APPROVED',
+  'REJECTED',
+  'EXPIRED',
+] as const;
+export type WaiverStatus = (typeof WAIVER_STATUSES)[number];
+
+export const FactoringCompanySchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  companyName: z.string().min(1),
+  remittanceEmail: z.string().email(),
+  remittancePhone: z.string().optional().nullable(),
+  lockboxAddress: z.string().min(1),
+  routingNumber: z.string().min(9),
+  accountNumber: z.string().min(4),
+  bankName: z.string().min(1),
+  apiEndpoint: z.string().url().optional().nullable(),
+  supportsElectronicWaiver: z.boolean().default(true),
+  createdAt: z.date().default(() => new Date()),
+});
+export type FactoringCompany = z.infer<typeof FactoringCompanySchema>;
+
+export const CarrierNoaRecordSchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  carrierScac: z.string().min(2).max(10),
+  carrierName: z.string().min(1),
+  dotNumber: z.string().optional().nullable(),
+  mcNumber: z.string().optional().nullable(),
+  taxIdEin: z.string().optional().nullable(),
+  factoringCompanyId: z.string().min(1),
+  noaStatus: z.enum(NOA_STATUSES).default('ACTIVE'),
+  effectiveDate: z.date(),
+  terminationDate: z.date().optional().nullable(),
+  noaDocumentUrl: z.string().optional().nullable(),
+  createdAt: z.date().default(() => new Date()),
+});
+export type CarrierNoaRecord = z.infer<typeof CarrierNoaRecordSchema>;
+
+export const FactoringWaiverSchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  shipmentId: z.string().min(1),
+  carrierScac: z.string().min(2).max(10),
+  factoringCompanyId: z.string().min(1),
+  waiverStatus: z.enum(WAIVER_STATUSES).default('APPROVED'),
+  authorizedBy: z.string().min(1),
+  authorizationCode: z.string().min(1),
+  grantedAt: z.date().default(() => new Date()),
+  expiresAt: z.date(),
+  createdAt: z.date().default(() => new Date()),
+});
+export type FactoringWaiver = z.infer<typeof FactoringWaiverSchema>;
+
+// Phase 6.8: SOC2 Continuous Compliance & RBAC Enums
+export const SOC2_CRITERIA_CODES = [
+  'CC6.1', // Logical Access & RBAC
+  'CC6.6', // Data Encryption (AES-256 / TLS 1.3)
+  'CC6.7', // Multi-Tenant Data Isolation
+  'CC7.2', // Audit Trail Immutability & SHA-256
+  'CC8.1', // Disaster Recovery & Balance Integrity
+] as const;
+export type Soc2CriteriaCode = (typeof SOC2_CRITERIA_CODES)[number];
+
+export const SOC2_STATUSES = ['PASS', 'WARNING', 'FAIL'] as const;
+export type Soc2Status = (typeof SOC2_STATUSES)[number];
+
+export const Soc2AuditRecordSchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  criteriaCode: z.enum(SOC2_CRITERIA_CODES),
+  controlName: z.string().min(1),
+  status: z.enum(SOC2_STATUSES),
+  details: z.record(z.unknown()),
+  evidenceHash: z.string().length(64),
+  assessedAt: z.date().default(() => new Date()),
+});
+export type Soc2AuditRecord = z.infer<typeof Soc2AuditRecordSchema>;
+
+export const RBAC_ACTIONS = [
+  'INGEST_RFQ',
+  'CREATE_QUOTE',
+  'ACCEPT_QUOTE',
+  'DISPATCH_LOAD',
+  'GENERATE_INVOICE',
+  'INITIATE_QUICKPAY',
+  'APPROVE_DISPUTE',
+  'VIEW_FINANCIAL_LEDGER',
+  'RECONCILE_BANK_STATEMENTS',
+  'MANAGE_FACTORING_NOA',
+  'VIEW_EXECUTIVE_ROI',
+  'EXPORT_BOARD_REPORT',
+  'MANAGE_USERS',
+  'VIEW_SOC2_REPORT',
+] as const;
+export type RbacAction = (typeof RBAC_ACTIONS)[number];
+
+
 
 

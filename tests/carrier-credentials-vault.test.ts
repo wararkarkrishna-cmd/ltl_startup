@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { CredentialVault } from '../src/lib/security/credential-vault';
 
 describe('Phase 2.1: Carrier Credentials Vault (AES-256-GCM)', () => {
@@ -33,7 +33,7 @@ describe('Phase 2.1: Carrier Credentials Vault (AES-256-GCM)', () => {
     const encrypted = CredentialVault.encrypt(rawApiKey, testTenant1);
 
     // Tamper ciphertext
-    const tamperedData = 'ff' + encrypted.encryptedData.slice(2);
+    const tamperedData = (encrypted.encryptedData[0] === '0' ? '1' : '0') + encrypted.encryptedData.slice(1);
     expect(() => {
       CredentialVault.decrypt(
         {
@@ -46,7 +46,7 @@ describe('Phase 2.1: Carrier Credentials Vault (AES-256-GCM)', () => {
     }).toThrow();
 
     // Tamper auth tag
-    const tamperedTag = '00' + encrypted.authTag.slice(2);
+    const tamperedTag = (encrypted.authTag[0] === '0' ? '1' : '0') + encrypted.authTag.slice(1);
     expect(() => {
       CredentialVault.decrypt(
         {

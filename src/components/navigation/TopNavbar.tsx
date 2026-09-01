@@ -15,6 +15,7 @@ import {
   Ship,
   Database,
   Camera,
+  TrendingUp,
 } from 'lucide-react';
 
 export const TopNavbar: React.FC = () => {
@@ -50,6 +51,18 @@ export const TopNavbar: React.FC = () => {
       href: '/invoices',
       icon: FileText,
       active: pathname.startsWith('/invoices'),
+    },
+    {
+      label: 'QuickPay Fintech',
+      href: '/quickpay',
+      icon: Zap,
+      active: pathname.startsWith('/quickpay'),
+    },
+    {
+      label: 'Executive ROI',
+      href: '/analytics',
+      icon: TrendingUp,
+      active: pathname.startsWith('/analytics'),
     },
     {
       label: '1-Click Shipper Portal',
@@ -109,6 +122,13 @@ export const TopNavbar: React.FC = () => {
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-2.5">
+            <Link
+              href="/quickpay/demo-qp-token-2026"
+              className="hidden lg:flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-teal-400 hover:text-teal-300 border border-teal-500/30 transition shadow"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              QuickPay
+            </Link>
             <Link
               href="/pod/demo-pod-token-2026"
               className="hidden md:flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 transition shadow"
