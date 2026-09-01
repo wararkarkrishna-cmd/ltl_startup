@@ -8,6 +8,7 @@ import {
   ShipmentItem,
   AccessorialLookup,
   FinancialLedgerEntry,
+  FinancialLedgerEntrySchema,
   IngestionDocument,
   CarrierCredential,
   MarginRule,
@@ -19,6 +20,7 @@ import {
   PodRecord,
   DeliveryException,
   CustomerInvoice,
+  CustomerInvoiceSchema,
   AccountingConnection,
   AccountingSyncLog,
   SalesRep,
@@ -519,19 +521,17 @@ export class FreightDatabaseClient {
 
   // Phase 4.4: Customer Invoices Operations
   public async insertCustomerInvoice(
-    inv: Omit<CustomerInvoice, 'id' | 'createdAt' | 'updatedAt'>
+    inv: Omit<z.input<typeof CustomerInvoiceSchema>, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<CustomerInvoice> {
     this.enforceTenantCheck(inv.tenantId);
-    const id = generateUuidV7();
-    const now = new Date();
-    const record: CustomerInvoice = {
+    const parsed = CustomerInvoiceSchema.parse({
       ...inv,
-      id,
-      createdAt: now,
-      updatedAt: now,
-    };
-    this.customerInvoices.set(id, record);
-    return record;
+      id: generateUuidV7(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    this.customerInvoices.set(parsed.id, parsed);
+    return parsed;
   }
 
   public async getCustomerInvoiceById(id: string): Promise<CustomerInvoice | null> {
@@ -560,6 +560,33 @@ export class FreightDatabaseClient {
       }
     }
     return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async getCustomerInvoicesByParentId(tenantId: string, parentInvoiceId: string): Promise<CustomerInvoice[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: CustomerInvoice[] = [];
+    for (const inv of this.customerInvoices.values()) {
+      if (inv.tenantId === tenantId && inv.parentInvoiceId === parentInvoiceId) {
+        results.push(inv);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async updateCustomerInvoice(
+    id: string,
+    updates: Partial<Omit<CustomerInvoice, 'id' | 'tenantId' | 'createdAt'>>
+  ): Promise<CustomerInvoice | null> {
+    const existing = this.customerInvoices.get(id);
+    if (!existing) return null;
+    this.enforceTenantCheck(existing.tenantId);
+    const updated: CustomerInvoice = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.customerInvoices.set(id, updated);
+    return updated;
   }
 
   // Phase 4.5: Accounting Connections & Sync Logs
@@ -1011,6 +1038,49 @@ export class FreightDatabaseClient {
     notes?: string
   ): Promise<CarrierDispute | null> {
     return this.updateCarrierDispute(id, { disputeStatus: status });
+  }
+
+  // ============================================================================
+  // FINANCIAL LEDGER ENTRIES
+  // ============================================================================
+
+  public async insertLedgerEntry(
+    entry: Omit<z.input<typeof FinancialLedgerEntrySchema>, 'id' | 'createdAt'> & { id?: string }
+  ): Promise<FinancialLedgerEntry> {
+    this.enforceTenantCheck(entry.tenantId);
+    const id = entry.id || generateUuidV7();
+    const parsed = FinancialLedgerEntrySchema.parse({
+      ...entry,
+      id,
+      createdAt: new Date(),
+    });
+    this.ledgerEntries.set(id, parsed);
+    return parsed;
+  }
+
+  public async getLedgerEntriesByTenant(tenantId: string): Promise<FinancialLedgerEntry[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: FinancialLedgerEntry[] = [];
+    for (const entry of this.ledgerEntries.values()) {
+      if (entry.tenantId === tenantId) {
+        results.push(entry);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async getLedgerEntriesByTransaction(
+    tenantId: string,
+    transactionId: string
+  ): Promise<FinancialLedgerEntry[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: FinancialLedgerEntry[] = [];
+    for (const entry of this.ledgerEntries.values()) {
+      if (entry.tenantId === tenantId && entry.transactionId === transactionId) {
+        results.push(entry);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 }
 

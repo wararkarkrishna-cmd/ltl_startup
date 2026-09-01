@@ -83,7 +83,7 @@ describe('Phase 4.7: Automated Multi-Stage Dunning Dispatcher (DunningEngine)', 
         updatedAt: new Date(),
       };
 
-      const template = DunningEngine.generateDunningTemplate(invoice, 'REMINDER_T_MINUS_5', -5);
+      const template = DunningEngine.generateDunningTemplate(invoice as any, 'REMINDER_T_MINUS_5', -5);
 
       expect(template.stage).toBe('REMINDER_T_MINUS_5');
       expect(template.subject).toContain('[COURTESY REMINDER]');
@@ -126,7 +126,7 @@ describe('Phase 4.7: Automated Multi-Stage Dunning Dispatcher (DunningEngine)', 
         updatedAt: new Date(),
       };
 
-      const template = DunningEngine.generateDunningTemplate(invoice, 'URGENT_T_PLUS_14', 14);
+      const template = DunningEngine.generateDunningTemplate(invoice as any, 'URGENT_T_PLUS_14', 14);
 
       expect(template.stage).toBe('URGENT_T_PLUS_14');
       expect(template.subject).toContain('[URGENT: 14 DAYS OVERDUE]');
@@ -168,7 +168,7 @@ describe('Phase 4.7: Automated Multi-Stage Dunning Dispatcher (DunningEngine)', 
         updatedAt: new Date(),
       };
 
-      const template = DunningEngine.generateDunningTemplate(invoice, 'FINAL_DEMAND_T_PLUS_30', 31);
+      const template = DunningEngine.generateDunningTemplate(invoice as any, 'FINAL_DEMAND_T_PLUS_30', 31);
 
       expect(template.creditHoldTriggered).toBe(true);
       expect(template.subject).toContain('[FINAL DEMAND & CREDIT HOLD]');

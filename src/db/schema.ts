@@ -139,6 +139,7 @@ export const LEDGER_ACCOUNT_TYPES = [
   'QUICKPAY_REVENUE',
   'CASH_ESCROW',
   'DISPUTE_RECOVERY',
+  'PLATFORM_REVENUE',
 ] as const;
 export type LedgerAccountType = (typeof LEDGER_ACCOUNT_TYPES)[number];
 
@@ -696,11 +697,11 @@ export type DeliveryException = z.infer<typeof DeliveryExceptionSchema>;
 
 // Phase 4.4: Customer Invoice Record
 export const CustomerInvoiceSchema = z.object({
-  id: z.string().uuid(),
-  tenantId: z.string().uuid(),
-  shipmentId: z.string().uuid(),
-  podId: z.string().uuid().optional().nullable(),
-  customerAccountId: z.string().uuid().optional().nullable(),
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  shipmentId: z.string().min(1),
+  podId: z.string().optional().nullable(),
+  customerAccountId: z.string().optional().nullable(),
   
   invoiceNumber: z.string().min(1).max(64),
   customerPoNumber: z.string().optional().nullable(),
@@ -733,6 +734,17 @@ export const CustomerInvoiceSchema = z.object({
   emailSentTo: z.string().optional().nullable(),
   emailSentAt: z.date().optional().nullable(),
   paidAt: z.date().optional().nullable(),
+  
+  // Phase 5.6 Supplemental Invoicing Fields
+  isSupplemental: z.boolean().default(false),
+  parentInvoiceId: z.string().optional().nullable(),
+  supplementalReason: z.string().optional().nullable(),
+  passedThroughCostCents: z.number().int().nonnegative().optional().nullable(),
+  markupPercent: z.number().nonnegative().optional().nullable(),
+  markupAmountCents: z.number().int().nonnegative().optional().nullable(),
+  supportingEvidenceDescription: z.string().optional().nullable(),
+  inspectionDocumentUrl: z.string().optional().nullable(),
+  attachedDocuments: z.array(z.string()).default([]),
   
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().default(() => new Date()),
@@ -1035,6 +1047,18 @@ export const CarrierDisputeSchema = z.object({
   resolvedAt: z.union([z.string(), z.date()]).optional().nullable(),
   creditMemoNumber: z.string().max(64).optional().nullable(),
   recoveredAmountCents: z.number().int().nonnegative().default(0),
+  recoveryYieldPercent: z.number().nonnegative().optional().nullable(),
+  settlementNotes: z.string().optional().nullable(),
+  isFmcsaViolated: z.boolean().default(false),
+  daysElapsedSinceSubmission: z.number().int().optional().nullable(),
+  escalatedAt: z.union([z.string(), z.date()]).optional().nullable(),
+  escalationLetterText: z.string().optional().nullable(),
+  statusHistory: z.array(z.object({
+    status: z.enum(DISPUTE_STATUSES),
+    timestamp: z.union([z.string(), z.date()]),
+    notes: z.string().optional().nullable(),
+    actorId: z.string().optional().nullable(),
+  })).default([]),
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().default(() => new Date()),
 });
