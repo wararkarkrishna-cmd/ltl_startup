@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { generateUuidV7 } from '../lib/uuidv7';
 import {
   Tenant,
@@ -24,6 +25,15 @@ import {
   CommissionRecord,
   DunningRecord,
   WormAuditPackage,
+  CarrierInvoice,
+  CarrierInvoiceSchema,
+  CarrierInvoiceStatus,
+  DiscrepancyRecord,
+  DiscrepancyRecordSchema,
+  CarrierDispute,
+  CarrierDisputeSchema,
+  DisputeStatus,
+  RateConfirmation,
 } from './schema';
 
 /**
@@ -46,6 +56,7 @@ export class FreightDatabaseClient {
   public quotes: Map<string, Quote> = new Map();
   public tenders: Map<string, CarrierTender> = new Map();
   public digitalBols: Map<string, DigitalBol> = new Map();
+  public rateConfirmations: Map<string, RateConfirmation> = new Map();
   public quoteActionTokens: Map<string, QuoteActionToken> = new Map();
   public podTokens: Map<string, PodToken> = new Map();
   public podRecords: Map<string, PodRecord> = new Map();
@@ -57,6 +68,9 @@ export class FreightDatabaseClient {
   public commissionRecords: Map<string, CommissionRecord> = new Map();
   public dunningRecords: Map<string, DunningRecord> = new Map();
   public wormAuditPackages: Map<string, WormAuditPackage> = new Map();
+  public carrierInvoices: Map<string, CarrierInvoice> = new Map();
+  public discrepancyRecords: Map<string, DiscrepancyRecord> = new Map();
+  public carrierDisputes: Map<string, CarrierDispute> = new Map();
   public auditEvents: Map<string, any> = new Map();
 
   constructor(tenantId?: string) {
@@ -328,6 +342,39 @@ export class FreightDatabaseClient {
     for (const b of this.digitalBols.values()) {
       if (b.tenantId === tenantId && b.shipmentId === shipmentId) {
         return b;
+      }
+    }
+    return null;
+  }
+
+  // Rate Confirmation Operations
+  public async insertRateConfirmation(
+    rc: Omit<RateConfirmation, 'id' | 'createdAt'>
+  ): Promise<RateConfirmation> {
+    this.enforceTenantCheck(rc.tenantId);
+    const id = generateUuidV7();
+    const now = new Date();
+    const record: RateConfirmation = {
+      ...rc,
+      id,
+      createdAt: now,
+    };
+    this.rateConfirmations.set(id, record);
+    return record;
+  }
+
+  public async getRateConfirmationById(id: string): Promise<RateConfirmation | null> {
+    const record = this.rateConfirmations.get(id);
+    if (!record) return null;
+    if (this.currentTenantId && record.tenantId !== this.currentTenantId) return null;
+    return record;
+  }
+
+  public async getRateConfirmationByShipmentId(tenantId: string, shipmentId: string): Promise<RateConfirmation | null> {
+    this.enforceTenantCheck(tenantId);
+    for (const rc of this.rateConfirmations.values()) {
+      if (rc.tenantId === tenantId && rc.shipmentId === shipmentId) {
+        return rc;
       }
     }
     return null;
@@ -712,6 +759,258 @@ export class FreightDatabaseClient {
       }
     }
     return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  // ============================================================================
+  // PHASE 5.1: CARRIER INVOICES, DISCREPANCIES & DISPUTES
+  // ============================================================================
+
+  public async insertCarrierInvoice(
+    invoice: Omit<z.input<typeof CarrierInvoiceSchema>, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<CarrierInvoice> {
+    this.enforceTenantCheck(invoice.tenantId);
+    const linehaul =
+      invoice.invoicedLinehaulCents ?? invoice.billedLinehaulCents ?? invoice.linehaulBilledCents ?? 0;
+    const fuel =
+      invoice.invoicedFuelCents ?? invoice.billedFuelCents ?? invoice.fuelBilledCents ?? 0;
+    const accessorial =
+      invoice.invoicedAccessorialCents ?? invoice.billedAccessorialCents ?? invoice.accessorialsBilledCents ?? 0;
+    const total =
+      invoice.invoicedTotalCents ?? invoice.totalBilledCents ?? (linehaul + fuel + accessorial);
+
+    const parsed = CarrierInvoiceSchema.parse({
+      ...invoice,
+      invoicedLinehaulCents: linehaul,
+      invoicedFuelCents: fuel,
+      invoicedAccessorialCents: accessorial,
+      invoicedTotalCents: total,
+      totalBilledCents: total,
+      billedLinehaulCents: linehaul,
+      billedFuelCents: fuel,
+      billedAccessorialCents: accessorial,
+      carrierInvoiceNumber: invoice.carrierInvoiceNumber || invoice.invoiceNumber || 'INV-UNKNOWN',
+      invoiceNumber: invoice.invoiceNumber || invoice.carrierInvoiceNumber || 'INV-UNKNOWN',
+      id: generateUuidV7(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    this.carrierInvoices.set(parsed.id, parsed);
+    return parsed;
+  }
+
+  public async getCarrierInvoiceById(id: string): Promise<CarrierInvoice | null> {
+    const record = this.carrierInvoices.get(id);
+    if (!record) return null;
+    if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
+      return null;
+    }
+    return record;
+  }
+
+  public async getCarrierInvoicesByTenant(tenantId: string): Promise<CarrierInvoice[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: CarrierInvoice[] = [];
+    for (const inv of this.carrierInvoices.values()) {
+      if (inv.tenantId === tenantId) {
+        results.push(inv);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async getCarrierInvoices(tenantId: string, status?: CarrierInvoiceStatus): Promise<CarrierInvoice[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: CarrierInvoice[] = [];
+    for (const inv of this.carrierInvoices.values()) {
+      if (inv.tenantId === tenantId && (!status || inv.status === status)) {
+        results.push(inv);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async getCarrierInvoicesByShipment(tenantId: string, shipmentId: string): Promise<CarrierInvoice[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: CarrierInvoice[] = [];
+    for (const inv of this.carrierInvoices.values()) {
+      if (inv.tenantId === tenantId && inv.shipmentId === shipmentId) {
+        results.push(inv);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async updateCarrierInvoice(
+    id: string,
+    updates: Partial<Omit<CarrierInvoice, 'id' | 'tenantId' | 'createdAt'>>
+  ): Promise<CarrierInvoice | null> {
+    const existing = this.carrierInvoices.get(id);
+    if (!existing) return null;
+    this.enforceTenantCheck(existing.tenantId);
+    const updated: CarrierInvoice = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.carrierInvoices.set(id, updated);
+    return updated;
+  }
+
+  public async insertDiscrepancyRecord(
+    record: Omit<z.input<typeof DiscrepancyRecordSchema>, 'id' | 'createdAt'>
+  ): Promise<DiscrepancyRecord> {
+    this.enforceTenantCheck(record.tenantId);
+    const deltaTotal =
+      record.deltaTotalCents ?? record.varianceCents ?? record.disputableAmountCents ?? 0;
+    const quoted =
+      record.quotedExpectedRateCents ?? record.quotedCents ?? 0;
+    const billed =
+      record.carrierInvoicedRateCents ?? record.billedCents ?? 0;
+
+    const parsed = DiscrepancyRecordSchema.parse({
+      ...record,
+      deltaTotalCents: deltaTotal,
+      varianceCents: record.varianceCents ?? deltaTotal,
+      disputableAmountCents: record.disputableAmountCents ?? deltaTotal,
+      quotedExpectedRateCents: quoted,
+      quotedCents: record.quotedCents ?? quoted,
+      carrierInvoicedRateCents: billed,
+      billedCents: record.billedCents ?? billed,
+      id: generateUuidV7(),
+      createdAt: new Date(),
+    });
+    this.discrepancyRecords.set(parsed.id, parsed);
+    return parsed;
+  }
+
+  public async getDiscrepancyById(id: string): Promise<DiscrepancyRecord | null> {
+    const record = this.discrepancyRecords.get(id);
+    if (!record) return null;
+    if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
+      return null;
+    }
+    return record;
+  }
+
+  public async getDiscrepancyRecordById(id: string): Promise<DiscrepancyRecord | null> {
+    return this.getDiscrepancyById(id);
+  }
+
+  public async getDiscrepanciesByInvoiceId(tenantId: string, invoiceId: string): Promise<DiscrepancyRecord[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: DiscrepancyRecord[] = [];
+    for (const disc of this.discrepancyRecords.values()) {
+      if (disc.tenantId === tenantId && disc.carrierInvoiceId === invoiceId) {
+        results.push(disc);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async getDiscrepanciesByCarrierInvoice(tenantId: string, carrierInvoiceId: string): Promise<DiscrepancyRecord[]> {
+    return this.getDiscrepanciesByInvoiceId(tenantId, carrierInvoiceId);
+  }
+
+  public async getDiscrepanciesByShipment(tenantId: string, shipmentId: string): Promise<DiscrepancyRecord[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: DiscrepancyRecord[] = [];
+    for (const disc of this.discrepancyRecords.values()) {
+      if (disc.tenantId === tenantId && disc.shipmentId === shipmentId) {
+        results.push(disc);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async getDiscrepancyRecords(tenantId: string): Promise<DiscrepancyRecord[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: DiscrepancyRecord[] = [];
+    for (const disc of this.discrepancyRecords.values()) {
+      if (disc.tenantId === tenantId) {
+        results.push(disc);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async updateDiscrepancyRecord(
+    id: string,
+    updates: Partial<Omit<DiscrepancyRecord, 'id' | 'tenantId' | 'createdAt'>>
+  ): Promise<DiscrepancyRecord | null> {
+    const existing = this.discrepancyRecords.get(id);
+    if (!existing) return null;
+    this.enforceTenantCheck(existing.tenantId);
+    const updated: DiscrepancyRecord = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.discrepancyRecords.set(id, updated);
+    return updated;
+  }
+
+  public async insertCarrierDispute(
+    dispute: Omit<z.input<typeof CarrierDisputeSchema>, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<CarrierDispute> {
+    this.enforceTenantCheck(dispute.tenantId);
+    const disputedAmount = dispute.disputedAmountCents || 0;
+    const parsed = CarrierDisputeSchema.parse({
+      ...dispute,
+      disputedAmountCents: disputedAmount,
+      id: generateUuidV7(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    this.carrierDisputes.set(parsed.id, parsed);
+    return parsed;
+  }
+
+  public async getCarrierDisputeById(id: string): Promise<CarrierDispute | null> {
+    const record = this.carrierDisputes.get(id);
+    if (!record) return null;
+    if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
+      return null;
+    }
+    return record;
+  }
+
+  public async getCarrierDisputesByTenant(tenantId: string): Promise<CarrierDispute[]> {
+    this.enforceTenantCheck(tenantId);
+    const results: CarrierDispute[] = [];
+    for (const d of this.carrierDisputes.values()) {
+      if (d.tenantId === tenantId) {
+        results.push(d);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async getCarrierDisputes(tenantId: string): Promise<CarrierDispute[]> {
+    return this.getCarrierDisputesByTenant(tenantId);
+  }
+
+  public async updateCarrierDispute(
+    id: string,
+    updates: Partial<Omit<CarrierDispute, 'id' | 'tenantId' | 'createdAt'>>
+  ): Promise<CarrierDispute | null> {
+    const existing = this.carrierDisputes.get(id);
+    if (!existing) return null;
+    this.enforceTenantCheck(existing.tenantId);
+    const updated: CarrierDispute = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.carrierDisputes.set(id, updated);
+    return updated;
+  }
+
+  public async updateCarrierDisputeStatus(
+    id: string,
+    status: DisputeStatus,
+    notes?: string
+  ): Promise<CarrierDispute | null> {
+    return this.updateCarrierDispute(id, { disputeStatus: status });
   }
 }
 

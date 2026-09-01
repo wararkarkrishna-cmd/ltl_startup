@@ -89,8 +89,29 @@ export const DISCREPANCY_TYPES = [
   'BOGUS_ACCESSORIAL',
   'FUEL_INDEX_MISMATCH',
   'DUPLICATE_BILLING',
+  'INCORRECT_RATE_BASE',
+  'OTHER',
 ] as const;
 export type DiscrepancyType = (typeof DISCREPANCY_TYPES)[number];
+
+export const CARRIER_INVOICE_STATUSES = [
+  'RECEIVED',
+  'PENDING_AUDIT',
+  'AUDITED_CLEAN',
+  'DISCREPANCY_FLAGGED',
+  'DISPUTE_FILED',
+  'DISPUTED',
+  'SETTLED',
+  'PAID',
+] as const;
+export type CarrierInvoiceStatus = (typeof CARRIER_INVOICE_STATUSES)[number];
+
+export const CARRIER_INVOICE_SOURCE_FORMATS = [
+  'EDI_210',
+  'PDF_OCR',
+  'MANUAL',
+] as const;
+export type CarrierInvoiceSourceFormat = (typeof CARRIER_INVOICE_SOURCE_FORMATS)[number];
 
 export const DISPUTE_STATUSES = [
   'FLAGGED',
@@ -892,3 +913,131 @@ export const WormAuditPackageSchema = z.object({
   createdAt: z.date().default(() => new Date()),
 });
 export type WormAuditPackage = z.infer<typeof WormAuditPackageSchema>;
+
+// ==============================================================================
+// PHASE 5.1: CARRIER FINAL INVOICES, DISCREPANCIES & DISPUTE RECOVERY ENGINE
+// ==============================================================================
+
+export const CarrierInvoiceAccessorialItemSchema = z.object({
+  code: z.string(),
+  description: z.string().optional().nullable(),
+  amountCents: z.number().int().nonnegative(),
+});
+export type CarrierInvoiceAccessorialItem = z.infer<typeof CarrierInvoiceAccessorialItemSchema>;
+
+export const CarrierInvoiceSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  shipmentId: z.string().uuid().optional().nullable(),
+  carrierCode: z.string().min(1).max(32).default('XPO'),
+  carrierScac: z.string().min(2).max(10),
+  carrierName: z.string().max(128).optional().nullable(),
+  carrierInvoiceNumber: z.string().max(64).optional().nullable(),
+  invoiceNumber: z.string().max(64).optional().nullable(),
+  proNumber: z.string().min(1).max(64),
+  bolNumber: z.string().max(64).optional().nullable(),
+  invoicedLinehaulCents: z.number().int().nonnegative().default(0),
+  invoicedFuelCents: z.number().int().nonnegative().default(0),
+  invoicedAccessorialCents: z.number().int().nonnegative().default(0),
+  invoicedAccessorialBreakdown: z.array(CarrierInvoiceAccessorialItemSchema).default([]),
+  invoicedTotalCents: z.number().int().nonnegative().default(0),
+  invoicedWeightLbs: z.number().positive().optional().nullable(),
+  invoicedClass: z.string().max(16).optional().nullable(),
+  totalBilledCents: z.number().int().nonnegative().optional().nullable(),
+  billedLinehaulCents: z.number().int().nonnegative().optional().nullable(),
+  billedFuelCents: z.number().int().nonnegative().optional().nullable(),
+  billedAccessorialCents: z.number().int().nonnegative().optional().nullable(),
+  billedAccessorials: z.record(z.number().int()).default({}),
+  billedWeightLbs: z.number().positive().optional().nullable(),
+  billedClass: z.string().max(16).optional().nullable(),
+  hasScaleCertificate: z.boolean().default(false),
+  hasDensityInspectionDoc: z.boolean().default(false),
+  scaleCertificateUrl: z.string().optional().nullable(),
+  densityInspectionDocUrl: z.string().optional().nullable(),
+  appliedFuelPercentage: z.number().optional().nullable(),
+  tariffRateBase: z.string().optional().nullable(),
+  linehaulBilledCents: z.number().int().nonnegative().optional().nullable(),
+  fuelBilledCents: z.number().int().nonnegative().optional().nullable(),
+  accessorialsBilledCents: z.number().int().nonnegative().optional().nullable(),
+  itemizedCharges: z.array(z.object({ code: z.string().optional(), amountCents: z.number() })).optional().nullable(),
+  invoiceDate: z.union([z.string(), z.date()]).default(() => new Date()),
+  dueDate: z.union([z.string(), z.date()]).optional().nullable(),
+  status: z.enum(CARRIER_INVOICE_STATUSES).default('RECEIVED'),
+  rawEdiPayload: z.string().optional().nullable(),
+  rawOcrText: z.string().optional().nullable(),
+  sourceFormat: z.enum(CARRIER_INVOICE_SOURCE_FORMATS).default('EDI_210'),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type CarrierInvoice = z.infer<typeof CarrierInvoiceSchema>;
+
+export const DiscrepancyRecordSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  carrierInvoiceId: z.string().uuid(),
+  shipmentId: z.string().uuid().optional().nullable(),
+  quoteId: z.string().uuid().optional().nullable(),
+  discrepancyType: z.enum(DISCREPANCY_TYPES),
+  deltaTotalCents: z.number().int().default(0),
+  deltaLinehaulCents: z.number().int().default(0),
+  deltaFuelCents: z.number().int().default(0),
+  deltaAccessorialCents: z.number().int().default(0),
+  deltaWeightLbs: z.number().optional().nullable(),
+  deltaClassBump: z.string().max(32).optional().nullable(),
+  quotedExpectedRateCents: z.number().int().nonnegative().default(0),
+  carrierInvoicedRateCents: z.number().int().nonnegative().default(0),
+  discrepancyDescription: z.string().min(1),
+  confidenceScore: z.number().min(0).max(100).default(1.00),
+  isDisputable: z.boolean().default(true),
+  status: z.string().optional().nullable(),
+  disputePackagePdfPath: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  reasonNotes: z.string().optional().nullable(),
+  quotedCents: z.number().int().optional().nullable(),
+  billedCents: z.number().int().optional().nullable(),
+  varianceCents: z.number().int().optional().nullable(),
+  disputableAmountCents: z.number().int().optional().nullable(),
+  evidencePayload: z.record(z.unknown()).optional().nullable(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type DiscrepancyRecord = z.infer<typeof DiscrepancyRecordSchema>;
+
+export const CarrierDisputeSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  shipmentId: z.string().uuid().optional().nullable(),
+  carrierInvoiceId: z.string().uuid(),
+  discrepancyId: z.string().uuid().optional().nullable(),
+  disputeReferenceNumber: z.string().min(1).max(64),
+  carrierScac: z.string().min(2).max(10),
+  carrierName: z.string().optional().nullable(),
+  carrierProNumber: z.string().min(1).max(64),
+  bolNumber: z.string().optional().nullable(),
+  disputeType: z.string().optional().nullable(),
+  quotedAmountCents: z.number().int().optional().nullable(),
+  billedAmountCents: z.number().int().optional().nullable(),
+  disputedAmountCents: z.number().int().nonnegative(),
+  disputeStatus: z.enum(DISPUTE_STATUSES).default('FLAGGED'),
+  status: z.string().optional().nullable(),
+  carrierContactEmail: z.string().email().optional().nullable(),
+  assignedClaimEmail: z.string().optional().nullable(),
+  legalBasisCitation: z.string().optional().nullable(),
+  rebuttalStatement: z.string().optional().nullable(),
+  disputePacketPdfUrl: z.string().optional().nullable(),
+  pdfUrl: z.string().optional().nullable(),
+  htmlContent: z.string().optional().nullable(),
+  disputeLetterText: z.string().optional().nullable(),
+  rebuttalEvidenceBundle: z.record(z.unknown()).default({}),
+  disputePackageData: z.record(z.unknown()).optional().nullable(),
+  statutoryResponseDeadlineDays: z.number().optional().nullable(),
+  submittedAt: z.union([z.string(), z.date()]).optional().nullable(),
+  resolvedAt: z.union([z.string(), z.date()]).optional().nullable(),
+  creditMemoNumber: z.string().max(64).optional().nullable(),
+  recoveredAmountCents: z.number().int().nonnegative().default(0),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type CarrierDispute = z.infer<typeof CarrierDisputeSchema>;
+
+
