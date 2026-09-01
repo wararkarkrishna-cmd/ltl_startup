@@ -203,8 +203,15 @@ export default function HomePage() {
 
           <div className="flex flex-wrap gap-3">
             <Link
+              href="/invoices"
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs sm:text-sm shadow-xl flex items-center gap-2 transition"
+            >
+              <DollarSign className="w-4 h-4" />
+              Invoicing &amp; Re-Bill Dispute Desk
+            </Link>
+            <Link
               href="/dispatch"
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-emerald-500 hover:from-indigo-400 hover:to-emerald-400 text-slate-950 font-black text-xs sm:text-sm shadow-xl flex items-center gap-2 transition"
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white font-black text-xs sm:text-sm shadow-xl flex items-center gap-2 transition"
             >
               <KanbanSquare className="w-4 h-4" />
               Open Dispatch Desk
