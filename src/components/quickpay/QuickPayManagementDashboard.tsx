@@ -146,22 +146,59 @@ export const QuickPayManagementDashboard: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    handleRunVetting();
   }, []);
 
-  const handleRunVetting = () => {
+  useEffect(() => {
+    handleRunVetting();
+  }, [vettingCarrier, vettingRoutingDays, vettingMcAgeDays, vettingHasNoa]);
+
+  const handleRunVetting = (overrides?: {
+    carrier?: string;
+    routingDays?: number;
+    mcAgeDays?: number;
+    hasNoa?: boolean;
+  }) => {
+    const carrier = overrides?.carrier !== undefined ? overrides.carrier : vettingCarrier;
+    const routingDays = overrides?.routingDays !== undefined ? overrides.routingDays : vettingRoutingDays;
+    const mcAge = overrides?.mcAgeDays !== undefined ? overrides.mcAgeDays : vettingMcAgeDays;
+    const hasNoa = overrides?.hasNoa !== undefined ? overrides.hasNoa : vettingHasNoa;
+
     const result = CarrierFraudScoringEngine.evaluateCarrier({
       tenantId: '01916362-7901-7080-867c-9b8895092a01',
-      carrierScac: vettingCarrier,
-      carrierName: `${vettingCarrier} Logistics`,
+      carrierScac: carrier,
+      carrierName: `${carrier} Logistics`,
       dotNumber: '1948201',
       mcNumber: 'MC-849102',
-      daysSinceBankRoutingChange: vettingRoutingDays,
-      daysSinceMcRegistration: vettingMcAgeDays,
-      hasFactoringNoticeOfAssignment: vettingHasNoa,
+      daysSinceBankRoutingChange: routingDays,
+      daysSinceMcRegistration: mcAge,
+      hasFactoringNoticeOfAssignment: hasNoa,
       hasFactoringWaiver: false,
     });
     setVettingResult(result);
+  };
+
+  const applyPreset = (preset: 'clean' | 'recent_bank' | 'new_mc' | 'factoring_noa') => {
+    if (preset === 'clean') {
+      setVettingCarrier('SAIA');
+      setVettingRoutingDays(180);
+      setVettingMcAgeDays(365);
+      setVettingHasNoa(false);
+    } else if (preset === 'recent_bank') {
+      setVettingCarrier('XPO');
+      setVettingRoutingDays(5);
+      setVettingMcAgeDays(365);
+      setVettingHasNoa(false);
+    } else if (preset === 'new_mc') {
+      setVettingCarrier('ODFL');
+      setVettingRoutingDays(180);
+      setVettingMcAgeDays(14);
+      setVettingHasNoa(false);
+    } else if (preset === 'factoring_noa') {
+      setVettingCarrier('ESTES');
+      setVettingRoutingDays(180);
+      setVettingMcAgeDays(365);
+      setVettingHasNoa(true);
+    }
   };
 
   return (
@@ -360,12 +397,89 @@ export const QuickPayManagementDashboard: React.FC = () => {
       {activeTab === 'vetting' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
-            <h2 className="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-emerald-400" />
-              Carrier Fraud & Safety Risk Simulator (Phase 6.1)
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                Carrier Fraud & Safety Risk Simulator (Phase 6.1)
+              </h2>
+              <span className="px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-mono font-bold">
+                REAL-TIME EVALUATION
+              </span>
+            </div>
 
-            <div className="space-y-4 text-xs">
+            {/* 1-Click Simulation Presets */}
+            <div>
+              <label className="block text-slate-400 font-semibold mb-2 text-xs">
+                ⚡ 1-Click Instant Test Presets:
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => applyPreset('clean')}
+                  className={`p-2.5 rounded-xl text-left border transition text-xs font-medium flex items-center gap-2 ${
+                    vettingRoutingDays >= 30 && vettingMcAgeDays >= 90 && !vettingHasNoa
+                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <div>
+                    <div className="font-bold">Clean Carrier</div>
+                    <div className="text-[10px] text-slate-400 font-mono">0/100 (Safe Payout)</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyPreset('recent_bank')}
+                  className={`p-2.5 rounded-xl text-left border transition text-xs font-medium flex items-center gap-2 ${
+                    vettingRoutingDays < 30
+                      ? 'bg-red-500/10 border-red-500/40 text-red-300'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                  <div>
+                    <div className="font-bold">Recent Bank Change</div>
+                    <div className="text-[10px] text-red-400 font-mono">5 Days (Hijack Risk)</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyPreset('new_mc')}
+                  className={`p-2.5 rounded-xl text-left border transition text-xs font-medium flex items-center gap-2 ${
+                    vettingMcAgeDays < 90 && vettingRoutingDays >= 30
+                      ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  <div>
+                    <div className="font-bold">New "Chameleon" MC</div>
+                    <div className="text-[10px] text-amber-400 font-mono">14 Days (Probationary)</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyPreset('factoring_noa')}
+                  className={`p-2.5 rounded-xl text-left border transition text-xs font-medium flex items-center gap-2 ${
+                    vettingHasNoa
+                      ? 'bg-purple-500/10 border-purple-500/40 text-purple-300'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-purple-400" />
+                  <div>
+                    <div className="font-bold">Factoring Lockbox</div>
+                    <div className="text-[10px] text-purple-400 font-mono">Active NOA Filed</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-xs pt-2 border-t border-slate-800">
               <div>
                 <label className="block text-slate-400 font-semibold mb-1">Carrier SCAC Code</label>
                 <input
@@ -377,55 +491,100 @@ export const QuickPayManagementDashboard: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">
-                  Days Since Bank Routing Number Change (Threshold: &lt; 30 Days flags High Fraud Risk)
-                </label>
-                <input
-                  type="number"
-                  value={vettingRoutingDays}
-                  onChange={(e) => setVettingRoutingDays(parseInt(e.target.value, 10) || 0)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono"
-                />
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-slate-400 font-semibold">
+                    Days Since Bank Routing Number Change
+                  </label>
+                  <span
+                    className={`font-mono font-bold px-2 py-0.5 rounded text-[11px] ${
+                      vettingRoutingDays < 30
+                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    }`}
+                  >
+                    {vettingRoutingDays} Days {vettingRoutingDays < 30 ? '(🚨 HIGH FRAUD RISK)' : '(SAFE)'}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min="0"
+                    max="180"
+                    value={Math.min(vettingRoutingDays, 180)}
+                    onChange={(e) => setVettingRoutingDays(parseInt(e.target.value, 10))}
+                    className="w-full accent-emerald-500 cursor-pointer"
+                  />
+                  <input
+                    type="number"
+                    value={vettingRoutingDays}
+                    onChange={(e) => setVettingRoutingDays(parseInt(e.target.value, 10) || 0)}
+                    className="w-full px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs"
+                    placeholder="Enter days..."
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Rule: Accounts with routing changes &lt; 30 days trigger immediate payout freeze due to bank takeover fraud heuristics.
+                </p>
               </div>
 
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">
-                  Days Since MC Registration (Threshold: &lt; 90 Days flags Chameleon/Probationary Risk)
-                </label>
-                <input
-                  type="number"
-                  value={vettingMcAgeDays}
-                  onChange={(e) => setVettingMcAgeDays(parseInt(e.target.value, 10) || 0)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono"
-                />
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-slate-400 font-semibold">
+                    Days Since MC Authority Registration
+                  </label>
+                  <span
+                    className={`font-mono font-bold px-2 py-0.5 rounded text-[11px] ${
+                      vettingMcAgeDays < 90
+                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    }`}
+                  >
+                    {vettingMcAgeDays} Days {vettingMcAgeDays < 90 ? '(⚠️ NEW MC PROBATION)' : '(ESTABLISHED)'}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min="0"
+                    max="365"
+                    value={Math.min(vettingMcAgeDays, 365)}
+                    onChange={(e) => setVettingMcAgeDays(parseInt(e.target.value, 10))}
+                    className="w-full accent-indigo-500 cursor-pointer"
+                  />
+                  <input
+                    type="number"
+                    value={vettingMcAgeDays}
+                    onChange={(e) => setVettingMcAgeDays(parseInt(e.target.value, 10) || 0)}
+                    className="w-full px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs"
+                    placeholder="Enter days..."
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Rule: MC numbers &lt; 90 days old receive probationary scrutiny to eliminate chameleon carrier risks.
+                </p>
               </div>
 
-              <label className="flex items-center gap-2 cursor-pointer pt-1">
+              <label className="flex items-center gap-2 cursor-pointer pt-2 border-t border-slate-800">
                 <input
                   type="checkbox"
                   checked={vettingHasNoa}
                   onChange={(e) => setVettingHasNoa(e.target.checked)}
                   className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-emerald-500"
                 />
-                <span className="text-slate-300">Carrier Has Active Factoring Notice of Assignment (NOA)</span>
+                <span className="text-slate-300 font-medium">
+                  Carrier Has Active Factoring Notice of Assignment (NOA)
+                </span>
               </label>
-
-              <button
-                onClick={handleRunVetting}
-                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow"
-              >
-                Evaluate Carrier Safety & Fraud Score
-              </button>
             </div>
           </div>
 
           {/* Vetting Outcome Card */}
           {vettingResult && (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                 <div>
                   <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Evaluation Verdict</div>
-                  <div className="text-xl font-black text-white flex items-center gap-2 mt-0.5">
+                  <div className="text-xl font-black text-white flex items-center gap-2 mt-1">
                     {vettingResult.isQuickPayEligible ? (
                       <span className="text-emerald-400 flex items-center gap-1.5">
                         <CheckCircle2 className="w-5 h-5" />
@@ -441,39 +600,87 @@ export const QuickPayManagementDashboard: React.FC = () => {
                 </div>
 
                 <div className="text-right">
-                  <div className="text-xs text-slate-400 font-mono">Fraud Risk: {vettingResult.fraudRiskScore}/100</div>
-                  <div className="text-xs text-emerald-400 font-mono font-bold">Safety Score: {vettingResult.safetyScore}/100</div>
+                  <div className="text-xs text-slate-400 font-mono">
+                    Fraud Risk:{' '}
+                    <span
+                      className={`font-bold ${
+                        vettingResult.fraudRiskScore >= 50
+                          ? 'text-red-400'
+                          : vettingResult.fraudRiskScore > 20
+                          ? 'text-amber-400'
+                          : 'text-emerald-400'
+                      }`}
+                    >
+                      {vettingResult.fraudRiskScore}/100
+                    </span>
+                  </div>
+                  <div className="text-xs text-emerald-400 font-mono font-bold">
+                    Safety Score: {vettingResult.safetyScore}/100
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic Risk Meter Bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-slate-400 font-medium">
+                  <span>Fraud Risk Meter</span>
+                  <span className="font-mono">{vettingResult.fraudRiskScore}%</span>
+                </div>
+                <div className="w-full h-3 rounded-full bg-slate-950 border border-slate-800 overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      vettingResult.fraudRiskScore >= 50
+                        ? 'bg-gradient-to-r from-amber-500 to-red-500'
+                        : vettingResult.fraudRiskScore > 20
+                        ? 'bg-gradient-to-r from-emerald-500 to-amber-500'
+                        : 'bg-emerald-500'
+                    }`}
+                    style={{ width: `${Math.max(vettingResult.fraudRiskScore, 4)}%` }}
+                  />
                 </div>
               </div>
 
               <div className="space-y-2 text-xs font-mono">
-                <div className="flex justify-between p-2 rounded bg-slate-950">
+                <div className="flex justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800/60">
                   <span className="text-slate-400">Risk Tier:</span>
-                  <span className="font-bold text-white">{vettingResult.riskTier}</span>
+                  <span
+                    className={`font-bold ${
+                      vettingResult.riskTier === 'LOW'
+                        ? 'text-emerald-400'
+                        : vettingResult.riskTier === 'MEDIUM'
+                        ? 'text-amber-400'
+                        : 'text-red-400'
+                    }`}
+                  >
+                    {vettingResult.riskTier}
+                  </span>
                 </div>
-                <div className="flex justify-between p-2 rounded bg-slate-950">
+                <div className="flex justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800/60">
                   <span className="text-slate-400">30-Day Routing Hold Check:</span>
                   <span className={vettingResult.checks.isRecentRoutingNumberChange ? 'text-red-400 font-bold' : 'text-emerald-400'}>
-                    {vettingResult.checks.isRecentRoutingNumberChange ? 'FAILED (CHANGED < 30D)' : 'PASSED'}
+                    {vettingResult.checks.isRecentRoutingNumberChange ? 'FAILED (CHANGED < 30D)' : 'PASSED (>= 30D)'}
                   </span>
                 </div>
-                <div className="flex justify-between p-2 rounded bg-slate-950">
+                <div className="flex justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800/60">
                   <span className="text-slate-400">90-Day Chameleon MC Check:</span>
-                  <span className={vettingResult.checks.isNewlyRegisteredMc ? 'text-yellow-400 font-bold' : 'text-emerald-400'}>
-                    {vettingResult.checks.isNewlyRegisteredMc ? 'PROBATIONARY (< 90D)' : 'PASSED'}
+                  <span className={vettingResult.checks.isNewlyRegisteredMc ? 'text-amber-400 font-bold' : 'text-emerald-400'}>
+                    {vettingResult.checks.isNewlyRegisteredMc ? 'PROBATIONARY (< 90D)' : 'PASSED (>= 90D)'}
                   </span>
                 </div>
-                <div className="flex justify-between p-2 rounded bg-slate-950">
+                <div className="flex justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800/60">
                   <span className="text-slate-400">Factoring NOA Conflict Check:</span>
-                  <span className={vettingResult.checks.hasFactoringConflict ? 'text-red-400 font-bold' : 'text-emerald-400'}>
-                    {vettingResult.checks.hasFactoringConflict ? 'BLOCKED (NO WAIVER)' : 'CLEAN'}
+                  <span className={vettingResult.checks.hasFactoringConflict ? 'text-purple-400 font-bold' : 'text-emerald-400'}>
+                    {vettingResult.checks.hasFactoringConflict ? 'BLOCKED (UCC ART. 9 LOCKBOX)' : 'CLEAN'}
                   </span>
                 </div>
               </div>
 
               {vettingResult.ineligibilityReasons?.length > 0 && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs space-y-1">
-                  <div className="font-bold">Blocking Reasons:</div>
+                <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs space-y-1.5">
+                  <div className="font-bold flex items-center gap-1.5 text-red-400">
+                    <AlertTriangle className="w-4 h-4" />
+                    Automated Protection Block Reasons:
+                  </div>
                   {vettingResult.ineligibilityReasons.map((r: string, idx: number) => (
                     <div key={idx}>• {r}</div>
                   ))}
