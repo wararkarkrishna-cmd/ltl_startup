@@ -21,6 +21,7 @@ import {
   Eye,
   X,
   Info,
+  Sparkles,
 } from 'lucide-react';
 import { KanbanBoardState, DispatchCard } from '../../lib/dispatch/dispatch-board-engine';
 import { DISPATCH_BOARD_COLUMNS, DispatchBoardColumn } from '../../db/schema';

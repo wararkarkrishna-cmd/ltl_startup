@@ -21,6 +21,7 @@ import {
   Eye,
   X,
   Info,
+  Sparkles,
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { QuickPayFeeEngine } from '../../lib/quickpay/quickpay-fee-engine';
