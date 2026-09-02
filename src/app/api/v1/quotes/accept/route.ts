@@ -94,11 +94,10 @@ export async function POST(req: NextRequest) {
       : null;
 
     if (shipment) {
-      shipment.status = 'BOOKED';
+      shipment.status = 'TENDERED';
       shipment.specialInstructions = parsed.specialInstructions || shipment.specialInstructions;
       dbClient.shipments.set(shipment.id, shipment);
     }
-
 
     // Append cryptographic audit log
     await AuditEngine.recordEvent({
@@ -107,7 +106,7 @@ export async function POST(req: NextRequest) {
       userId: parsed.signerEmail,
       fieldName: 'status',
       oldValue: 'QUOTED',
-      newValue: 'BOOKED',
+      newValue: 'TENDERED',
       source: 'USER_OVERRIDE',
     });
 

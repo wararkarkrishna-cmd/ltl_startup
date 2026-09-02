@@ -1,0 +1,35 @@
+'use client';
+
+import React, { useState } from 'react';
+import { AppSidebar } from './AppSidebar';
+import { AppHeader } from './AppHeader';
+
+export const AppShell: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-[#050507] text-[#f4f4f5] flex flex-col font-sans selection:bg-white selection:text-black">
+      {/* Left Sidebar */}
+      <AppSidebar
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
+      />
+
+      {/* Top Header */}
+      <AppHeader isSidebarCollapsed={isSidebarCollapsed} />
+
+      {/* Main Content Area */}
+      <main
+        className={`flex-1 transition-all duration-200 ease-in-out ${
+          isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72'
+        }`}
+      >
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+};

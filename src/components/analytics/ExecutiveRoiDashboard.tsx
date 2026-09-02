@@ -49,27 +49,27 @@ export const ExecutiveRoiDashboard: React.FC = () => {
     `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="space-y-6 font-sans">
       {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 p-6 rounded-3xl shadow-2xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#09090b] border border-[#27272a] p-6 rounded-2xl shadow-2xl">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-bold flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5" /> EXECUTIVE ROI &amp; FINANCIAL VALUE ENGINE
+            <span className="px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-700/80 text-neutral-300 font-mono text-[10px] font-medium flex items-center gap-1">
+              <TrendingUp className="w-3 h-3" /> EXECUTIVE ROI &amp; FINANCIAL VALUE ENGINE
             </span>
-            <span className="text-xs text-slate-400 font-mono">Phase 6.7 Active</span>
+            <span className="text-[10px] text-neutral-500 font-mono">Phase 6.7 Active</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-serif text-white tracking-tight font-normal">
             Continuous Software &amp; Fintech ROI Audit
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-neutral-400 mt-1 font-sans">
             Real-time provable value metrics, labor hours saved, rate optimization spread, and QuickPay margins.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Timeframe selector */}
-          <div className="flex items-center bg-slate-950 border border-slate-800 rounded-xl p-1 text-xs font-bold">
+          <div className="flex items-center bg-[#121215] border border-neutral-800 rounded-lg p-1 text-xs font-sans font-medium">
             {[
               { label: '30 Days', value: 30 },
               { label: '90 Days', value: 90 },
@@ -78,10 +78,10 @@ export const ExecutiveRoiDashboard: React.FC = () => {
               <button
                 key={t.value}
                 onClick={() => setPeriodDays(t.value)}
-                className={`px-3 py-1.5 rounded-lg transition ${
+                className={`px-3 py-1.5 rounded-md transition ${
                   periodDays === t.value
-                    ? 'bg-emerald-500 text-slate-950 font-black shadow'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-white text-black font-bold shadow-sm'
+                    : 'text-neutral-400 hover:text-white'
                 }`}
               >
                 {t.label}
@@ -93,87 +93,87 @@ export const ExecutiveRoiDashboard: React.FC = () => {
             href={`/api/v1/analytics/roi/pdf?periodDays=${periodDays}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition shadow flex items-center gap-2"
+            className="px-3.5 py-2 rounded-lg bg-[#121215] hover:bg-neutral-800 text-white font-sans font-medium text-xs border border-neutral-800 transition shadow flex items-center gap-2"
           >
-            <Download className="w-4 h-4 text-emerald-400" />
+            <Download className="w-4 h-4 text-neutral-400" />
             Export Board PDF
           </a>
         </div>
       </div>
 
       {isLoading || !metrics ? (
-        <div className="py-20 text-center text-slate-500 font-mono text-xs animate-pulse">
+        <div className="py-20 text-center text-neutral-500 font-mono text-xs animate-pulse">
           Aggregating cross-system multi-tier ROI telemetry...
         </div>
       ) : (
         <>
           {/* Top 4 Value Drivers Highlights */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 hover:border-emerald-500/40 transition">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+            <div className="bg-[#09090b] border border-[#27272a] rounded-xl p-5 space-y-2 hover:border-neutral-700 transition">
+              <div className="flex items-center justify-between text-xs text-neutral-400 font-sans font-medium">
                 <span className="flex items-center gap-1.5">
-                  <DollarSign className="w-4 h-4 text-emerald-400" /> Total Economic Value
+                  <DollarSign className="w-4 h-4 text-neutral-300" /> Total Economic Value
                 </span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold">
+                <span className="px-2 py-0.5 rounded bg-neutral-900 border border-neutral-700 text-white text-[10px] font-mono font-bold">
                   {metrics.platformSummary.roiMultiplier.toFixed(1)}x ROI
                 </span>
               </div>
-              <div className="text-3xl font-black text-emerald-400 font-mono">
+              <div className="text-3xl font-mono font-bold text-white">
                 {formatCurrency(metrics.platformSummary.totalEconomicValueGeneratedCents)}
               </div>
-              <div className="text-[11px] text-slate-400 font-medium">
-                Net Broker Profit: <span className="text-white font-bold">{formatCurrency(metrics.platformSummary.netBrokerageProfitGainCents)}</span>
+              <div className="text-[11px] text-neutral-400 font-sans">
+                Net Broker Profit: <span className="text-white font-mono font-medium">{formatCurrency(metrics.platformSummary.netBrokerageProfitGainCents)}</span>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 hover:border-sky-500/40 transition">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+            <div className="bg-[#09090b] border border-[#27272a] rounded-xl p-5 space-y-2 hover:border-neutral-700 transition">
+              <div className="flex items-center justify-between text-xs text-neutral-400 font-sans font-medium">
                 <span className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-sky-400" /> Labor Hours Saved
+                  <Clock className="w-4 h-4 text-neutral-300" /> Labor Hours Saved
                 </span>
-                <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 text-[10px] font-mono font-bold">
+                <span className="px-2 py-0.5 rounded bg-neutral-900 border border-neutral-700 text-neutral-300 text-[10px] font-mono font-bold">
                   @ $35/hr
                 </span>
               </div>
-              <div className="text-3xl font-black text-sky-400 font-mono">
+              <div className="text-3xl font-mono font-bold text-white">
                 {metrics.laborEfficiency.totalLaborHoursSaved} hrs
               </div>
-              <div className="text-[11px] text-slate-400 font-medium">
-                Labor Value: <span className="text-white font-bold">{formatCurrency(metrics.laborEfficiency.totalLaborValueSavedCents)}</span>
+              <div className="text-[11px] text-neutral-400 font-sans">
+                Labor Value: <span className="text-white font-mono font-medium">{formatCurrency(metrics.laborEfficiency.totalLaborValueSavedCents)}</span>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 hover:border-indigo-500/40 transition">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+            <div className="bg-[#09090b] border border-[#27272a] rounded-xl p-5 space-y-2 hover:border-neutral-700 transition">
+              <div className="flex items-center justify-between text-xs text-neutral-400 font-sans font-medium">
                 <span className="flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-indigo-400" /> Split Freight Savings
+                  <Zap className="w-4 h-4 text-neutral-300" /> Split Freight Savings
                 </span>
-                <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-mono font-bold">
+                <span className="px-2 py-0.5 rounded bg-neutral-900 border border-neutral-700 text-neutral-300 text-[10px] font-mono font-bold">
                   {metrics.splitOptimization.totalOptimizedLoads} Loads
                 </span>
               </div>
-              <div className="text-3xl font-black text-indigo-400 font-mono">
+              <div className="text-3xl font-mono font-bold text-white">
                 {formatCurrency(metrics.splitOptimization.totalLinehaulSavedCents)}
               </div>
-              <div className="text-[11px] text-slate-400 font-medium">
-                Avg Line-Haul Saved: <span className="text-white font-bold">{formatCurrency(metrics.splitOptimization.averageSavingsPerLoadCents)}/load</span>
+              <div className="text-[11px] text-neutral-400 font-sans">
+                Avg Linehaul Saved: <span className="text-white font-mono font-medium">{formatCurrency(metrics.splitOptimization.averageSavingsPerLoadCents)}/load</span>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 hover:border-amber-500/40 transition">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+            <div className="bg-[#09090b] border border-[#27272a] rounded-xl p-5 space-y-2 hover:border-neutral-700 transition">
+              <div className="flex items-center justify-between text-xs text-neutral-400 font-sans font-medium">
                 <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-amber-400" /> Dispute &amp; Fintech Margin
+                  <ShieldCheck className="w-4 h-4 text-neutral-300" /> Dispute &amp; Fintech Margin
                 </span>
-                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-mono font-bold">
+                <span className="px-2 py-0.5 rounded bg-neutral-900 border border-neutral-700 text-neutral-300 text-[10px] font-mono font-bold">
                   {metrics.disputeRecovery.recoverySuccessRatePercent}% Win Rate
                 </span>
               </div>
-              <div className="text-3xl font-black text-amber-400 font-mono">
+              <div className="text-3xl font-mono font-bold text-white">
                 {formatCurrency(metrics.disputeRecovery.brokerRecoveryNetCents + metrics.quickpayFintech.totalFintechFeeRevenueCents)}
               </div>
-              <div className="text-[11px] text-slate-400 font-medium">
-                QuickPay Fees: <span className="text-white font-bold">{formatCurrency(metrics.quickpayFintech.totalFintechFeeRevenueCents)}</span>
+              <div className="text-[11px] text-neutral-400 font-sans">
+                QuickPay Fees: <span className="text-white font-mono font-medium">{formatCurrency(metrics.quickpayFintech.totalFintechFeeRevenueCents)}</span>
               </div>
             </div>
           </div>

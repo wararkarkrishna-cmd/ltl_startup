@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbClient } from '../../../../../db/client';
 import { DispatchBoardEngine } from '../../../../../lib/dispatch/dispatch-board-engine';
@@ -37,7 +37,7 @@ function mapEdi214ToStatus(code: string): ShipmentStatus {
     case 'P1':
     case 'PICKED_UP':
     case 'AT_PICKUP':
-      return 'AT_PICKUP';
+      return 'PICKED_UP';
     case 'SD':
     case 'A9':
     case 'EXCEPTION':
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     let targetShipment = parsed.shipmentId ? await dbClient.getShipmentById(parsed.shipmentId) : null;
     if (!targetShipment && parsed.proNumber) {
       for (const s of dbClient.shipments.values()) {
-        if (s.tenantId === tenantId && s.proNumber === parsed.proNumber) {
+        if (s.tenantId === tenantId && (s as any).proNumber === parsed.proNumber) {
           targetShipment = s;
           break;
         }
@@ -74,17 +74,17 @@ export async function POST(req: NextRequest) {
           tenantId,
           targetShipment.id,
           nextStatus,
-          CARRIER_WEBHOOK_
+          'CARRIER_WEBHOOK'
         );
       } else {
         await AuditEngine.recordEvent({
           tenantId,
           shipmentId: targetShipment.id,
-          userId: CARRIER_,
+          userId: 'CARRIER',
           fieldName: 'tracking_event',
           oldValue: currentStatus,
           newValue: nextStatus,
-          source: 'SYSTEM_CALCULATED',
+          source: 'CARRIER_EDI',
         });
       }
     }
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       carrierScac: parsed.carrierScac,
       proNumber: parsed.proNumber || null,
       mappedStatus: nextStatus,
-      message: Tracking status  processed successfully,
+      message: `Tracking status ${nextStatus} processed successfully`,
       receivedAt: new Date().toISOString(),
     });
   } catch (error: any) {

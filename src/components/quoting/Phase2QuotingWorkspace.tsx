@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -206,54 +206,54 @@ export const Phase2QuotingWorkspace: React.FC<Phase2QuotingWorkspaceProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 space-y-6">
+    <div className="space-y-6 font-sans">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#09090b] border border-[#27272a] p-5 rounded-2xl shadow-xl">
         <div className="flex items-center gap-4">
-          <div className="bg-indigo-600/20 text-indigo-400 p-3 rounded-xl border border-indigo-500/30">
-            <Truck className="w-8 h-8" />
+          <div className="bg-neutral-900 text-white p-3 rounded-xl border border-neutral-700/80">
+            <Truck className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold font-mono bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded">
+              <span className="text-[10px] font-mono bg-neutral-900 text-neutral-300 px-2 py-0.5 rounded border border-neutral-800">
                 {shipmentId}
               </span>
-              <span className="text-xs text-slate-400">Ready: {lane.pickupDate}</span>
+              <span className="text-xs text-neutral-400 font-sans">Ready: {lane.pickupDate}</span>
               {isStreaming && (
-                <span className="flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">
-                  <Radio className="w-3 h-3 text-emerald-400" />
-                  Live SSE Streaming
+                <span className="flex items-center gap-1.5 bg-neutral-900 text-white border border-neutral-700 text-[10px] px-2 py-0.5 rounded-full font-mono font-medium animate-pulse">
+                  <Radio className="w-3 h-3 text-white" />
+                  Live SSE Feed
                 </span>
               )}
             </div>
-            <h1 className="text-2xl font-black text-white flex items-center gap-2 mt-0.5">
+            <h1 className="text-2xl sm:text-3xl font-serif text-white flex items-center gap-2 mt-1">
               {lane.originCity}, {lane.originState} ({lane.originZip})
-              <ArrowRight className="w-5 h-5 text-slate-400" />
+              <ArrowRight className="w-5 h-5 text-neutral-500" />
               {lane.destCity}, {lane.destState} ({lane.destZip})
             </h1>
-            <div className="text-xs text-slate-400 mt-1 flex items-center gap-3">
-              <span>{totalPallets} Pallets</span>
+            <div className="text-xs text-neutral-400 mt-1 flex items-center gap-3 font-sans">
+              <span className="font-mono text-neutral-300">{totalPallets} Pallets</span>
               <span>•</span>
-              <span>{totalWeight.toLocaleString()} lbs</span>
+              <span className="font-mono text-neutral-300">{totalWeight.toLocaleString()} lbs</span>
               <span>•</span>
               <span>Accessorials: {lane.accessorials.join(', ') || 'Standard Dock'}</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={fetchRatesProgressive}
             disabled={isLoading}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl transition border border-slate-700 flex items-center gap-2"
+            className="px-3.5 py-2 bg-[#121215] hover:bg-neutral-800 text-neutral-200 text-xs font-sans font-medium rounded-xl transition border border-neutral-800 flex items-center gap-1.5"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            Re-Calculate Rates
+            Re-Calculate
           </button>
           <button
             onClick={handleBookSelected}
             disabled={!selectedQuote || isBooked}
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition shadow-lg flex items-center gap-2 disabled:opacity-50"
+            className="px-5 py-2 bg-white hover:bg-neutral-200 text-black text-xs font-sans font-bold rounded-xl transition shadow flex items-center gap-1.5 disabled:opacity-40"
           >
             <CheckCircle2 className="w-4 h-4" />
             Book Quote (${selectedQuote ? (selectedQuote.quotedCustomerPriceCents / 100).toFixed(2) : '0.00'})

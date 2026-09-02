@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { RfqExtractionResult } from '@/lib/schema/rfq-extraction-schema';
@@ -126,46 +126,38 @@ export const FastReviewBoard: React.FC<FastReviewBoardProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-screen max-h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-[calc(100vh-5rem)] bg-[#09090b] border border-[#27272a] rounded-2xl text-neutral-100 overflow-hidden font-sans shadow-2xl">
       {/* Top Notification / Command Banner */}
-      <header className="h-14 border-b border-slate-800 bg-slate-900/80 px-6 flex items-center justify-between flex-shrink-0">
+      <header className="h-14 border-b border-[#27272a] bg-[#0c0c0e] px-6 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-3">
-          <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-md">
-            <Zap className="w-5 h-5" />
+          <div className="p-1.5 bg-neutral-900 text-white rounded-lg border border-neutral-700">
+            <Zap className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-sm font-bold tracking-tight text-slate-100">
+            <h1 className="text-sm font-serif font-normal tracking-tight text-white">
               High-Velocity Broker Review &amp; Edit Board
             </h1>
-            <span className="text-[11px] text-slate-400 font-mono">
+            <span className="text-[10px] text-neutral-400 font-mono">
               Shipment ID: {shipmentId} &bull; 15-Sec Keyboard SLA
             </span>
           </div>
         </div>
 
         {/* Global Confidence & Keyboard Indicator */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <button
             onClick={() => setIsPaletteOpen(true)}
-            className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-md border border-slate-700 transition"
+            className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 text-xs font-sans font-medium text-neutral-300 bg-[#121215] hover:bg-neutral-800 rounded-lg border border-neutral-800 transition"
           >
-            <Command className="w-3.5 h-3.5 text-slate-400" />
+            <Command className="w-3.5 h-3.5 text-neutral-400" />
             <span>Accessorials</span>
-            <kbd className="px-1 py-0.5 text-[10px] bg-slate-900 text-slate-400 rounded">
+            <kbd className="px-1 py-0.2 text-[10px] bg-neutral-900 text-neutral-400 rounded font-mono border border-neutral-700">
               Cmd+K
             </kbd>
           </button>
 
-          <div
-            className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1.5 border ${
-              evaluation.overallTier === 'GREEN'
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                : evaluation.overallTier === 'YELLOW'
-                ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="px-3 py-1 rounded-lg text-xs font-mono font-medium flex items-center space-x-1.5 border border-neutral-700 bg-neutral-900 text-white">
+            <Sparkles className="w-3.5 h-3.5 text-neutral-300" />
             <span>{Math.round(evaluation.overallConfidence * 100)}% Confidence</span>
           </div>
         </div>
@@ -446,13 +438,13 @@ export const FastReviewBoard: React.FC<FastReviewBoardProps> = ({
           {/* Section 3: Accessorials Chips & Command Palette Trigger */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <div className="flex items-center space-x-2 text-xs font-semibold text-neutral-300 uppercase tracking-wider font-sans">
+                <CheckCircle2 className="w-3.5 h-3.5 text-neutral-400" />
                 <span>Selected Accessorials ({rfq.accessorials.length})</span>
               </div>
               <button
                 onClick={() => setIsPaletteOpen(true)}
-                className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 font-semibold"
+                className="text-xs text-white hover:text-neutral-300 flex items-center space-x-1 font-medium font-sans"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add / Toggle (Cmd+K)</span>
@@ -463,12 +455,12 @@ export const FastReviewBoard: React.FC<FastReviewBoardProps> = ({
               {rfq.accessorials.map((code) => (
                 <span
                   key={code}
-                  className="inline-flex items-center space-x-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-medium rounded-lg"
+                  className="inline-flex items-center space-x-1.5 px-3 py-1 bg-neutral-900 border border-neutral-700 text-neutral-200 text-xs font-mono font-medium rounded-lg"
                 >
                   <span>{code}</span>
                   <button
                     onClick={() => toggleAccessorial(code)}
-                    className="hover:text-rose-400 text-emerald-500 p-0.5 rounded transition"
+                    className="hover:text-white text-neutral-400 p-0.5 rounded transition"
                   >
                     &times;
                   </button>
@@ -476,7 +468,7 @@ export const FastReviewBoard: React.FC<FastReviewBoardProps> = ({
               ))}
 
               {rfq.accessorials.length === 0 && (
-                <span className="text-xs text-slate-500 italic py-1">
+                <span className="text-xs text-neutral-500 italic py-1 font-sans">
                   Standard Dock-to-Dock (No Accessorials Selected)
                 </span>
               )}
@@ -486,20 +478,20 @@ export const FastReviewBoard: React.FC<FastReviewBoardProps> = ({
           {/* Bottom Action Footer */}
           <div className="pt-2 flex items-center justify-between">
             {approvalMessage ? (
-              <span className="text-xs font-medium text-emerald-400 flex items-center gap-1.5">
+              <span className="text-xs font-medium text-white flex items-center gap-1.5 font-sans">
                 <CheckCircle2 className="w-4 h-4" />
                 {approvalMessage}
               </span>
             ) : (
-              <span className="text-xs text-slate-400">
-                Press <kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-mono text-[10px]">Cmd+Enter</kbd> to Approve
+              <span className="text-xs text-neutral-400 font-sans">
+                Press <kbd className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-700 rounded font-mono text-[10px] text-neutral-300">Cmd+Enter</kbd> to Approve
               </span>
             )}
 
             <button
               onClick={handleApproveAndRate}
               disabled={isSubmitting}
-              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm rounded-xl shadow-lg shadow-emerald-500/20 flex items-center space-x-2 transition disabled:opacity-50"
+              className="px-6 py-2.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow flex items-center space-x-2 transition disabled:opacity-50"
             >
               <span>Approve &amp; Rate Load</span>
               <ArrowRight className="w-4 h-4 stroke-[3]" />

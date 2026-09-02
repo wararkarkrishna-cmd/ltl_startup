@@ -500,19 +500,19 @@ export const InvoiceManagementDashboard: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 font-sans">
       {/* Header Banner */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/60 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+      <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-2xl space-y-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold font-mono">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              PHASE 4.8: SUB-MINUTE DSO SETTLEMENT & S3 WORM COMPLIANCE VAULT
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-700/80 text-neutral-300 text-[10px] font-mono font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              SUB-MINUTE DSO SETTLEMENT &amp; S3 WORM COMPLIANCE VAULT
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Broker Invoicing & Settlement Dashboard
+            <h1 className="text-2xl sm:text-3xl font-serif text-white tracking-tight font-normal">
+              Broker Invoicing &amp; Settlement Dashboard
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-3xl">
+            <p className="text-xs text-neutral-400 max-w-3xl font-sans">
               Unified financial operating desk: Sub-60s automated customer billing, verified POD streams, QBO/Xero ledger sync, AR dunning, gross margin commissions, and FMCSA § 379 S3 WORM compliance archiving.
             </p>
           </div>
@@ -521,96 +521,96 @@ export const InvoiceManagementDashboard: React.FC = () => {
             <button
               onClick={handleSimulateInstantInvoice}
               disabled={isGenerating}
-              className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs rounded-xl shadow-lg flex items-center gap-2 transition disabled:opacity-50"
+              className="px-4 py-2.5 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-xl shadow flex items-center gap-2 transition disabled:opacity-50"
             >
               <Sparkles className="w-4 h-4" />
               {isGenerating ? 'Generating PDF Invoice...' : 'Instant POD Billing (<60s)'}
             </button>
             <button
               onClick={() => setActiveTab('worm')}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 flex items-center gap-2 transition"
+              className="px-4 py-2.5 bg-[#121215] hover:bg-[#1c1c21] text-white font-sans font-medium text-xs rounded-xl border border-neutral-800 flex items-center gap-2 transition"
             >
-              <Lock className="w-4 h-4 text-indigo-400" />
+              <Lock className="w-4 h-4 text-neutral-400" />
               WORM Vault ({wormPackages.length})
             </button>
           </div>
         </div>
 
-        {/* Global Financial KPI Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 pt-4 border-t border-slate-800/80">
-          <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-3.5">
-            <div className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
-              <DollarSign className="w-3.5 h-3.5 text-emerald-400" /> Total Invoiced
+        {/* Global Financial KPI Row with Space Grotesk Numbers */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 pt-4 border-t border-[#27272a]">
+          <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-3.5">
+            <div className="text-[11px] text-neutral-400 font-sans font-medium flex items-center gap-1.5">
+              <DollarSign className="w-3.5 h-3.5 text-neutral-300" /> Total Invoiced
             </div>
-            <div className="text-xl font-black text-white mt-1 font-mono">
+            <div className="text-xl font-mono font-bold text-white mt-1">
               ${totalInvoiced.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
-            <div className="text-[10px] text-emerald-400 font-medium mt-0.5">{invoices.length} Loads Active</div>
+            <div className="text-[10px] text-neutral-500 font-mono mt-0.5">{invoices.length} Loads Active</div>
           </div>
 
-          <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-3.5">
-            <div className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-teal-400" /> Realized GP %
+          <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-3.5">
+            <div className="text-[11px] text-neutral-400 font-sans font-medium flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5 text-neutral-300" /> Realized GP %
             </div>
-            <div className="text-xl font-black text-emerald-400 mt-1 font-mono">
+            <div className="text-xl font-mono font-bold text-white mt-1">
               {realizedMarginPct.toFixed(1)}%
             </div>
-            <div className="text-[10px] text-slate-400 font-medium mt-0.5">${realizedGp.toFixed(2)} Gross Profit</div>
+            <div className="text-[10px] text-neutral-500 font-mono mt-0.5">${realizedGp.toFixed(2)} GP</div>
           </div>
 
-          <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-3.5">
-            <div className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" /> Days Sales Out (DSO)
+          <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-3.5">
+            <div className="text-[11px] text-neutral-400 font-sans font-medium flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-neutral-300" /> DSO
             </div>
-            <div className="text-xl font-black text-white mt-1 font-mono">21.4 Days</div>
-            <div className="text-[10px] text-indigo-400 font-medium mt-0.5">-4.2d Target Achieved</div>
+            <div className="text-xl font-mono font-bold text-white mt-1">21.4 Days</div>
+            <div className="text-[10px] text-neutral-500 font-mono mt-0.5">-4.2d Target Achieved</div>
           </div>
 
-          <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-3.5">
-            <div className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-400" /> Active AR Overdue
+          <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-3.5">
+            <div className="text-[11px] text-neutral-400 font-sans font-medium flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-neutral-300" /> Active AR Overdue
             </div>
-            <div className="text-xl font-black text-rose-400 mt-1 font-mono">
+            <div className="text-xl font-mono font-bold text-white mt-1">
               ${overdueTotal.toFixed(2)}
             </div>
-            <div className="text-[10px] text-slate-400 font-medium mt-0.5">{overdueInvoices.length} Account Alert</div>
+            <div className="text-[10px] text-neutral-500 font-mono mt-0.5">{overdueInvoices.length} Account Alert</div>
           </div>
 
-          <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-3.5">
-            <div className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-sky-400" /> Geofence Accuracy
+          <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-3.5">
+            <div className="text-[11px] text-neutral-400 font-sans font-medium flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-neutral-300" /> Geofence Accuracy
             </div>
-            <div className="text-xl font-black text-white mt-1 font-mono">100.0%</div>
-            <div className="text-[10px] text-sky-300 font-medium mt-0.5">Avg Dist: 0.11 mi</div>
+            <div className="text-xl font-mono font-bold text-white mt-1">100.0%</div>
+            <div className="text-[10px] text-neutral-500 font-mono mt-0.5">Avg: 0.11 mi</div>
           </div>
 
-          <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-3.5">
-            <div className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-amber-400" /> S3 WORM Compliance
+          <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-3.5">
+            <div className="text-[11px] text-neutral-400 font-sans font-medium flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-neutral-300" /> S3 WORM Compliance
             </div>
-            <div className="text-xl font-black text-amber-400 mt-1 font-mono">100% Locked</div>
-            <div className="text-[10px] text-slate-400 font-medium mt-0.5">7-Yr FMCSA Lock</div>
+            <div className="text-xl font-mono font-bold text-white mt-1">100% Locked</div>
+            <div className="text-[10px] text-neutral-500 font-mono mt-0.5">7-Yr FMCSA Lock</div>
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div className="flex border-b border-slate-800 gap-1 sm:gap-2 overflow-x-auto pb-1">
+      <div className="flex border-b border-[#27272a] gap-1 sm:gap-2 overflow-x-auto pb-1 custom-scrollbar">
         {[
           { id: 'overview', label: 'Overview & KPIs', icon: BarChart3 },
-          { id: 'invoices', label: `Customer Invoices (${invoices.length})`, icon: FileText },
-          { id: 'rebill', label: 'Carrier Re-Bill Audit (5.1/5.2)', icon: Scale },
-          { id: 'disputes', label: 'Legal Dispute Desk (5.3/5.4)', icon: ShieldAlert },
-          { id: 'claims_lifecycle', label: 'Claims Lifecycle & 30d SLA (5.5)', icon: Clock },
-          { id: 'supplemental', label: 'Supplemental Invoices (5.6)', icon: PlusCircle },
-          { id: 'recovery_billing', label: '20% Contingency Fees (5.7)', icon: Percent },
-          { id: 'scorecards', label: 'Carrier Scorecards (5.8)', icon: Award },
-          { id: 'pods', label: `Verified PODs (${podRecords.length})`, icon: CheckCircle2 },
-          { id: 'exceptions', label: `Damage Claims (${exceptions.length})`, icon: AlertTriangle },
-          { id: 'accounting', label: 'Accounting Sync (QBO)', icon: Database },
-          { id: 'aging', label: 'AR Aging & Dunning', icon: Calendar },
-          { id: 'commissions', label: 'Gross Margin & Sales Reps', icon: Award },
-          { id: 'worm', label: `S3 WORM Vault (${wormPackages.length})`, icon: FolderLock },
+          { id: 'invoices', label: `Invoices (${invoices.length})`, icon: FileText },
+          { id: 'rebill', label: 'Re-Bill Audit', icon: Scale },
+          { id: 'disputes', label: 'Dispute Desk', icon: ShieldAlert },
+          { id: 'claims_lifecycle', label: 'Claims (30d SLA)', icon: Clock },
+          { id: 'supplemental', label: 'Supplemental', icon: PlusCircle },
+          { id: 'recovery_billing', label: '20% Recovery Fees', icon: Percent },
+          { id: 'scorecards', label: 'Scorecards', icon: Award },
+          { id: 'pods', label: `PODs (${podRecords.length})`, icon: CheckCircle2 },
+          { id: 'exceptions', label: `Claims (${exceptions.length})`, icon: AlertTriangle },
+          { id: 'accounting', label: 'QBO Sync', icon: Database },
+          { id: 'aging', label: 'AR Aging', icon: Calendar },
+          { id: 'commissions', label: 'Commissions', icon: Award },
+          { id: 'worm', label: `WORM Vault (${wormPackages.length})`, icon: FolderLock },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -618,14 +618,14 @@ export const InvoiceManagementDashboard: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-3.5 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl transition flex items-center gap-2 border-b-2 whitespace-nowrap ${
+              className={`px-3 py-2 text-xs font-sans font-medium rounded-t-xl transition flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
                 isActive
-                  ? 'border-emerald-400 text-emerald-400 bg-slate-900/90 shadow-sm'
-                  : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-900/40'
+                  ? 'border-white text-white bg-[#121215] font-semibold'
+                  : 'border-transparent text-neutral-400 hover:text-white hover:bg-[#0c0c0e]'
               }`}
             >
-              <Icon className="w-4 h-4" />
-              {tab.label}
+              <Icon className="w-3.5 h-3.5" />
+              <span>{tab.label}</span>
             </button>
           );
         })}
