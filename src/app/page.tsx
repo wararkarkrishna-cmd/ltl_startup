@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Truck,
   Zap,
@@ -26,10 +27,24 @@ import { FmcsaCarrierVettingEngine } from '../lib/vetting/fmcsa-vetting-engine';
 import { DamageDetectorEngine } from '../lib/pod/damage-detector-engine';
 import { GeofenceValidator } from '../lib/pod/geofence-validator';
 
-export default function HomePage() {
+function HomePageContent() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<
     'overview' | 'ingestion' | 'quoting' | 'dispatch' | 'vetting' | 'pod-invoicing' | 'quickpay'
   >('overview');
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['overview', 'ingestion', 'quoting', 'dispatch', 'vetting', 'pod-invoicing', 'quickpay'].includes(tabParam)) {
+      setActiveTab(tabParam as any);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId as any);
+    const newUrl = tabId === 'overview' ? '/' : `/?tab=${tabId}`;
+    window.history.pushState(null, '', newUrl);
+  };
 
   // Ingestion Interactive State
   const sampleEmail = `RFQ: Need rate for 4 pallets HVAC units from Los Angeles, CA 90001 to Chicago, IL 60601. Total weight 3,200 lbs, dims 48x40x48 in. Liftgate required on delivery and mandatory appointment needed.`;
@@ -225,7 +240,7 @@ export default function HomePage() {
         </div>
 
         {/* Executive KPI Bento Row with Space Grotesk Numbers */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-8 pt-6 border-t border-[#27272a]/80">
+        <div id="kpis" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-8 pt-6 border-t border-[#27272a]/80">
           <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-4 space-y-1">
             <div className="text-xs text-neutral-400 font-sans font-medium flex items-center gap-1.5">
               <Truck className="w-3.5 h-3.5 text-neutral-300" />
@@ -296,10 +311,10 @@ export default function HomePage() {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => handleTabChange(tab.id)}
               className={`px-4 py-2.5 text-xs font-sans font-medium rounded-t-xl transition flex items-center gap-2 border-b-2 whitespace-nowrap ${
                 isActive
-                  ? 'border-white text-white bg-[#121215] font-semibold'
+                  ? 'border-white text-white bg-[#121215] font-semibold shadow-sm'
                   : 'border-transparent text-neutral-400 hover:text-white hover:bg-[#0c0c0e]'
               }`}
             >
@@ -339,12 +354,12 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <Link
-              href="/review/01916362-7901-7080-867c-9b8895092s01"
+            <button
+              onClick={() => handleTabChange('ingestion')}
               className="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-lg border border-neutral-700/80 flex items-center justify-center gap-1.5 transition mt-4"
             >
-              Open Fast Review <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+              Test AI Extraction <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* Card 2: Phase 2 */}
@@ -373,12 +388,12 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <Link
-              href="/quote/01916362-7901-7080-867c-9b8895092s01"
+            <button
+              onClick={() => handleTabChange('quoting')}
               className="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-lg border border-neutral-700/80 flex items-center justify-center gap-1.5 transition mt-4"
             >
-              Open Quoting Matrix <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+              Rate Simulation <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* Card 3: Phase 3 */}
@@ -407,12 +422,12 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <Link
-              href="/dispatch"
+            <button
+              onClick={() => handleTabChange('dispatch')}
               className="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-lg border border-neutral-700/80 flex items-center justify-center gap-1.5 transition mt-4"
             >
-              Open Dispatch Desk <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+              View Dispatch <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* Card 4: Phase 4 */}
@@ -441,19 +456,19 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <Link
-              href="/invoices"
+            <button
+              onClick={() => handleTabChange('pod-invoicing')}
               className="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-lg border border-neutral-700/80 flex items-center justify-center gap-1.5 transition mt-4"
             >
-              Open Invoicing Desk <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+              Simulate POD <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       )}
 
       {/* TAB CONTENT 2: PHASE 1 AI INGESTION */}
       {activeTab === 'ingestion' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-[#09090b] border border-[#27272a] rounded-2xl p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-xl">
           <div className="space-y-4">
             <div>
               <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
@@ -536,7 +551,7 @@ export default function HomePage() {
 
       {/* TAB CONTENT 3: PHASE 2 HYBRID RATING */}
       {activeTab === 'quoting' && (
-        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6">
+        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6 shadow-xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
@@ -595,7 +610,7 @@ export default function HomePage() {
           {quoteResults && (
             <div className="space-y-4">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border border-neutral-800 rounded-xl overflow-hidden">
+                <table className="w-full text-left text-xs border border-neutral-800 rounded-xl overflow-hidden font-sans">
                   <thead className="bg-[#121215] text-neutral-400 font-sans font-semibold uppercase text-[10px]">
                     <tr>
                       <th className="p-3">Carrier / Account</th>
@@ -642,7 +657,7 @@ export default function HomePage() {
 
       {/* TAB CONTENT 4: PHASE 3 DISPATCH */}
       {activeTab === 'dispatch' && (
-        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6">
+        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6 shadow-xl">
           <div>
             <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
               Phase 3 Dispatch Desk &amp; Digital BOL
@@ -706,7 +721,7 @@ export default function HomePage() {
 
       {/* TAB CONTENT 5: PHASE 3.8 FMCSA VETTING */}
       {activeTab === 'vetting' && (
-        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6">
+        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6 shadow-xl">
           <div>
             <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
               Phase 3.8 Safety &amp; Compliance Gatekeeper
@@ -777,7 +792,7 @@ export default function HomePage() {
 
       {/* TAB CONTENT 6: PHASE 4 GEOTAGGED POD & INVOICING */}
       {activeTab === 'pod-invoicing' && (
-        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6">
+        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6 shadow-xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
@@ -909,7 +924,7 @@ export default function HomePage() {
 
       {/* TAB CONTENT 7: PHASE 6 QUICKPAY FINTECH */}
       {activeTab === 'quickpay' && (
-        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6">
+        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6 shadow-xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
@@ -972,5 +987,13 @@ export default function HomePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-neutral-400 font-mono text-xs">Loading Executive Command OS...</div>}>
+      <HomePageContent />
+    </Suspense>
   );
 }

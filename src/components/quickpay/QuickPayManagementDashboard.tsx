@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import {
   Zap,
@@ -19,11 +19,26 @@ import {
   Lock,
   Search,
 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { QuickPayFeeEngine } from '../../lib/quickpay/quickpay-fee-engine';
 import { CarrierFraudScoringEngine } from '../../lib/quickpay/carrier-fraud-scoring-engine';
 
-export const QuickPayManagementDashboard: React.FC = () => {
+function QuickPayManagementDashboardContent() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'payouts' | 'vetting' | 'ledger' | 'tax-1099'>('payouts');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['payouts', 'vetting', 'ledger', 'tax-1099', 'tax'].includes(tab)) {
+      setActiveTab(tab === 'tax' ? 'tax-1099' : (tab as any));
+    }
+  }, [searchParams]);
+
+  const handleTabClick = (tabId: 'payouts' | 'vetting' | 'ledger' | 'tax-1099') => {
+    setActiveTab(tabId);
+    const newUrl = tabId === 'payouts' ? '/quickpay' : `/quickpay?tab=${tabId}`;
+    window.history.pushState(null, '', newUrl);
+  };
   const [payouts, setPayouts] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any>({
     totalPayoutCount: 14,
@@ -314,11 +329,11 @@ export const QuickPayManagementDashboard: React.FC = () => {
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+            onClick={() => handleTabClick(tab.id as any)}
+            className={`px-4 py-2 rounded-xl text-xs font-sans font-medium transition whitespace-nowrap ${
               activeTab === tab.id
-                ? 'bg-slate-800 text-emerald-400 border border-emerald-500/30 shadow'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                ? 'bg-white text-black font-bold shadow-sm'
+                : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
             }`}
           >
             {tab.label}
@@ -799,4 +814,13 @@ export const QuickPayManagementDashboard: React.FC = () => {
       )}
     </div>
   );
+}
+
+export const QuickPayManagementDashboard: React.FC = () => {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-neutral-400 font-mono text-xs">Loading QuickPay Fintech Desk...</div>}>
+      <QuickPayManagementDashboardContent />
+    </Suspense>
+  );
 };
+

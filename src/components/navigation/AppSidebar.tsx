@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
   FileCheck2,
@@ -43,6 +43,7 @@ export const AppSidebar: React.FC<{
   onToggleCollapse: () => void;
 }> = ({ isCollapsed, onToggleCollapse }) => {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
     overview: true,
@@ -65,9 +66,13 @@ export const AppSidebar: React.FC<{
       icon: LayoutDashboard,
       badge: 'v3.8',
       subFeatures: [
-        { title: 'Command Overview', href: '/', description: 'Master operational & financial pulse' },
-        { title: 'Executive KPI Ribbon', href: '/#kpis', description: 'Realized margins, SLA speed & load count' },
-        { title: 'Multi-Phase Simulator', href: '/#sandbox', description: 'Interactive end-to-end freight sandbox' },
+        { title: 'All Systems Overview', href: '/?tab=overview', description: 'Master operational & financial pulse' },
+        { title: 'Phase 1: AI Ingestion & Density', href: '/?tab=ingestion', description: 'Multi-modal extraction & PCF density calculator' },
+        { title: 'Phase 2: Rating & Split Optimizer', href: '/?tab=quoting', description: 'Multi-carrier rating & knapsack split engine' },
+        { title: 'Phase 3: Dispatch & eBOL', href: '/?tab=dispatch', description: 'Lifecycle state machine & digital VICS eBOL PDFs' },
+        { title: 'Phase 3.8: FMCSA Safety Gate', href: '/?tab=vetting', description: 'Safety rating, operating authority & insurance validator' },
+        { title: 'Phase 4: Geotagged POD & Billing', href: '/?tab=pod-invoicing', description: 'Geofenced mobile POD & sub-60s billing engine' },
+        { title: 'Phase 6: Embedded QuickPay', href: '/?tab=quickpay', description: 'Accelerated payout rails & gross take-rate spread' },
       ],
     },
     {
@@ -77,10 +82,10 @@ export const AppSidebar: React.FC<{
       icon: FileCheck2,
       badge: '15s SLA',
       subFeatures: [
-        { title: 'Fast Review Board', href: `/review/${sampleShipmentId}`, description: 'Dual-pane 15s keyboard review desk' },
-        { title: 'PCF Density Calculator', href: `/review/${sampleShipmentId}`, description: '11-Tier NMFC automatic class assignment' },
-        { title: 'Accessorial Palette (⌘K)', href: `/review/${sampleShipmentId}`, description: '15+ high-liability accessorial detector' },
-        { title: 'HITL Confidence Scorer', href: `/review/${sampleShipmentId}`, description: 'Entropy threshold escalation gate' },
+        { title: 'Fast Review Board', href: `/review/${sampleShipmentId}?view=board`, description: 'Dual-pane 15s keyboard review desk' },
+        { title: 'PCF Density Calculator', href: `/review/${sampleShipmentId}?view=density`, description: '11-Tier NMFC automatic class assignment' },
+        { title: 'Accessorial Palette (⌘K)', href: `/review/${sampleShipmentId}?view=accessorials`, description: '15+ high-liability accessorial detector' },
+        { title: 'HITL Confidence Scorer', href: `/review/${sampleShipmentId}?view=confidence`, description: 'Entropy threshold escalation gate' },
       ],
     },
     {
@@ -90,10 +95,10 @@ export const AppSidebar: React.FC<{
       icon: Zap,
       badge: '5 Carriers',
       subFeatures: [
-        { title: 'Multi-Carrier Rate Matrix', href: `/quote/${sampleShipmentId}`, description: 'Direct BYOC + Wholesale tariffs' },
-        { title: 'Combinatorial Split Optimizer', href: `/quote/${sampleShipmentId}`, description: 'Knapsack multi-shipment savings engine' },
-        { title: 'Volume-LTL Limit Watcher', href: `/quote/${sampleShipmentId}`, description: 'Linear-foot & cubic surcharge alerts' },
-        { title: 'Live SSE Progressive Streamer', href: `/quote/${sampleShipmentId}`, description: 'Real-time carrier latency & rate feed' },
+        { title: 'Multi-Carrier Rate Matrix', href: `/quote/${sampleShipmentId}?view=matrix`, description: 'Direct BYOC + Wholesale tariffs' },
+        { title: 'Combinatorial Split Optimizer', href: `/quote/${sampleShipmentId}?view=split`, description: 'Knapsack multi-shipment savings engine' },
+        { title: 'Volume-LTL Limit Watcher', href: `/quote/${sampleShipmentId}?view=volumeltl`, description: 'Linear-foot & cubic surcharge alerts' },
+        { title: 'Live SSE Progressive Streamer', href: `/quote/${sampleShipmentId}?view=streamer`, description: 'Real-time carrier latency & rate feed' },
       ],
     },
     {
@@ -103,10 +108,10 @@ export const AppSidebar: React.FC<{
       icon: KanbanSquare,
       badge: '10 Stages',
       subFeatures: [
-        { title: '10-Stage Kanban Board', href: '/dispatch', description: 'State machine from Unassigned to Settled' },
+        { title: '10-Stage Kanban Board', href: '/dispatch?view=kanban', description: 'State machine from Unassigned to Settled' },
+        { title: 'Carrier Tender Desk', href: '/dispatch?view=tender', description: 'Electronic tender dispatch & EDI 204/990' },
+        { title: 'Milestone Tracking & EDI 214', href: '/dispatch?view=milestones', description: 'Real-time tracking webhook receiver' },
         { title: 'Digital VICS eBOL PDF', href: `/api/v1/shipments/${sampleShipmentId}/ebol?format=pdf`, isExternal: true, description: 'Printable bill of lading with GS1-128 barcode' },
-        { title: 'Carrier Tender Desk', href: '/dispatch', description: 'Electronic tender dispatch & EDI 204/990' },
-        { title: 'Milestone Tracking & EDI 214', href: '/dispatch', description: 'Real-time tracking webhook receiver' },
       ],
     },
     {
@@ -116,10 +121,10 @@ export const AppSidebar: React.FC<{
       icon: Camera,
       badge: 'Geofenced',
       subFeatures: [
-        { title: 'Driver Mobile PWA Portal', href: '/pod/demo-pod-token-2026', description: 'Frictionless mobile upload interface' },
-        { title: 'GPS Haversine Geofence', href: '/pod/demo-pod-token-2026', description: '0.5-mile delivery location validation' },
-        { title: 'HTML5 Signature Pad', href: '/pod/demo-pod-token-2026', description: 'Receiver touch & pen signature capture' },
-        { title: 'Damage Exception Notations', href: '/pod/demo-pod-token-2026', description: 'OCR damaged cartons & shortage flagger' },
+        { title: 'Driver Mobile PWA Portal', href: '/pod/demo-pod-token-2026?view=upload', description: 'Frictionless mobile upload interface' },
+        { title: 'GPS Haversine Geofence', href: '/pod/demo-pod-token-2026?view=geofence', description: '0.5-mile delivery location validation' },
+        { title: 'HTML5 Signature Pad', href: '/pod/demo-pod-token-2026?view=signature', description: 'Receiver touch & pen signature capture' },
+        { title: 'Damage Exception Notations', href: '/pod/demo-pod-token-2026?view=damage', description: 'OCR damaged cartons & shortage flagger' },
       ],
     },
     {
@@ -129,15 +134,15 @@ export const AppSidebar: React.FC<{
       icon: FileText,
       badge: '14 Desks',
       subFeatures: [
-        { title: 'Sub-60s Automated Billing', href: '/invoices', description: 'Instant invoice generation on clean POD' },
-        { title: 'Carrier Re-Bill Audit (EDI 210)', href: '/invoices', description: 'Cross-audits carrier invoices vs original quote' },
-        { title: '1-Click Dispute Generator', href: '/invoices', description: 'Carrier-specific dispute packages with evidence' },
-        { title: '30-Day FMCSA SLA Tracker', href: '/invoices', description: 'Statutory 49 CFR § 370 claims timer' },
-        { title: 'Supplemental Invoicing', href: '/invoices', description: 'Pass-through legitimate accessorials with markup' },
-        { title: '20% Recovery Contingency Fees', href: '/invoices', description: 'Broker profit capture on won carrier disputes' },
-        { title: 'Carrier Reliability Scorecards', href: '/invoices', description: 'Overcharge frequency & dispute win rates' },
-        { title: 'S3 WORM Compliance Vault', href: '/invoices', description: '7-Year immutable Merkle root document lock' },
-        { title: 'QuickBooks Online Sync', href: '/invoices', description: 'Automated double-entry general ledger sync' },
+        { title: 'Sub-60s Automated Billing', href: '/invoices?tab=invoices', description: 'Instant invoice generation on clean POD' },
+        { title: 'Carrier Re-Bill Audit (EDI 210)', href: '/invoices?tab=rebill', description: 'Cross-audits carrier invoices vs original quote' },
+        { title: '1-Click Dispute Generator', href: '/invoices?tab=disputes', description: 'Carrier-specific dispute packages with evidence' },
+        { title: '30-Day FMCSA SLA Tracker', href: '/invoices?tab=claims_lifecycle', description: 'Statutory 49 CFR § 370 claims timer' },
+        { title: 'Supplemental Invoicing', href: '/invoices?tab=supplemental', description: 'Pass-through legitimate accessorials with markup' },
+        { title: '20% Recovery Contingency Fees', href: '/invoices?tab=recovery_billing', description: 'Broker profit capture on won carrier disputes' },
+        { title: 'Carrier Reliability Scorecards', href: '/invoices?tab=scorecards', description: 'Overcharge frequency & dispute win rates' },
+        { title: 'S3 WORM Compliance Vault', href: '/invoices?tab=worm', description: '7-Year immutable Merkle root document lock' },
+        { title: 'QuickBooks Online Sync', href: '/invoices?tab=accounting', description: 'Automated double-entry general ledger sync' },
       ],
     },
     {
@@ -148,10 +153,10 @@ export const AppSidebar: React.FC<{
       badge: '2.5% Spread',
       subFeatures: [
         { title: 'Carrier 1-Click Payout Portal', href: '/quickpay/demo-qp-token-2026', description: 'Instant Same-Day RTP/FedNow & ACH' },
-        { title: 'Fintech Management Desk', href: '/quickpay', description: 'Disbursement tracking & gross take-rates' },
-        { title: 'FMCSA Safety & Fraud Gatekeeper', href: '/quickpay', description: 'Bank routing change & factoring NOA checks' },
-        { title: 'Double-Entry Trial Balance', href: '/quickpay', description: 'Float liability & revenue ledger' },
-        { title: 'Form 1099-NEC Tax Compliance', href: '/quickpay', description: 'Annual carrier tax statements & IRS exports' },
+        { title: 'Fintech Management Desk', href: '/quickpay?tab=payouts', description: 'Disbursement tracking & gross take-rates' },
+        { title: 'FMCSA Safety & Fraud Gatekeeper', href: '/quickpay?tab=vetting', description: 'Bank routing change & factoring NOA checks' },
+        { title: 'Double-Entry Trial Balance', href: '/quickpay?tab=ledger', description: 'Float liability & revenue ledger' },
+        { title: 'Form 1099-NEC Tax Compliance', href: '/quickpay?tab=tax-1099', description: 'Annual carrier tax statements & IRS exports' },
       ],
     },
     {
@@ -161,10 +166,10 @@ export const AppSidebar: React.FC<{
       icon: TrendingUp,
       badge: 'Provable ROI',
       subFeatures: [
-        { title: 'Continuous Economic Value', href: '/analytics', description: '4-Stream provable software & fintech ROI' },
-        { title: 'Labor Hours Saved (@$35/hr)', href: '/analytics', description: 'Automated ingestion & billing labor savings' },
-        { title: 'Split Linehaul Net Savings', href: '/analytics', description: 'Combinatorial freight savings captured' },
-        { title: 'Dispute & QuickPay Spreads', href: '/analytics', description: 'Contingency fees and fintech fee revenue' },
+        { title: 'Continuous Economic Value', href: '/analytics?view=economic_value', description: '4-Stream provable software & fintech ROI' },
+        { title: 'Labor Hours Saved (@$35/hr)', href: '/analytics?view=labor_saved', description: 'Automated ingestion & billing labor savings' },
+        { title: 'Split Linehaul Net Savings', href: '/analytics?view=split_savings', description: 'Combinatorial freight savings captured' },
+        { title: 'Dispute & QuickPay Spreads', href: '/analytics?view=spreads', description: 'Contingency fees and fintech fee revenue' },
         { title: 'Export Board Report PDF', href: '/api/v1/analytics/roi/pdf?periodDays=30', isExternal: true, description: 'Executive board-ready PDF audit summary' },
       ],
     },
@@ -192,6 +197,19 @@ export const AppSidebar: React.FC<{
     if (module.href === '/' && pathname === '/') return true;
     if (module.href !== '/' && pathname.startsWith(module.href.split('?')[0])) return true;
     return false;
+  };
+
+  const isSubFeatureActive = (sfHref?: string) => {
+    if (!sfHref) return false;
+    const [path, query] = sfHref.split('?');
+    if (pathname !== path) return false;
+    if (!query) return !searchParams.toString() || searchParams.get('tab') === 'overview' || searchParams.get('view') === 'board';
+    
+    const params = new URLSearchParams(query);
+    for (const [k, v] of params.entries()) {
+      if (searchParams.get(k) !== v) return false;
+    }
+    return true;
   };
 
   const filteredModules = navModules.filter((m) => {
@@ -350,7 +368,7 @@ export const AppSidebar: React.FC<{
               {isExpanded && (
                 <div className="pl-6 pr-1 py-1 space-y-0.5 border-l border-neutral-800/80 ml-4 my-1">
                   {module.subFeatures.map((sf, idx) => {
-                    const isSfActive = sf.href && (pathname === sf.href || pathname.startsWith(sf.href + '/'));
+                    const isSfActive = isSubFeatureActive(sf.href);
 
                     if (sf.isExternal && sf.href) {
                       return (
@@ -373,12 +391,15 @@ export const AppSidebar: React.FC<{
                         href={sf.href || module.href}
                         className={`block px-2 py-1.5 rounded text-[11px] font-sans transition ${
                           isSfActive
-                            ? 'text-white font-semibold bg-neutral-800/70 border border-neutral-700/60'
+                            ? 'text-white font-semibold bg-neutral-800/80 border border-neutral-700/80 shadow-sm'
                             : 'text-neutral-400 hover:text-white hover:bg-neutral-900/60'
                         }`}
                         title={sf.description}
                       >
-                        <div className="truncate">{sf.title}</div>
+                        <div className="truncate flex items-center justify-between">
+                          <span>{sf.title}</span>
+                          {isSfActive && <span className="w-1.5 h-1.5 rounded-full bg-white ml-1.5 shrink-0" />}
+                        </div>
                         {sf.description && (
                           <div className="text-[9px] text-neutral-500 truncate mt-0.5 font-normal">
                             {sf.description}

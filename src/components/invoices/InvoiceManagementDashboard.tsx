@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   FileText,
@@ -41,7 +42,8 @@ import {
 } from 'lucide-react';
 import { Phase5DisputeWorkspace } from './Phase5DisputeWorkspace';
 
-export const InvoiceManagementDashboard: React.FC = () => {
+function InvoiceManagementDashboardContent() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<
     | 'overview'
     | 'invoices'
@@ -58,6 +60,37 @@ export const InvoiceManagementDashboard: React.FC = () => {
     | 'commissions'
     | 'worm'
   >('overview');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (
+      tab &&
+      [
+        'overview',
+        'invoices',
+        'rebill',
+        'disputes',
+        'claims_lifecycle',
+        'supplemental',
+        'recovery_billing',
+        'scorecards',
+        'pods',
+        'exceptions',
+        'accounting',
+        'aging',
+        'commissions',
+        'worm',
+      ].includes(tab)
+    ) {
+      setActiveTab(tab as any);
+    }
+  }, [searchParams]);
+
+  const handleTabClick = (tabId: string) => {
+    setActiveTab(tabId as any);
+    const newUrl = tabId === 'overview' ? '/invoices' : `/invoices?tab=${tabId}`;
+    window.history.pushState(null, '', newUrl);
+  };
 
   const [searchFilter, setSearchFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -617,7 +650,7 @@ export const InvoiceManagementDashboard: React.FC = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => handleTabClick(tab.id as any)}
               className={`px-3 py-2 text-xs font-sans font-medium rounded-t-xl transition flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
                 isActive
                   ? 'border-white text-white bg-[#121215] font-semibold'
@@ -1721,4 +1754,13 @@ export const InvoiceManagementDashboard: React.FC = () => {
       )}
     </div>
   );
+}
+
+export const InvoiceManagementDashboard: React.FC = () => {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-neutral-400 font-mono text-xs">Loading Invoicing &amp; Settlement Desk...</div>}>
+      <InvoiceManagementDashboardContent />
+    </Suspense>
+  );
 };
+
