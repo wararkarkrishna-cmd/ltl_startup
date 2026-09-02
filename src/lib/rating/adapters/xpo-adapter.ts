@@ -1,4 +1,4 @@
-﻿import {
+import {
   ICarrierRatingAdapter,
   RateRequest,
   CarrierQuoteResult,
@@ -22,8 +22,53 @@ export class XpoRatingAdapter implements ICarrierRatingAdapter {
     const fuelCostCents = Math.round(tariff.discountedLinehaulCents * xpoFuelRate);
     const totalCostCents = tariff.discountedLinehaulCents + fuelCostCents + tariff.totalAccessorialCostCents;
 
-    const acctNum = request.carrierCredentials?.accountNumber || (isWholesale ? 'MSTR-XPO-882' : 'XPO-BYOC-01');
-    const sourceTag = isWholesale ? `[PLATFORM WHOLESALE: 86.5% TIER]` : `[DIRECT: XPO #${acctNum}]`;
+    const acctNum = request.carrierCredentials?.accountNumber;
+    const sourceTag = isWholesale
+      ? `[PLATFORM WHOLESALE: 86.5% TIER]`
+      : (acctNum ? `[DIRECT: XPO #${acctNum}]` : `[DIRECT: XPO TARIFF]`);
+
+
+    // In live production, if live API credentials and endpoint are present:
+    if (request.carrierCredentials?.apiKey && process.env.XPO_API_URL) {
+      try {
+        const liveRes = await fetch(process.env.XPO_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${request.carrierCredentials.apiKey}`,
+          },
+          body: JSON.stringify({
+            originPostalCode: request.originZip,
+            destinationPostalCode: request.destZip,
+            items: request.items,
+          }),
+        });
+        if (liveRes.ok) {
+          const liveData = await liveRes.json();
+          if (liveData.totalNetChargeCents) {
+            return {
+              carrierCode: this.carrierCode,
+              carrierName: this.carrierName,
+              carrierScac: this.carrierScac,
+              accountType: request.accountType,
+              sourceTag,
+              quoteNumber: liveData.quoteNumber || `XPO-${Date.now().toString().slice(-6)}`,
+              linehaulCostCents: liveData.linehaulChargeCents || tariff.discountedLinehaulCents,
+              fuelSurchargeCents: liveData.fuelSurchargeCents || fuelCostCents,
+              accessorialCostCents: liveData.accessorialChargesCents || tariff.totalAccessorialCostCents,
+              accessorialBreakdown: liveData.accessorials || tariff.accessorialFees,
+              totalCostCents: liveData.totalNetChargeCents,
+              transitDays: liveData.transitDays || tariff.estimatedTransitDays,
+              isGuaranteed: liveData.isGuaranteed || false,
+              timestamp: new Date().toISOString(),
+              rawResponse: liveData,
+            };
+          }
+        }
+      } catch {
+        // Fallback gracefully to algorithmic CzarLite tariff
+      }
+    }
 
     return {
       carrierCode: this.carrierCode,
@@ -41,10 +86,10 @@ export class XpoRatingAdapter implements ICarrierRatingAdapter {
       isGuaranteed: false,
       timestamp: new Date().toISOString(),
       rawResponse: {
-        apiEndpoint: 'https://api.xpo.com/rating/v2/quote',
         serviceLevel: 'STANDARD_LTL',
-        directLinehaul: tariff.discountedLinehaulCents,
+        appliedTariff: 'CzarLite 2021 Base',
       },
     };
   }
 }
+

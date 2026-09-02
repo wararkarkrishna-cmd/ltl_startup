@@ -1,4 +1,4 @@
-﻿import {
+import {
   ICarrierRatingAdapter,
   RateRequest,
   CarrierQuoteResult,
@@ -101,8 +101,9 @@ export class PlatformRatingEngine {
             cred.tenantId
           );
         } catch {
-          apiKey = 'TEST_API_KEY';
+          apiKey = '';
         }
+
 
         const directReq: RateRequest = {
           ...baseRequest,
