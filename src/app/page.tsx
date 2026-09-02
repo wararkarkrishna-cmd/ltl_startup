@@ -178,17 +178,19 @@ function HomePageContent() {
   };
 
   const handleRunVetting = () => {
-    const result = FmcsaCarrierVettingEngine.evaluateSafety({
-      scac: vettingCarrier,
+    const result = FmcsaCarrierVettingEngine.evaluateCarrier({
+      tenantId: '01916362-7901-7080-867c-9b8895092a01',
+      carrierCode: vettingCarrier,
+      carrierScac: vettingCarrier,
+      carrierName: `${vettingCarrier} Freight`,
       dotNumber: vettingDot,
-      safetyRating: 'SATISFACTORY',
-      operatingAuthorityStatus: 'ACTIVE',
-      autoLiabilityInsuranceCents: 200000000,
-      cargoInsuranceCents: 25000000,
-      outOfServiceRateVehiclePct: 14.2,
-      outOfServiceRateDriverPct: 3.1,
-      nationalAvgOosVehiclePct: 20.7,
-      nationalAvgOosDriverPct: 5.5,
+      mcNumber: `MC-${vettingDot}`,
+      autoLiabilityCoverageDollars: 2_000_000,
+      cargoInsuranceCoverageDollars: 250_000,
+      safetyRatingOverride: 'SATISFACTORY',
+      operatingAuthorityStatusOverride: 'ACTIVE',
+      driverOosRatePercent: 3.1,
+      vehicleOosRatePercent: 14.2,
     });
     setVettingResult(result);
   };
