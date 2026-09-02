@@ -52,6 +52,15 @@ export async function GET(
       accountMasked: tokenRecord.accountNumberMasked,
     });
 
+    const storage = (await import('@/lib/storage/document-storage')).getDocumentStorage();
+    storage.saveDocument(
+      tokenRecord.tenantId,
+      `QuickPay_Agreement_${agreement.agreementReference}.pdf`,
+      'application/pdf',
+      pdfBuffer,
+      'shipment-documents'
+    ).catch(() => {});
+
     return new Response(pdfBuffer as any, {
       status: 200,
       headers: {
@@ -59,6 +68,7 @@ export async function GET(
         'Content-Disposition': `inline; filename="QuickPay_Agreement_${agreement.agreementReference}.pdf"`,
       },
     });
+
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to generate contract PDF' },
