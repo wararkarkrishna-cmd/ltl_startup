@@ -475,29 +475,29 @@ export const Phase5DisputeWorkspace: React.FC<{
       {/* ===================================================================== */}
       {activeSubTab === 'rebill' && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#09090b] border border-[#27272a] p-5 rounded-2xl">
             <div>
-              <h3 className="text-base font-black text-white flex items-center gap-2">
-                <Scale className="w-5 h-5 text-emerald-400" /> Carrier Re-Bill Auditing Desk (EDI 210 & PDF OCR)
+              <h3 className="text-base font-serif font-normal text-white flex items-center gap-2">
+                <Scale className="w-5 h-5 text-white" /> Carrier Re-Bill Auditing Desk (EDI 210 &amp; PDF OCR)
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-neutral-400 mt-1 font-sans">
                 Automated cross-comparison of carrier final invoices against contracted rate baselines. Standard $5.00 tolerance rule enforced.
               </p>
             </div>
             <button
               onClick={handleRunAudit}
               disabled={isAuditing}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center gap-2 transition disabled:opacity-50"
+              className="px-4 py-2 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow flex items-center gap-2 transition disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${isAuditing ? 'animate-spin' : ''}`} />
               {isAuditing ? 'Running Cross-Audit...' : 'Run Automated Audit'}
             </button>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl overflow-hidden shadow-xl font-sans">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 uppercase font-semibold text-[10px] tracking-wider font-mono">
+                <thead className="bg-[#121215] text-neutral-400 border-b border-neutral-800 uppercase font-semibold text-[10px] tracking-wider font-mono">
                   <tr>
                     <th className="p-3.5">Carrier / PRO #</th>
                     <th className="p-3.5">Shipment Ref</th>
@@ -509,61 +509,61 @@ export const Phase5DisputeWorkspace: React.FC<{
                     <th className="p-3.5 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 font-sans">
+                <tbody className="divide-y divide-neutral-800/80 font-sans">
                   {carrierInvoices.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-800/40 transition">
+                    <tr key={inv.id} className="hover:bg-neutral-900/60 transition">
                       <td className="p-3.5">
                         <div className="font-bold text-white flex items-center gap-1.5">
-                          <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+                          <Building2 className="w-3.5 h-3.5 text-neutral-400" />
                           {inv.carrierName}
                         </div>
-                        <div className="text-[10px] text-slate-400 font-mono">PRO: {inv.proNumber}</div>
+                        <div className="text-[10px] text-neutral-400 font-mono">PRO: {inv.proNumber}</div>
                       </td>
-                      <td className="p-3.5 font-mono text-slate-300 font-semibold">{inv.shipmentRef}</td>
-                      <td className="p-3.5 font-mono text-slate-200 font-semibold">${inv.quotedTotal.toFixed(2)}</td>
+                      <td className="p-3.5 font-mono text-neutral-300 font-semibold">{inv.shipmentRef}</td>
+                      <td className="p-3.5 font-mono text-neutral-200 font-semibold">${inv.quotedTotal.toFixed(2)}</td>
                       <td className="p-3.5 font-mono text-white font-bold">${inv.invoicedTotal.toFixed(2)}</td>
                       <td className="p-3.5">
                         {inv.deltaTotal > 0 ? (
-                          <span className="font-mono font-bold text-rose-400">
+                          <span className="font-mono font-bold text-white">
                             +${inv.deltaTotal.toFixed(2)}
                           </span>
                         ) : (
-                          <span className="font-mono font-bold text-emerald-400">$0.00</span>
+                          <span className="font-mono font-bold text-neutral-400">$0.00</span>
                         )}
                       </td>
-                      <td className="p-3.5 text-[11px] text-slate-300">
+                      <td className="p-3.5 text-[11px] text-neutral-300">
                         {inv.deltaWeightLbs > 0 && (
-                          <div className="text-amber-400 font-bold font-mono">+{inv.deltaWeightLbs} lbs reweigh</div>
+                          <div className="text-white font-bold font-mono">+{inv.deltaWeightLbs} lbs reweigh</div>
                         )}
                         {inv.invoicedClass !== inv.quotedClass && (
-                          <div className="text-rose-400 font-bold font-mono">Class {inv.quotedClass} → {inv.invoicedClass}</div>
+                          <div className="text-neutral-300 font-bold font-mono">Class {inv.quotedClass} → {inv.invoicedClass}</div>
                         )}
                         {inv.unapprovedAccessorials.length > 0 && (
-                          <div className="text-purple-400 font-medium text-[10px]">{inv.unapprovedAccessorials.join(', ')}</div>
+                          <div className="text-neutral-400 font-medium text-[10px]">{inv.unapprovedAccessorials.join(', ')}</div>
                         )}
                         {inv.deltaWeightLbs === 0 && inv.invoicedClass === inv.quotedClass && inv.unapprovedAccessorials.length === 0 && (
-                          <span className="text-slate-400">Match 100%</span>
+                          <span className="text-neutral-500">Match 100%</span>
                         )}
                       </td>
                       <td className="p-3.5">
                         {inv.status === 'AUDITED_CLEAN' && (
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 w-fit">
-                            <CheckCircle2 className="w-3 h-3" /> CLEAN (≤$5.00)
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-900 text-white border border-neutral-700 flex items-center gap-1 w-fit font-mono">
+                            <CheckCircle2 className="w-3 h-3 text-white" /> CLEAN (≤$5.00)
                           </span>
                         )}
                         {inv.status === 'DISCREPANCY_FLAGGED' && (
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1 w-fit">
-                            <AlertTriangle className="w-3 h-3" /> OVERCHARGE
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-900 text-white border border-neutral-700 flex items-center gap-1 w-fit font-mono">
+                            <AlertTriangle className="w-3 h-3 text-white" /> OVERCHARGE
                           </span>
                         )}
                         {inv.status === 'DISPUTED' && (
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 w-fit">
-                            <Clock className="w-3 h-3" /> DISPUTE FILED
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-900 text-neutral-300 border border-neutral-700 flex items-center gap-1 w-fit font-mono">
+                            <Clock className="w-3 h-3 text-neutral-400" /> DISPUTE FILED
                           </span>
                         )}
                         {inv.status === 'SETTLED' && (
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1 w-fit">
-                            <Check className="w-3 h-3" /> CREDIT WON
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-900 text-white border border-neutral-700 flex items-center gap-1 w-fit font-mono">
+                            <Check className="w-3 h-3 text-white" /> CREDIT WON
                           </span>
                         )}
                       </td>
@@ -571,16 +571,16 @@ export const Phase5DisputeWorkspace: React.FC<{
                         {inv.status === 'DISCREPANCY_FLAGGED' && (
                           <button
                             onClick={() => setShowCreateDisputeModal(inv)}
-                            className="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[11px] rounded-lg shadow transition flex items-center gap-1 ml-auto"
+                            className="px-3 py-1.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-[11px] rounded-lg shadow transition flex items-center gap-1 ml-auto"
                           >
                             <ShieldAlert className="w-3 h-3" /> Dispute Overcharge
                           </button>
                         )}
                         {inv.status === 'AUDITED_CLEAN' && (
-                          <span className="text-[11px] text-emerald-400 font-bold">Auto-Approved</span>
+                          <span className="text-[11px] text-white font-bold font-mono">Auto-Approved</span>
                         )}
                         {inv.status === 'SETTLED' && (
-                          <span className="text-[11px] text-sky-400 font-bold">Settled</span>
+                          <span className="text-[11px] text-white font-bold font-mono">Settled</span>
                         )}
                       </td>
                     </tr>
@@ -596,13 +596,13 @@ export const Phase5DisputeWorkspace: React.FC<{
       {/* TAB: LEGAL DISPUTE DESK (5.3 & 5.4) */}
       {/* ===================================================================== */}
       {activeSubTab === 'disputes' && (
-        <div className="space-y-4">
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-            <h3 className="text-base font-black text-white flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-indigo-400" /> 49 CFR § 378 Legal Dispute Desk
+        <div className="space-y-4 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] p-5 rounded-2xl">
+            <h3 className="text-base font-serif font-normal text-white flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-white" /> 49 CFR § 378 Legal Dispute Desk
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Automated compilation of formal legal dispute packages pursuant to <strong>49 CFR § 378</strong> and <strong>49 U.S.C. § 14708</strong> with certified eBOL & Geotagged POD evidence.
+            <p className="text-xs text-neutral-400 mt-1 font-sans">
+              Automated compilation of formal legal dispute packages pursuant to <strong>49 CFR § 378</strong> and <strong>49 U.S.C. § 14708</strong> with certified eBOL &amp; Geotagged POD evidence.
             </p>
           </div>
 
@@ -610,58 +610,50 @@ export const Phase5DisputeWorkspace: React.FC<{
             {disputes.map((d) => (
               <div
                 key={d.id}
-                className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 space-y-3.5 shadow-lg transition"
+                className="bg-[#09090b] border border-[#27272a] hover:border-neutral-700 rounded-2xl p-5 space-y-3.5 shadow-lg transition"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[10px] font-bold font-mono text-indigo-400 uppercase tracking-wider">
+                    <span className="text-[10px] font-bold font-mono text-neutral-300 uppercase tracking-wider">
                       {d.disputeReferenceNumber}
                     </span>
-                    <h4 className="text-base font-black text-white mt-0.5">{d.carrierName}</h4>
-                    <span className="text-xs text-slate-400 font-mono">PRO: {d.carrierProNumber}</span>
+                    <h4 className="text-base font-serif font-normal text-white mt-0.5">{d.carrierName}</h4>
+                    <span className="text-xs text-neutral-400 font-mono">PRO: {d.carrierProNumber}</span>
                   </div>
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                      d.status === 'CREDIT_ISSUED'
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                        : d.status === 'ESCALATED'
-                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                        : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                    }`}
-                  >
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold font-mono border bg-neutral-900 text-white border-neutral-700">
                     {d.status.replace('_', ' ')}
                   </span>
                 </div>
 
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 space-y-1.5 text-xs">
-                  <div className="flex justify-between text-slate-300">
+                <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800 space-y-1.5 text-xs font-sans">
+                  <div className="flex justify-between text-neutral-300">
                     <span>Dispute Category:</span>
-                    <span className="font-bold text-amber-400 font-mono">{d.disputeCategory}</span>
+                    <span className="font-bold text-white font-mono">{d.disputeCategory}</span>
                   </div>
-                  <div className="flex justify-between text-slate-300">
+                  <div className="flex justify-between text-neutral-300">
                     <span>Disputed Overcharge:</span>
-                    <span className="font-bold text-rose-400 font-mono text-sm">${d.disputedAmount.toFixed(2)}</span>
+                    <span className="font-bold text-white font-mono text-sm">${d.disputedAmount.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-slate-400 text-[11px]">
+                  <div className="flex justify-between text-neutral-400 text-[11px]">
                     <span>Evidence Confidence:</span>
-                    <span className="font-bold text-emerald-400">{d.confidenceScore}% (Certified eBOL + POD)</span>
+                    <span className="font-bold text-white">{d.confidenceScore}% (Certified eBOL + POD)</span>
                   </div>
-                  <div className="flex justify-between text-slate-400 text-[11px]">
+                  <div className="flex justify-between text-neutral-400 text-[11px]">
                     <span>Assigned Claims Intake:</span>
-                    <span className="font-mono text-sky-400">{d.claimDeskEmail}</span>
+                    <span className="font-mono text-neutral-300">{d.claimDeskEmail}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                  <span className="text-[11px] text-slate-400">
+                <div className="flex items-center justify-between pt-2 border-t border-neutral-800">
+                  <span className="text-[11px] text-neutral-400">
                     FMCSA Clock: <strong className="text-white font-mono">Day {d.daysElapsed}/30</strong>
                   </span>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setSelectedDispute(d)}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 flex items-center gap-1.5 transition"
+                      className="px-3 py-1.5 bg-[#121215] hover:bg-neutral-800 text-white font-medium text-xs rounded-xl border border-neutral-800 flex items-center gap-1.5 transition"
                     >
-                      <Eye className="w-3.5 h-3.5 text-indigo-400" /> View 2-Page Legal PDF
+                      <Eye className="w-3.5 h-3.5 text-neutral-400" /> View Legal PDF
                     </button>
                     {d.status !== 'CREDIT_ISSUED' && (
                       <button
@@ -669,7 +661,7 @@ export const Phase5DisputeWorkspace: React.FC<{
                           setShowCreditMemoModal(d);
                           setCreditAmountInput(d.disputedAmount.toString());
                         }}
-                        className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1 transition"
+                        className="px-3 py-1.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl flex items-center gap-1 transition"
                       >
                         <DollarSign className="w-3.5 h-3.5" /> Record Credit
                       </button>
@@ -686,54 +678,54 @@ export const Phase5DisputeWorkspace: React.FC<{
       {/* TAB: CLAIMS LIFECYCLE & 30-DAY FMCSA TRACKER (5.5) */}
       {/* ===================================================================== */}
       {activeSubTab === 'claims_lifecycle' && (
-        <div className="space-y-4">
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-            <h3 className="text-base font-black text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-teal-400" /> Carrier Claims State Machine & 30-Day FMCSA Tracker
+        <div className="space-y-4 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] p-5 rounded-2xl">
+            <h3 className="text-base font-serif font-normal text-white flex items-center gap-2">
+              <Clock className="w-5 h-5 text-white" /> Carrier Claims State Machine &amp; 30-Day FMCSA Tracker
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-neutral-400 mt-1 font-sans">
               Monitors carrier response deadlines under <strong>49 CFR § 378.7 (Statutory 30-Day Claim Rule)</strong> and triggers automatic STB complaints if carriers delay.
             </p>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
-            <h4 className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 space-y-4 shadow-xl">
+            <h4 className="text-xs font-bold font-mono text-neutral-300 uppercase tracking-wider">
               Dispute Pipeline State Machine
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               {[
-                { stage: '1. FLAGGED', count: '1 Load', color: 'border-slate-700 text-slate-300' },
-                { stage: '2. GENERATED', count: '1 Legal Pkg', color: 'border-indigo-500/50 text-indigo-300' },
-                { stage: '3. SUBMITTED', count: '1 Dispatched', color: 'border-sky-500/50 text-sky-300' },
-                { stage: '4. IN REVIEW', count: '1 Adjustor Assigned', color: 'border-amber-500/50 text-amber-300' },
-                { stage: '5. CREDIT WON', count: '1 Settled ($220.00)', color: 'border-emerald-500/50 text-emerald-300 bg-emerald-950/20' },
+                { stage: '1. FLAGGED', count: '1 Load', color: 'border-neutral-700 text-neutral-300' },
+                { stage: '2. GENERATED', count: '1 Legal Pkg', color: 'border-neutral-700 text-white' },
+                { stage: '3. SUBMITTED', count: '1 Dispatched', color: 'border-neutral-700 text-white' },
+                { stage: '4. IN REVIEW', count: '1 Adjustor Assigned', color: 'border-neutral-700 text-white' },
+                { stage: '5. CREDIT WON', count: '1 Settled ($220.00)', color: 'border-white text-white bg-[#121215]' },
               ].map((st, i) => (
-                <div key={i} className={`p-3 rounded-xl border bg-slate-950 ${st.color}`}>
-                  <div className="text-[11px] font-black">{st.stage}</div>
-                  <div className="text-[10px] opacity-80 mt-0.5">{st.count}</div>
+                <div key={i} className={`p-3 rounded-xl border bg-[#121215] ${st.color}`}>
+                  <div className="text-[11px] font-bold font-mono">{st.stage}</div>
+                  <div className="text-[10px] opacity-80 mt-0.5 font-sans">{st.count}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 shadow-xl">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 space-y-3 shadow-xl">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold font-mono text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4" /> 30-Day Statutory FMCSA Overdue Alerts
+              <h4 className="text-xs font-bold font-mono text-white uppercase tracking-wider flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-white" /> 30-Day Statutory FMCSA Overdue Alerts
               </h4>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-neutral-900 text-white border border-neutral-700">
                 1 Claim Non-Compliant
               </span>
             </div>
-            <div className="bg-slate-950 p-4 rounded-xl border border-rose-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-[#121215] p-4 rounded-xl border border-neutral-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <div className="text-xs font-bold text-white flex items-center gap-2">
                   <span>DISP-2026-RL-11048 (R+L Carriers)</span>
-                  <span className="px-2 py-0.5 bg-rose-500 text-slate-950 font-black text-[9px] rounded">
+                  <span className="px-2 py-0.5 bg-neutral-900 border border-neutral-700 text-white font-mono text-[9px] rounded font-bold">
                     34 DAYS ELAPSED (VIOLATION)
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">
+                <p className="text-[11px] text-neutral-400 mt-1 font-sans">
                   Carrier failed to acknowledge or resolve $165.00 Fuel Index Mismatch overcharge within statutory 30-day window under 49 CFR § 378.7.
                 </p>
               </div>
@@ -741,7 +733,7 @@ export const Phase5DisputeWorkspace: React.FC<{
                 onClick={() =>
                   alert('STB (Surface Transportation Board) Complaint Letter compiled pursuant to 49 U.S.C. § 14708 & § 14901! Ready for regulatory submission.')
                 }
-                className="px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow whitespace-nowrap"
+                className="px-3.5 py-2 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow whitespace-nowrap"
               >
                 Download STB / FMCSA Complaint
               </button>
@@ -911,64 +903,50 @@ export const Phase5DisputeWorkspace: React.FC<{
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-sans">
             {scorecards.map((sc) => (
               <div
                 key={sc.scac}
-                className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl"
+                className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 space-y-4 shadow-xl"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-wider">
+                    <span className="text-[10px] font-bold font-mono text-neutral-400 uppercase tracking-wider">
                       SCAC: {sc.scac}
                     </span>
-                    <h4 className="text-base font-black text-white mt-0.5">{sc.name}</h4>
+                    <h4 className="text-base font-serif font-normal text-white mt-0.5">{sc.name}</h4>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-black text-white font-mono">{sc.reliabilityScore}</div>
-                    <span
-                      className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
-                        sc.tier === 'EXCELLENT'
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          : sc.tier === 'GOOD'
-                          ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                          : sc.tier === 'MARGINAL'
-                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                          : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                      }`}
-                    >
+                    <div className="text-2xl font-mono font-bold text-white">{sc.reliabilityScore}</div>
+                    <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-neutral-900 text-white border border-neutral-700 uppercase">
                       {sc.tier.replace('_', ' ')}
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-2 text-xs bg-slate-950 p-3 rounded-xl border border-slate-800/80">
-                  <div className="flex justify-between text-slate-300">
+                <div className="space-y-2 text-xs bg-[#121215] p-3 rounded-xl border border-neutral-800">
+                  <div className="flex justify-between text-neutral-300">
                     <span>Clean Invoice Rate:</span>
-                    <span className="font-bold text-emerald-400 font-mono">{sc.cleanInvoiceRatePct}%</span>
+                    <span className="font-bold text-white font-mono">{sc.cleanInvoiceRatePct}%</span>
                   </div>
-                  <div className="flex justify-between text-slate-300">
+                  <div className="flex justify-between text-neutral-300">
                     <span>Dispute Win Rate:</span>
-                    <span className="font-bold text-sky-400 font-mono">{sc.winRatePct}%</span>
+                    <span className="font-bold text-white font-mono">{sc.winRatePct}%</span>
                   </div>
-                  <div className="flex justify-between text-slate-300">
+                  <div className="flex justify-between text-neutral-300">
                     <span>Avg Resolution Time:</span>
                     <span className="font-mono text-white">{sc.avgResolutionDays} days</span>
                   </div>
-                  <div className="flex justify-between text-slate-300 pt-1 border-t border-slate-800">
+                  <div className="flex justify-between text-neutral-300 pt-1 border-t border-neutral-800">
                     <span>Routing Friction Penalty:</span>
-                    <span
-                      className={`font-mono font-bold ${
-                        sc.ratingPenaltyBps > 0 ? 'text-rose-400' : 'text-emerald-400'
-                      }`}
-                    >
+                    <span className="font-mono font-bold text-white">
                       +{sc.ratingPenaltyBps} bps
                     </span>
                   </div>
                 </div>
 
-                <div className="text-[11px] text-slate-400">
-                  Frequent Error: <strong className="text-slate-200">{sc.topDiscrepancy}</strong>
+                <div className="text-[11px] text-neutral-400">
+                  Frequent Error: <strong className="text-neutral-200">{sc.topDiscrepancy}</strong>
                 </div>
               </div>
             ))}

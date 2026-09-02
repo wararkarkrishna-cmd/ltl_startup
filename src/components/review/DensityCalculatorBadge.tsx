@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { LtlDensityCalculator } from '@/lib/classification/density-calculator';
@@ -34,51 +34,51 @@ export const DensityCalculatorBadge: React.FC<DensityCalculatorBadgeProps> = ({
     ]);
 
     return (
-      <div className="rounded-lg border border-slate-800 bg-slate-900/90 p-4 space-y-3 shadow-md">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-          <div className="flex items-center space-x-2 text-emerald-400 font-semibold text-sm">
-            <Gauge className="w-4 h-4" />
-            <span>Algorithmic Density & NMFC Engine</span>
+      <div className="rounded-xl border border-neutral-800 bg-[#09090b] p-4 space-y-3 shadow-md font-sans">
+        <div className="flex items-center justify-between border-b border-neutral-800 pb-2">
+          <div className="flex items-center space-x-2 text-white font-medium text-xs">
+            <Gauge className="w-4 h-4 text-neutral-400" />
+            <span>Algorithmic Density &amp; NMFC Engine</span>
           </div>
-          <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="px-2.5 py-0.5 text-xs font-bold rounded font-mono bg-neutral-900 text-white border border-neutral-700">
             Class {summary.recommendedShipmentClass}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          <div className="bg-slate-950/60 p-2.5 rounded border border-slate-800/80">
-            <span className="text-slate-400 flex items-center gap-1 mb-1">
-              <Box className="w-3.5 h-3.5 text-blue-400" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+          <div className="bg-[#121215] p-2.5 rounded-lg border border-neutral-800">
+            <span className="text-neutral-400 flex items-center gap-1 mb-1 font-sans text-[10px] uppercase">
+              <Box className="w-3.5 h-3.5 text-neutral-400" />
               PCF Density
             </span>
-            <span className="text-sm font-bold text-slate-100">{summary.effectiveShipmentPcf} lbs/cu.ft</span>
+            <span className="text-sm font-bold text-white">{summary.effectiveShipmentPcf} lbs/cu.ft</span>
           </div>
 
-          <div className="bg-slate-950/60 p-2.5 rounded border border-slate-800/80">
-            <span className="text-slate-400 flex items-center gap-1 mb-1">
-              <Layers className="w-3.5 h-3.5 text-amber-400" />
+          <div className="bg-[#121215] p-2.5 rounded-lg border border-neutral-800">
+            <span className="text-neutral-400 flex items-center gap-1 mb-1 font-sans text-[10px] uppercase">
+              <Layers className="w-3.5 h-3.5 text-neutral-400" />
               Total Volume
             </span>
-            <span className="text-sm font-bold text-slate-100">{summary.totalCubicFeet} cu.ft</span>
+            <span className="text-sm font-bold text-white">{summary.totalCubicFeet} cu.ft</span>
           </div>
 
-          <div className="bg-slate-950/60 p-2.5 rounded border border-slate-800/80">
-            <span className="text-slate-400 flex items-center gap-1 mb-1">
-              <Truck className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="bg-[#121215] p-2.5 rounded-lg border border-neutral-800">
+            <span className="text-neutral-400 flex items-center gap-1 mb-1 font-sans text-[10px] uppercase">
+              <Truck className="w-3.5 h-3.5 text-neutral-400" />
               Linear Feet
             </span>
-            <span className="text-sm font-bold text-slate-100">{summary.totalLinearFeet} ft</span>
+            <span className="text-sm font-bold text-white">{summary.totalLinearFeet} ft</span>
           </div>
 
-          <div className="bg-slate-950/60 p-2.5 rounded border border-slate-800/80">
-            <span className="text-slate-400 block mb-1">53ft Trailer Cap</span>
-            <span className="text-sm font-bold text-slate-100">{summary.trailerSpaceUtilizationPercent}%</span>
+          <div className="bg-[#121215] p-2.5 rounded-lg border border-neutral-800">
+            <span className="text-neutral-400 block mb-1 font-sans text-[10px] uppercase">53ft Trailer Cap</span>
+            <span className="text-sm font-bold text-white">{summary.trailerSpaceUtilizationPercent}%</span>
           </div>
         </div>
 
         {summary.volumeLtlFlags.isVolumeLtl && (
-          <div className="flex items-center space-x-2 text-amber-400 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-md text-xs">
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <div className="flex items-center space-x-2 text-white bg-[#121215] border border-neutral-700 p-2.5 rounded-lg text-xs font-sans">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0 text-neutral-300" />
             <span>
               <strong>Volume-LTL Threshold Warning:</strong> Exceeds standard single-carrier thresholds ({summary.totalLinearFeet} LF / {summary.totalWeightLbs} lbs). Routing to Split-Optimizer recommended.
             </span>

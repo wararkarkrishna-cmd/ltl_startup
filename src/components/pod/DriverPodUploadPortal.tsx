@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Camera,
   Upload,
@@ -16,13 +17,17 @@ import {
   Clock,
   User,
   Package,
+  Layers,
+  PenTool,
 } from 'lucide-react';
 
 interface DriverPodUploadPortalProps {
   token: string;
 }
 
-export const DriverPodUploadPortal: React.FC<DriverPodUploadPortalProps> = ({ token }) => {
+function DriverPodUploadPortalContent({ token }: DriverPodUploadPortalProps) {
+  const searchParams = useSearchParams();
+  const [activeView, setActiveView] = useState<'upload' | 'geofence' | 'signature' | 'damage'>('upload');
   const [shipment, setShipment] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +52,29 @@ export const DriverPodUploadPortal: React.FC<DriverPodUploadPortalProps> = ({ to
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<any | null>(null);
+
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    if (viewParam === 'geofence') {
+      setActiveView('geofence');
+    } else if (viewParam === 'signature') {
+      setActiveView('signature');
+    } else if (viewParam === 'damage') {
+      setActiveView('damage');
+      setHasDamageNotation(true);
+    } else {
+      setActiveView('upload');
+    }
+  }, [searchParams]);
+
+  const handleSubViewChange = (view: 'upload' | 'geofence' | 'signature' | 'damage') => {
+    setActiveView(view);
+    const url = view === 'upload' ? `/pod/${token}` : `/pod/${token}?view=${view}`;
+    window.history.pushState(null, '', url);
+    if (view === 'damage') {
+      setHasDamageNotation(true);
+    }
+  };
 
   // Fetch Shipment Details by Token
   useEffect(() => {
@@ -133,7 +161,7 @@ export const DriverPodUploadPortal: React.FC<DriverPodUploadPortalProps> = ({ to
     if (!ctx) return;
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#0f172a';
+    ctx.strokeStyle = '#000000';
   }, [canvasRef]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -280,10 +308,10 @@ export const DriverPodUploadPortal: React.FC<DriverPodUploadPortalProps> = ({ to
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#050507] flex items-center justify-center p-4">
         <div className="text-center space-y-3">
-          <Truck className="w-8 h-8 text-emerald-400 animate-bounce mx-auto" />
-          <div className="text-sm font-bold text-white">Loading Delivery Details...</div>
+          <Truck className="w-8 h-8 text-white animate-bounce mx-auto" />
+          <div className="text-xs font-mono text-neutral-400">Loading Delivery Details...</div>
         </div>
       </div>
     );
@@ -294,57 +322,57 @@ export const DriverPodUploadPortal: React.FC<DriverPodUploadPortalProps> = ({ to
     const isClean = submissionResult.status === 'VERIFIED' && !submissionResult.damageCheck?.hasException;
 
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 sm:p-6">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-5 text-center shadow-2xl">
-          <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center bg-emerald-500/10 border border-emerald-500/20">
-            <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+      <div className="min-h-screen bg-[#050507] text-white flex items-center justify-center p-4 sm:p-6 font-sans">
+        <div className="max-w-md w-full bg-[#09090b] border border-[#27272a] rounded-3xl p-6 space-y-5 text-center shadow-2xl">
+          <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center bg-neutral-900 border border-neutral-700">
+            <CheckCircle2 className="w-8 h-8 text-white" />
           </div>
 
           <div className="space-y-1">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400">
               {isClean ? 'DELIVERY VERIFIED & SETTLED' : 'DELIVERY LOGGED WITH EXCEPTION'}
             </span>
-            <h2 className="text-2xl font-black text-white">Proof of Delivery Captured</h2>
-            <p className="text-xs text-slate-400">
+            <h2 className="text-2xl font-serif text-white font-normal">Proof of Delivery Captured</h2>
+            <p className="text-xs text-neutral-400 font-sans">
               Shipment Ref: <span className="font-mono text-white font-bold">{shipment?.referenceNumber}</span>
             </p>
           </div>
 
           {/* Verification Badge Grid */}
           <div className="grid grid-cols-2 gap-2 text-left text-xs font-mono">
-            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-              <div className="text-[10px] text-slate-400 font-sans">Geotag Geofence</div>
-              <div className="text-emerald-400 font-bold mt-0.5">
+            <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+              <div className="text-[10px] text-neutral-500 font-sans">Geotag Geofence</div>
+              <div className="text-white font-bold mt-0.5">
                 {submissionResult.geofence?.distanceMiles ? `${submissionResult.geofence.distanceMiles} mi (PASS)` : '0.12 mi (PASS)'}
               </div>
             </div>
 
-            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-              <div className="text-[10px] text-slate-400 font-sans">OCR Signature</div>
-              <div className="text-emerald-400 font-bold mt-0.5">DETECTED (98%)</div>
+            <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+              <div className="text-[10px] text-neutral-500 font-sans">OCR Signature</div>
+              <div className="text-white font-bold mt-0.5">DETECTED (98%)</div>
             </div>
 
-            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-              <div className="text-[10px] text-slate-400 font-sans">Piece Count</div>
+            <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+              <div className="text-[10px] text-neutral-500 font-sans">Piece Count</div>
               <div className="text-white font-bold mt-0.5">
                 {receivedPieces} / {shipment?.totalPallets} Pallets
               </div>
             </div>
 
-            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-              <div className="text-[10px] text-slate-400 font-sans">Invoice Status</div>
-              <div className="text-indigo-300 font-bold mt-0.5">
+            <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+              <div className="text-[10px] text-neutral-500 font-sans">Invoice Status</div>
+              <div className="text-neutral-300 font-bold mt-0.5">
                 {isClean ? 'AUTO-GENERATED (<60s)' : 'UNDER REVIEW'}
               </div>
             </div>
           </div>
 
           {isClean && (
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 text-xs text-left space-y-1">
-              <div className="text-emerald-400 font-bold flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4" /> Instant Invoicing Triggered
+            <div className="bg-[#121215] border border-neutral-800 rounded-2xl p-4 text-xs text-left space-y-1 font-sans">
+              <div className="text-white font-bold flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-white" /> Instant Invoicing Triggered
               </div>
-              <div className="text-slate-300">
+              <div className="text-neutral-300">
                 Customer Invoice <span className="font-mono font-bold text-white">INV-2026-08842</span> has been compiled and emailed to Accounts Payable.
               </div>
             </div>
@@ -359,7 +387,7 @@ export const DriverPodUploadPortal: React.FC<DriverPodUploadPortalProps> = ({ to
                 setConsigneeName('');
                 clearSignature();
               }}
-              className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition"
+              className="w-full py-3 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl transition"
             >
               Submit Another Delivery
             </button>
@@ -370,47 +398,74 @@ export const DriverPodUploadPortal: React.FC<DriverPodUploadPortalProps> = ({ to
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-start p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen bg-[#050507] text-white flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 font-sans">
       <div className="max-w-lg w-full space-y-5">
-        {/* Header Branding */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3">
+        {/* Top Header & Sub-Feature Tabs */}
+        <div className="bg-[#09090b] border border-[#27272a] rounded-3xl p-5 shadow-xl space-y-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <Truck className="w-4 h-4 text-emerald-400" />
+              <div className="w-8 h-8 rounded-xl bg-neutral-900 border border-neutral-700 flex items-center justify-center">
+                <Truck className="w-4 h-4 text-white" />
               </div>
               <div>
-                <div className="text-xs font-black text-white tracking-tight">
-                  APEX <span className="text-emerald-400 font-mono">DRIVER POD</span>
+                <div className="text-xs font-bold text-white tracking-tight font-sans">
+                  APEX <span className="text-neutral-400 font-mono">DRIVER POD</span>
                 </div>
-                <div className="text-[10px] text-slate-400">Mobile Delivery Portal</div>
+                <div className="text-[10px] text-neutral-400">Mobile Delivery Portal</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-full border border-slate-800 text-[11px] font-mono">
-              <MapPin className={`w-3 h-3 ${gpsStatus === 'captured' ? 'text-emerald-400' : 'text-amber-400'}`} />
-              <span className={gpsStatus === 'captured' ? 'text-emerald-400' : 'text-slate-400'}>
-                {gpsStatus === 'captured' ? 'GPS Active' : 'Acquiring GPS...'}
+            <div className="flex items-center gap-1.5 bg-[#121215] px-2.5 py-1 rounded-full border border-neutral-800 text-[11px] font-mono">
+              <MapPin className={`w-3 h-3 ${gpsStatus === 'captured' ? 'text-white' : 'text-neutral-500'}`} />
+              <span className={gpsStatus === 'captured' ? 'text-white' : 'text-neutral-400'}>
+                {gpsStatus === 'captured' ? '0.5mi Geofence Active' : 'Acquiring GPS...'}
               </span>
             </div>
           </div>
 
+          {/* Sub-Feature View Tabs */}
+          <div className="flex border-b border-[#27272a] gap-1 overflow-x-auto pb-1 custom-scrollbar">
+            {[
+              { id: 'upload', label: 'PWA Portal', icon: Upload },
+              { id: 'geofence', label: 'Haversine Geofence', icon: MapPin },
+              { id: 'signature', label: 'HTML5 Signature', icon: PenTool },
+              { id: 'damage', label: 'Damage Notations', icon: AlertTriangle },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeView === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleSubViewChange(tab.id as any)}
+                  className={`px-3 py-1.5 text-xs font-sans font-medium rounded-t-lg transition flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
+                    isActive
+                      ? 'border-white text-white bg-[#121215] font-semibold'
+                      : 'border-transparent text-neutral-400 hover:text-white hover:bg-[#0c0c0e]'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
           {/* Shipment Summary Card */}
-          <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 space-y-2.5">
+          <div className="bg-[#121215] border border-neutral-800 rounded-2xl p-4 space-y-2.5">
             <div className="flex justify-between items-start">
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400">Destination Consignee</span>
-                <div className="text-sm font-bold text-white">{shipment?.destName}</div>
-                <div className="text-xs text-slate-300">
+                <span className="text-[10px] uppercase font-mono text-neutral-500">Destination Consignee</span>
+                <div className="text-sm font-bold text-white font-sans">{shipment?.destName}</div>
+                <div className="text-xs text-neutral-400 font-sans">
                   {shipment?.destAddress1}, {shipment?.destCity}, {shipment?.destState} {shipment?.destZip}
                 </div>
               </div>
-              <span className="text-xs font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded">
+              <span className="text-xs font-mono font-bold bg-[#09090b] text-neutral-200 border border-neutral-700 px-2 py-0.5 rounded">
                 {shipment?.referenceNumber}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono pt-2 border-t border-slate-800/80 text-slate-400">
+            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono pt-2 border-t border-neutral-800 text-neutral-400">
               <div>Carrier: <span className="text-white font-bold">{shipment?.carrierName}</span></div>
               <div>Pro #: <span className="text-white font-bold">{shipment?.proNumber || 'SAIA-984210'}</span></div>
               <div>Load: <span className="text-white font-bold">{shipment?.totalPallets} Pallets</span></div>
@@ -419,178 +474,201 @@ export const DriverPodUploadPortal: React.FC<DriverPodUploadPortalProps> = ({ to
           </div>
         </div>
 
-        {/* Step 1: Camera Photo Capture */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center">
-              1
-            </div>
-            <h3 className="font-bold text-white text-sm">Capture Signed Delivery Receipt (POD)</h3>
-          </div>
-
-          <div className="space-y-3">
-            {previewUrl ? (
-              <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 max-h-64 flex items-center justify-center">
-                <img src={previewUrl} alt="POD Delivery Receipt" className="max-h-64 object-contain" />
-                <button
-                  onClick={() => {
-                    setSelectedFile(null);
-                    setPreviewUrl(null);
-                  }}
-                  className="absolute top-2 right-2 bg-slate-900/90 hover:bg-slate-800 text-white text-xs px-2.5 py-1 rounded-lg border border-slate-700 font-semibold shadow"
-                >
-                  Retake Photo
-                </button>
+        {/* Step 1 / Geofence Section */}
+        {(activeView === 'upload' || activeView === 'geofence') && (
+          <div className={`bg-[#09090b] border rounded-3xl p-5 space-y-4 shadow-xl transition ${
+            activeView === 'geofence' ? 'border-white ring-1 ring-white/20' : 'border-[#27272a]'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-neutral-900 text-white font-bold font-mono text-xs flex items-center justify-center border border-neutral-700">
+                  1
+                </div>
+                <h3 className="font-sans font-semibold text-white text-sm">
+                  {activeView === 'geofence' ? 'GPS Haversine Geofence Verification (0.5mi)' : 'Capture Signed Delivery Receipt (POD)'}
+                </h3>
               </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-2xl p-6 cursor-pointer bg-slate-950/60 transition group">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition">
-                  <Camera className="w-6 h-6 text-emerald-400" />
+              {activeView === 'geofence' && (
+                <span className="text-[10px] font-mono px-2 py-0.5 bg-neutral-900 border border-neutral-700 rounded text-white">
+                  Distance: 0.12 mi (PASS)
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              {previewUrl ? (
+                <div className="relative rounded-2xl overflow-hidden border border-neutral-800 bg-[#121215] max-h-64 flex items-center justify-center">
+                  <img src={previewUrl} alt="POD Delivery Receipt" className="max-h-64 object-contain" />
+                  <button
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setPreviewUrl(null);
+                    }}
+                    className="absolute top-2 right-2 bg-black/80 hover:bg-neutral-800 text-white text-xs px-2.5 py-1 rounded-lg border border-neutral-700 font-medium shadow"
+                  >
+                    Retake Photo
+                  </button>
                 </div>
-                <div className="text-sm font-bold text-white mt-3">Take Photo or Upload Image</div>
-                <div className="text-[11px] text-slate-400 mt-1">
-                  Automatic client compression (12MB $\rightarrow$ &lt;800KB)
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </label>
-            )}
+              ) : (
+                <label className="flex flex-col items-center justify-center border-2 border-dashed border-neutral-800 hover:border-neutral-500 rounded-2xl p-6 cursor-pointer bg-[#121215] transition group">
+                  <div className="w-12 h-12 rounded-2xl bg-neutral-900 border border-neutral-700 flex items-center justify-center group-hover:scale-105 transition">
+                    <Camera className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-xs font-sans font-bold text-white mt-3">Take Photo or Upload Image</div>
+                  <div className="text-[11px] text-neutral-400 mt-1 font-mono">
+                    Automatic client compression (&lt; 800KB)
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Step 2: Consignee Information & Piece Count */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center">
-              2
-            </div>
-            <h3 className="font-bold text-white text-sm">Receiver Confirmation</h3>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="text-[11px] font-bold text-slate-400 uppercase">
-                Consignee Printed Name *
-              </label>
-              <div className="relative mt-1">
-                <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-                <input
-                  type="text"
-                  placeholder="e.g. John Miller, Receiving Lead"
-                  value={consigneeName}
-                  onChange={(e) => setConsigneeName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                />
+        {(activeView === 'upload' || activeView === 'geofence') && (
+          <div className="bg-[#09090b] border border-[#27272a] rounded-3xl p-5 space-y-4 shadow-xl">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-neutral-900 text-white font-bold font-mono text-xs flex items-center justify-center border border-neutral-700">
+                2
               </div>
+              <h3 className="font-sans font-semibold text-white text-sm">Receiver Confirmation</h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase">
-                  Pieces Delivered
+                <label className="text-[10px] font-mono text-neutral-500 uppercase">
+                  Consignee Printed Name *
                 </label>
                 <div className="relative mt-1">
-                  <Package className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <User className="w-4 h-4 text-neutral-500 absolute left-3 top-3" />
                   <input
-                    type="number"
-                    value={receivedPieces}
-                    onChange={(e) => setReceivedPieces(parseInt(e.target.value) || 0)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                    type="text"
+                    placeholder="e.g. John Miller, Receiving Lead"
+                    value={consigneeName}
+                    onChange={(e) => setConsigneeName(e.target.value)}
+                    className="w-full bg-[#121215] border border-neutral-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase">
-                  Expected Pieces
-                </label>
-                <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs font-mono text-slate-400 mt-1">
-                  {shipment?.totalPallets || 4} Pallets
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-mono text-neutral-500 uppercase">
+                    Pieces Delivered
+                  </label>
+                  <div className="relative mt-1">
+                    <Package className="w-4 h-4 text-neutral-500 absolute left-3 top-3" />
+                    <input
+                      type="number"
+                      value={receivedPieces}
+                      onChange={(e) => setReceivedPieces(parseInt(e.target.value) || 0)}
+                      className="w-full bg-[#121215] border border-neutral-800 rounded-xl pl-9 pr-3 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-neutral-600"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-mono text-neutral-500 uppercase">
+                    Expected Pieces
+                  </label>
+                  <div className="bg-[#121215] border border-neutral-800 rounded-xl px-3 py-2.5 text-xs font-mono text-neutral-300 mt-1">
+                    {shipment?.totalPallets || 4} Pallets
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Step 3: Digital Consignee Signature Pad */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center">
-                3
+        {(activeView === 'upload' || activeView === 'signature') && (
+          <div className={`bg-[#09090b] border rounded-3xl p-5 space-y-4 shadow-xl transition ${
+            activeView === 'signature' ? 'border-white ring-1 ring-white/20' : 'border-[#27272a]'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-neutral-900 text-white font-bold font-mono text-xs flex items-center justify-center border border-neutral-700">
+                  3
+                </div>
+                <h3 className="font-sans font-semibold text-white text-sm">HTML5 Receiver Digital Signature Pad</h3>
               </div>
-              <h3 className="font-bold text-white text-sm">Receiver Digital Signature</h3>
+
+              <button
+                onClick={clearSignature}
+                className="text-xs text-neutral-400 hover:text-white flex items-center gap-1 bg-[#121215] px-2 py-1 rounded-lg border border-neutral-800 transition"
+              >
+                <RotateCcw className="w-3 h-3" /> Clear
+              </button>
             </div>
 
-            <button
-              onClick={clearSignature}
-              className="text-xs text-slate-400 hover:text-white flex items-center gap-1 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800 transition"
-            >
-              <RotateCcw className="w-3 h-3" /> Clear
-            </button>
-          </div>
-
-          <div className="border border-slate-700 bg-white rounded-2xl p-1 shadow-inner">
-            <canvas
-              ref={canvasRef}
-              width={400}
-              height={140}
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
-              onTouchStart={startDrawing}
-              onTouchMove={draw}
-              onTouchEnd={stopDrawing}
-              className="w-full h-32 touch-none cursor-crosshair rounded-xl bg-white"
-            />
-          </div>
-          <div className="text-[10px] text-slate-400 text-center">
-            Sign with finger or stylus above. By signing, consignee confirms clean receipt of goods.
-          </div>
-        </div>
-
-        {/* Step 4: Damage & Exception Notation (Optional) */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={hasDamageNotation}
-                onChange={(e) => setHasDamageNotation(e.target.checked)}
-                className="w-4 h-4 rounded text-rose-500 bg-slate-950 border-slate-700 focus:ring-rose-500"
-              />
-              <span className="text-xs font-bold text-slate-200">
-                Flag Damage, Shortage, or Exception Notations
-              </span>
-            </label>
-          </div>
-
-          {hasDamageNotation && (
-            <div className="space-y-2 pt-2 border-t border-slate-800">
-              <div className="flex items-center gap-1.5 text-xs text-rose-400 font-bold">
-                <AlertTriangle className="w-4 h-4" /> Broker Claims Alert Will Be Dispatched
-              </div>
-              <textarea
-                placeholder="Detail damage notation on bill (e.g. 1 pallet crushed, wet cartons, 2 pcs short)..."
-                value={driverNotes}
-                onChange={(e) => setDriverNotes(e.target.value)}
-                rows={3}
-                className="w-full bg-slate-950 border border-rose-500/40 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+            <div className="border border-neutral-700 bg-white rounded-2xl p-1 shadow-inner">
+              <canvas
+                ref={canvasRef}
+                width={400}
+                height={140}
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+                className="w-full h-32 touch-none cursor-crosshair rounded-xl bg-white"
               />
             </div>
-          )}
-        </div>
+            <div className="text-[10px] text-neutral-400 text-center font-sans">
+              Sign with finger or stylus above. By signing, consignee confirms clean receipt of goods.
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Damage & Exception Notation */}
+        {(activeView === 'upload' || activeView === 'damage') && (
+          <div className={`bg-[#09090b] border rounded-3xl p-5 space-y-3 shadow-xl transition ${
+            activeView === 'damage' ? 'border-white ring-1 ring-white/20' : 'border-[#27272a]'
+          }`}>
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasDamageNotation}
+                  onChange={(e) => setHasDamageNotation(e.target.checked)}
+                  className="w-4 h-4 rounded text-white bg-[#121215] border-neutral-700 focus:ring-white"
+                />
+                <span className="text-xs font-sans font-semibold text-white">
+                  Flag Damage, Shortage, or Exception Notations
+                </span>
+              </label>
+            </div>
+
+            {hasDamageNotation && (
+              <div className="space-y-2 pt-2 border-t border-neutral-800">
+                <div className="flex items-center gap-1.5 text-xs text-white font-bold font-sans">
+                  <AlertTriangle className="w-4 h-4 text-white" /> OCR Damage Keyword Flagging &amp; Claims Alert
+                </div>
+                <textarea
+                  placeholder="Detail damage notation on bill (e.g. 1 pallet crushed, wet cartons, 2 pcs short)..."
+                  value={driverNotes}
+                  onChange={(e) => setDriverNotes(e.target.value)}
+                  rows={3}
+                  className="w-full bg-[#121215] border border-neutral-700 rounded-xl p-3 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 font-mono"
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Error Alert */}
         {error && (
-          <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-3.5 text-xs text-rose-300 flex items-center gap-2 font-medium">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+          <div className="bg-[#121215] border border-neutral-700 rounded-2xl p-3.5 text-xs text-white flex items-center gap-2 font-medium font-sans">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-white" />
             <span>{error}</span>
           </div>
         )}
@@ -599,12 +677,12 @@ export const DriverPodUploadPortal: React.FC<DriverPodUploadPortalProps> = ({ to
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm rounded-2xl shadow-xl flex items-center justify-center gap-2 transition disabled:opacity-50"
+          className="w-full py-4 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-sm rounded-2xl shadow-xl flex items-center justify-center gap-2 transition disabled:opacity-50"
         >
           {isSubmitting ? (
             <>
               <Clock className="w-4 h-4 animate-spin" />
-              Validating Geotag & Processing POD...
+              Validating Geotag &amp; Processing POD...
             </>
           ) : (
             <>
@@ -615,5 +693,13 @@ export const DriverPodUploadPortal: React.FC<DriverPodUploadPortalProps> = ({ to
         </button>
       </div>
     </div>
+  );
+}
+
+export const DriverPodUploadPortal: React.FC<DriverPodUploadPortalProps> = (props) => {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-neutral-400 font-mono text-xs">Loading Mobile POD Portal...</div>}>
+      <DriverPodUploadPortalContent {...props} />
+    </Suspense>
   );
 };

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { AccessorialCode } from '@/db/schema';
@@ -61,78 +61,67 @@ export const AccessorialCommandPalette: React.FC<AccessorialCommandPaletteProps>
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-w-xl w-full overflow-hidden flex flex-col max-h-[80vh]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/80 backdrop-blur-sm p-4 font-sans">
+      <div className="bg-[#09090b] border border-[#27272a] rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden flex flex-col max-h-[80vh]">
         {/* Search Header */}
-        <div className="flex items-center px-4 py-3 border-b border-slate-800 bg-slate-950">
-          <Search className="w-5 h-5 text-slate-400 mr-3" />
+        <div className="flex items-center px-4 py-3 border-b border-[#27272a] bg-[#0c0c0e]">
+          <Search className="w-4 h-4 text-neutral-400 mr-3" />
           <input
             type="text"
             placeholder="Search accessorials (Liftgate, Residential, Hazmat...)"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             autoFocus
-            className="bg-transparent text-slate-100 placeholder-slate-500 text-sm focus:outline-none w-full"
+            className="bg-transparent text-white placeholder-neutral-500 text-xs font-sans focus:outline-none w-full"
           />
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 p-1 rounded-md hover:bg-slate-800 transition"
+            className="text-neutral-400 hover:text-white p-1 rounded-md hover:bg-neutral-800 transition"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* List of Accessorials */}
-        <div className="overflow-y-auto p-2 space-y-1 divide-y divide-slate-800/50">
+        <div className="overflow-y-auto p-2 space-y-1 divide-y divide-neutral-800/50 custom-scrollbar">
           {filtered.map((acc) => {
             const isSelected = selectedAccessorials.includes(acc.code);
             return (
               <button
                 key={acc.code}
                 onClick={() => onToggle(acc.code)}
-                className={`w-full text-left p-3 rounded-lg flex items-center justify-between transition ${
+                className={`w-full text-left p-3 rounded-xl flex items-center justify-between transition ${
                   isSelected
-                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
-                    : 'hover:bg-slate-800/60 text-slate-300 border border-transparent'
+                    ? 'bg-[#121215] border border-neutral-700 text-white font-semibold'
+                    : 'hover:bg-neutral-900 text-neutral-300 border border-transparent'
                 }`}
               >
                 <div className="space-y-0.5">
                   <div className="flex items-center space-x-2">
-                    <span className="font-semibold text-sm">{acc.name}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded">
-                      {acc.code}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      ~{acc.fee}
+                    <span className="font-mono text-xs text-white font-bold">{acc.code}</span>
+                    <span className="text-xs font-sans text-neutral-200">{acc.name}</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 bg-[#09090b] text-neutral-400 border border-neutral-800 rounded">
+                      {acc.category}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400">{acc.description}</p>
+                  <p className="text-[11px] text-neutral-400 font-sans">{acc.description}</p>
                 </div>
 
-                <div
-                  className={`w-6 h-6 rounded-md flex items-center justify-center border transition ${
-                    isSelected
-                      ? 'bg-emerald-500 border-emerald-400 text-black'
-                      : 'border-slate-700 bg-slate-800'
-                  }`}
-                >
-                  {isSelected && <Check className="w-4 h-4 stroke-[3]" />}
+                <div className="flex items-center space-x-3">
+                  <span className="font-mono text-xs text-neutral-300">{acc.fee}</span>
+                  <div
+                    className={`w-5 h-5 rounded flex items-center justify-center border transition ${
+                      isSelected
+                        ? 'bg-white border-white text-black'
+                        : 'border-neutral-700 bg-[#121215]'
+                    }`}
+                  >
+                    {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
                 </div>
               </button>
             );
           })}
-
-          {filtered.length === 0 && (
-            <div className="p-6 text-center text-sm text-slate-500">
-              No matching accessorials found.
-            </div>
-          )}
-        </div>
-
-        {/* Footer info */}
-        <div className="p-3 border-t border-slate-800 bg-slate-950 text-xs text-slate-400 flex justify-between items-center">
-          <span>Tip: Press <kbd className="px-1.5 py-0.5 bg-slate-800 rounded text-slate-300 font-mono text-[10px]">Esc</kbd> to exit</span>
-          <span>{selectedAccessorials.length} selected</span>
         </div>
       </div>
     </div>
