@@ -1,6 +1,7 @@
-﻿import crypto from 'crypto';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { supabaseAdmin } from '../supabase/admin';
 
 export interface StoredDocumentMetadata {
   id: string;
@@ -10,6 +11,7 @@ export interface StoredDocumentMetadata {
   sizeBytes: number;
   sha256Hash: string;
   storagePath: string;
+  publicUrl?: string | null;
   uploadedAt: Date;
 }
 
@@ -18,7 +20,8 @@ export interface IDocumentStorage {
     tenantId: string,
     fileName: string,
     mimeType: string,
-    buffer: Buffer
+    buffer: Buffer,
+    bucketOverride?: string
   ): Promise<StoredDocumentMetadata>;
 
   getDocumentBuffer(storagePath: string): Promise<Buffer>;
@@ -28,6 +31,131 @@ export interface IDocumentStorage {
 
 export function calculateSha256(buffer: Buffer): string {
   return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+/**
+ * Supabase Storage Adapter
+ * Stores all PDFs, rate sheets, signed BOLs, POD photos, invoices, and dispute packets in Supabase Storage.
+ */
+export class SupabaseStorageAdapter implements IDocumentStorage {
+  private defaultBucket: string;
+  private localFallback: LocalStorageAdapter;
+  private initializedBuckets: Set<string> = new Set();
+
+  constructor(defaultBucket: string = 'rfq-documents') {
+    this.defaultBucket = defaultBucket;
+    this.localFallback = new LocalStorageAdapter();
+  }
+
+  public calculateSha256(buffer: Buffer): string {
+    return calculateSha256(buffer);
+  }
+
+  private async ensureBucketExists(bucket: string): Promise<void> {
+    if (this.initializedBuckets.has(bucket)) return;
+    try {
+      const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+      const exists = buckets?.some((b) => b.name === bucket);
+      if (!exists) {
+        await supabaseAdmin.storage.createBucket(bucket, {
+          public: true,
+          fileSizeLimit: 52428800, // 50 MB
+        });
+      }
+      this.initializedBuckets.add(bucket);
+    } catch {
+      this.initializedBuckets.add(bucket);
+    }
+  }
+
+  public async saveDocument(
+    tenantId: string,
+    fileName: string,
+    mimeType: string,
+    buffer: Buffer,
+    bucketOverride?: string
+  ): Promise<StoredDocumentMetadata> {
+    const hash = this.calculateSha256(buffer);
+    const bucket = bucketOverride || this.defaultBucket;
+    const ext = path.extname(fileName) || '.bin';
+    const cleanFileName = path.basename(fileName, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const storagePath = `${tenantId}/${hash.substring(0, 16)}_${cleanFileName}${ext}`;
+
+    try {
+      await this.ensureBucketExists(bucket);
+
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from(bucket)
+        .upload(storagePath, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new Error(`Supabase Storage Upload Error: ${uploadError.message}`);
+      }
+
+      const { data: publicUrlData } = supabaseAdmin.storage
+        .from(bucket)
+        .getPublicUrl(storagePath);
+
+      const metadata: StoredDocumentMetadata = {
+        id: crypto.randomUUID(),
+        tenantId,
+        originalFileName: fileName,
+        mimeType,
+        sizeBytes: buffer.length,
+        sha256Hash: hash,
+        storagePath: `supabase://${bucket}/${storagePath}`,
+        publicUrl: publicUrlData?.publicUrl || null,
+        uploadedAt: new Date(),
+      };
+
+      // Also cache locally
+      await this.localFallback.saveDocument(tenantId, fileName, mimeType, buffer);
+
+      return metadata;
+    } catch {
+      // Fallback gracefully to local storage if network / storage bucket is offline
+      const fallbackMeta = await this.localFallback.saveDocument(tenantId, fileName, mimeType, buffer);
+      return {
+        ...fallbackMeta,
+        publicUrl: null,
+      };
+    }
+  }
+
+  public async getDocumentBuffer(storagePath: string): Promise<Buffer> {
+    if (storagePath.startsWith('supabase://')) {
+      const parts = storagePath.replace('supabase://', '').split('/');
+      const bucket = parts[0];
+      const filePath = parts.slice(1).join('/');
+
+      try {
+        const { data, error } = await supabaseAdmin.storage.from(bucket).download(filePath);
+        if (error) {
+          throw new Error(`Supabase Storage Download Error: ${error.message}`);
+        }
+        const arrayBuffer = await data.arrayBuffer();
+        return Buffer.from(arrayBuffer);
+      } catch {
+        return this.localFallback.getDocumentBuffer(filePath);
+      }
+    }
+
+    return this.localFallback.getDocumentBuffer(storagePath);
+  }
+
+  public async deleteDocument(storagePath: string): Promise<void> {
+    if (storagePath.startsWith('supabase://')) {
+      const parts = storagePath.replace('supabase://', '').split('/');
+      const bucket = parts[0];
+      const filePath = parts.slice(1).join('/');
+
+      await supabaseAdmin.storage.from(bucket).remove([filePath]);
+    }
+    await this.localFallback.deleteDocument(storagePath);
+  }
 }
 
 export class LocalStorageAdapter implements IDocumentStorage {
@@ -71,6 +199,7 @@ export class LocalStorageAdapter implements IDocumentStorage {
       sizeBytes: buffer.length,
       sha256Hash: hash,
       storagePath: filePath,
+      publicUrl: `file://${filePath}`,
       uploadedAt: new Date(),
     };
 
@@ -123,6 +252,7 @@ export class S3StorageAdapter implements IDocumentStorage {
       sizeBytes: buffer.length,
       sha256Hash: hash,
       storagePath: `s3://${this.bucket}/${s3Key}`,
+      publicUrl: `https://${this.bucket}.s3.amazonaws.com/${s3Key}`,
       uploadedAt: new Date(),
     };
 
@@ -138,10 +268,17 @@ export class S3StorageAdapter implements IDocumentStorage {
   }
 }
 
-// Factory Helper
+// Singleton factory
+let globalStorage: IDocumentStorage | null = null;
+
 export function getDocumentStorage(): IDocumentStorage {
-  if (process.env.STORAGE_PROVIDER === 's3' && process.env.S3_BUCKET) {
-    return new S3StorageAdapter(process.env.S3_BUCKET, process.env.S3_ENDPOINT || 'https://s3.amazonaws.com');
+  if (!globalStorage) {
+    if (process.env.STORAGE_PROVIDER === 's3' && process.env.S3_BUCKET) {
+      globalStorage = new S3StorageAdapter(process.env.S3_BUCKET, process.env.S3_ENDPOINT || 'https://s3.amazonaws.com');
+    } else {
+      globalStorage = new SupabaseStorageAdapter('rfq-documents');
+    }
   }
-  return new LocalStorageAdapter();
+  return globalStorage;
 }
+

@@ -1,29 +1,30 @@
-﻿import fs from 'fs';
+import fs from 'fs';
 import path from 'path';
-import { Pool } from 'pg';
+import { pgPool } from '../src/lib/supabase/db-pool';
 
-const pool = new Pool({
-  host: 'db.byjhclavuwlomujwuoku.supabase.co',
-  port: 5432,
-  user: 'postgres',
-  password: '?Mxtx_3?p?/C/vK',
-  database: 'postgres',
-  ssl: {
-    rejectUnauthorized: false,
-  },
-  connectionTimeoutMillis: 10000,
-});
-
-pool.on('error', (err) => {
-  // Ignore idle client connection resets
-});
+// Load .env.local if not already loaded in process
+const envPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+      const idx = trimmed.indexOf('=');
+      const key = trimmed.substring(0, idx).trim();
+      const val = trimmed.substring(idx + 1).trim();
+      if (!process.env[key]) {
+        process.env[key] = val;
+      }
+    }
+  }
+}
 
 async function runVerification() {
   console.log('====================================================');
   console.log('🚀 SUPABASE POSTGRESQL TABLE VERIFICATION');
   console.log('====================================================');
 
-  const client = await pool.connect();
+  const client = await pgPool.connect();
 
   try {
     const res = await client.query(`
@@ -51,8 +52,9 @@ async function runVerification() {
     console.error('❌ Verification error:', err.message);
   } finally {
     client.release();
-    await pool.end();
+    await pgPool.end();
   }
 }
 
 runVerification();
+

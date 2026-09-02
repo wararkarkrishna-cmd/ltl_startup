@@ -1,4 +1,4 @@
-﻿import {
+import {
   RfqExtractionResult,
   RfqExtractionResultSchema,
   ExtractedLineItem,
@@ -285,6 +285,93 @@ export class LtlFreightExtractor {
   }
 
   /**
+   * Live Multimodal / LLM Extraction via Gemini / OpenAI with Structured Output
+   */
+  public static async extractWithLlm(rawText: string): Promise<RfqExtractionResult | null> {
+    const openaiKey = process.env.OPENAI_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
+
+    if (geminiKey) {
+      try {
+        const prompt = `You are an expert LTL freight rating and dispatch AI parser.
+Extract the structured shipment details from this unstructured RFQ text into valid JSON matching this schema:
+- origin: { name, address1, city, state, zip, country }
+- destination: { name, address1, city, state, zip, country }
+- items: array of { quantity, packagingType, lengthIn, widthIn, heightIn, unitWeightLbs, totalWeightLbs, commodityDescription, isStackable, isHazmat }
+- totalPallets: number
+- totalWeightLbs: number
+- accessorials: array of standard codes (LG_PU, LG_DEL, RES_PU, RES_DEL, LIM_ACC, INS_DEL, NOTIFY, HAZMAT)
+- confidenceScores: { originZip, destZip, totalWeight, palletCount, dimensions, accessorials, overall }
+- requiresHumanReview: boolean
+
+Input text:
+"""${rawText}"""
+
+Respond ONLY with pure JSON without markdown code fences.`;
+
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { responseMimeType: 'application/json' },
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (jsonText) {
+            const parsed = JSON.parse(jsonText);
+            return RfqExtractionResultSchema.parse(parsed);
+          }
+        }
+      } catch {
+        // Fallback gracefully on any API failure
+      }
+    }
+
+    if (openaiKey) {
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${openaiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an expert LTL freight parser. Extract shipment details into valid JSON matching the RFQ schema.',
+              },
+              { role: 'user', content: rawText },
+            ],
+            response_format: { type: 'json_object' },
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const jsonText = data.choices?.[0]?.message?.content;
+          if (jsonText) {
+            const parsed = JSON.parse(jsonText);
+            return RfqExtractionResultSchema.parse(parsed);
+          }
+        }
+      } catch {
+        // Fallback gracefully on any API failure
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Unified Extraction Method
    */
   public static async extractRfq(rawText: string): Promise<RfqExtractionResult> {
@@ -293,9 +380,21 @@ export class LtlFreightExtractor {
     }
 
     try {
+      // 1. Attempt live LLM extraction if API credentials configured
+      if (process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY) {
+        const llmResult = await this.extractWithLlm(rawText);
+        if (llmResult) return llmResult;
+      }
+
+      // 2. High-speed deterministic extraction engine
       return this.parseDeterministic(rawText);
     } catch (err: any) {
-      throw new Error(`RFQ Extraction failed: ${err.message || String(err)}`);
+      // Final resilience: try deterministic parse
+      try {
+        return this.parseDeterministic(rawText);
+      } catch {
+        throw new Error(`RFQ Extraction failed: ${err.message || String(err)}`);
+      }
     }
   }
 }
