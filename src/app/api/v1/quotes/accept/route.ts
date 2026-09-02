@@ -94,10 +94,11 @@ export async function POST(req: NextRequest) {
       : null;
 
     if (shipment) {
-      shipment.status = 'QUOTED';
+      shipment.status = 'BOOKED';
       shipment.specialInstructions = parsed.specialInstructions || shipment.specialInstructions;
       dbClient.shipments.set(shipment.id, shipment);
     }
+
 
     // Append cryptographic audit log
     await AuditEngine.recordEvent({

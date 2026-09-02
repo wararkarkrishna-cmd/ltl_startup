@@ -27,9 +27,17 @@ export async function POST(req: NextRequest) {
 
     dbClient.setTenantContext(tenantId);
 
-    // Compute SHA-256 Hash of image
+    // Compute SHA-256 Hash of image & store to Supabase Storage
     const imageBuffer = Buffer.from(imageBase64 || 'POD_PLACEHOLDER_IMAGE');
-    const imageHash = crypto.createHash('sha256').update(imageBuffer).digest('hex');
+    const storage = (await import('../../../../../lib/storage/document-storage')).getDocumentStorage();
+    const storageMeta = await storage.saveDocument(
+      tenantId,
+      fileName,
+      'image/jpeg',
+      imageBuffer,
+      'pod-documents'
+    );
+    const imageHash = storageMeta.sha256Hash;
 
     // 1. Run Damage & Shortage Detection Engine
     const inspection = DamageDetectorEngine.inspect({
@@ -48,11 +56,12 @@ export async function POST(req: NextRequest) {
       tenantId,
       shipmentId,
       podToken: token || null,
-      imageUrl: `/uploads/pod/${imageHash.slice(0, 16)}_${fileName}`,
+      imageUrl: storageMeta.publicUrl || storageMeta.storagePath,
       imageHash,
       fileSizeBytes: Number(fileSizeBytes),
 
       consigneeName: consigneeName || 'Authorized Receiver',
+
       consigneeSignatureDataUrl: consigneeSignatureDataUrl || null,
       receivedPieces: Number(receivedPieces),
       expectedPieces: Number(expectedPieces),

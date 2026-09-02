@@ -59,6 +59,17 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     if (format === 'pdf') {
       try {
         const pdfBuffer = await VicsEbolGenerator.generatePdfBuffer(ebolData);
+        const storage = (await import('../../../../../../lib/storage/document-storage')).getDocumentStorage();
+        
+        // Save to Supabase Storage in shipment-documents bucket
+        storage.saveDocument(
+          tenantId,
+          `eBOL_${masterBolNumber}.pdf`,
+          'application/pdf',
+          pdfBuffer,
+          'shipment-documents'
+        ).catch(() => {});
+
         return new Response(pdfBuffer as any, {
           headers: {
             'Content-Type': 'application/pdf',
@@ -75,6 +86,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
         });
       }
     }
+
 
     const html = VicsEbolGenerator.renderVicsHtml(ebolData);
     return new Response(html, {
