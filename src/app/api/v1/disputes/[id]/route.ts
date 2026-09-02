@@ -63,6 +63,17 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       }
 
       const pdfBuffer = await DisputePackageGenerator.generateDisputePdf(packageData);
+      const storage = (await import('../../../../../lib/storage/document-storage')).getDocumentStorage();
+      
+      // Save dispute packet to Supabase Storage under disputes bucket
+      storage.saveDocument(
+        tenantId,
+        `dispute-${dispute.disputeReferenceNumber}.pdf`,
+        'application/pdf',
+        pdfBuffer,
+        'disputes'
+      ).catch(() => {});
+
       return new Response(new Uint8Array(pdfBuffer), {
         headers: {
           'Content-Type': 'application/pdf',
@@ -71,6 +82,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
         },
       });
     }
+
 
     return NextResponse.json(
       { success: false, error: `Unsupported format: ${format}. Supported: json, html, pdf` },
