@@ -366,7 +366,7 @@ export const AppSidebar: React.FC<{
 
               {/* Expandable Sub-features Dropdown */}
               {isExpanded && (
-                <div className="pl-6 pr-1 py-1 space-y-0.5 border-l border-neutral-800/80 ml-4 my-1">
+                <div className="pl-5 pr-1 py-1 space-y-1 border-l border-neutral-800/80 ml-4 my-1.5">
                   {module.subFeatures.map((sf, idx) => {
                     const isSfActive = isSubFeatureActive(sf.href);
 
@@ -377,10 +377,11 @@ export const AppSidebar: React.FC<{
                           href={sf.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex items-center justify-between px-2 py-1.5 rounded text-[11px] font-sans text-neutral-400 hover:text-white hover:bg-neutral-900 transition"
+                          className="group flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-sans text-neutral-400 hover:text-white hover:bg-[#121215] transition"
+                          title={sf.description}
                         >
                           <span className="truncate">{sf.title}</span>
-                          <ExternalLink className="w-3 h-3 text-neutral-500 group-hover:text-neutral-300" />
+                          <ExternalLink className="w-3 h-3 text-neutral-500 group-hover:text-neutral-300 ml-1.5 shrink-0" />
                         </a>
                       );
                     }
@@ -389,22 +390,15 @@ export const AppSidebar: React.FC<{
                       <Link
                         key={idx}
                         href={sf.href || module.href}
-                        className={`block px-2 py-1.5 rounded text-[11px] font-sans transition ${
+                        className={`group flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-sans transition ${
                           isSfActive
-                            ? 'text-white font-semibold bg-neutral-800/80 border border-neutral-700/80 shadow-sm'
-                            : 'text-neutral-400 hover:text-white hover:bg-neutral-900/60'
+                            ? 'text-white font-semibold bg-[#18181b] border border-neutral-700/80 shadow-sm'
+                            : 'text-neutral-400 hover:text-white hover:bg-[#121215]'
                         }`}
                         title={sf.description}
                       >
-                        <div className="truncate flex items-center justify-between">
-                          <span>{sf.title}</span>
-                          {isSfActive && <span className="w-1.5 h-1.5 rounded-full bg-white ml-1.5 shrink-0" />}
-                        </div>
-                        {sf.description && (
-                          <div className="text-[9px] text-neutral-500 truncate mt-0.5 font-normal">
-                            {sf.description}
-                          </div>
-                        )}
+                        <span className="truncate">{sf.title}</span>
+                        {isSfActive && <span className="w-1.5 h-1.5 rounded-full bg-white ml-2 shrink-0" />}
                       </Link>
                     );
                   })}

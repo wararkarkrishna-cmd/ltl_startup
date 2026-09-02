@@ -20,6 +20,11 @@ import {
   Camera,
   AlertTriangle,
   RotateCcw,
+  Eye,
+  X,
+  Info,
+  HelpCircle,
+  ExternalLink,
 } from 'lucide-react';
 import { LtlDensityCalculator } from '../lib/classification/density-calculator';
 import { AccessorialDetector } from '../lib/classification/accessorial-detector';
@@ -27,11 +32,25 @@ import { FmcsaCarrierVettingEngine } from '../lib/vetting/fmcsa-vetting-engine';
 import { DamageDetectorEngine } from '../lib/pod/damage-detector-engine';
 import { GeofenceValidator } from '../lib/pod/geofence-validator';
 
+interface UseCaseDetails {
+  title: string;
+  phase: string;
+  category: string;
+  summary: string;
+  whyItMatters: string;
+  brokerBenefits: string[];
+  workflowStage: string;
+  targetTab?: string;
+  targetHref?: string;
+}
+
 function HomePageContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<
     'overview' | 'ingestion' | 'quoting' | 'dispatch' | 'vetting' | 'pod-invoicing' | 'quickpay'
   >('overview');
+
+  const [activeUseCase, setActiveUseCase] = useState<UseCaseDetails | null>(null);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -150,88 +169,112 @@ function HomePageContent() {
           totalCarrierCost: 766.2,
           margin: 114.93,
           customerPrice: 881.13,
-          transitDays: 2,
-          isGuaranteed: false,
+          transitDays: 3,
+          isGuaranteed: true,
         },
       ]);
       setIsQuoting(false);
-    }, 350);
+    }, 600);
   };
 
   const handleRunVetting = () => {
-    const res = FmcsaCarrierVettingEngine.evaluateCarrier({
-      tenantId: '01916362-7901-7080-867c-9b8895092a01',
-      carrierCode: vettingCarrier,
-      carrierScac: vettingCarrier,
-      carrierName: `${vettingCarrier} Freight Express`,
+    const result = FmcsaCarrierVettingEngine.evaluateSafety({
+      scac: vettingCarrier,
       dotNumber: vettingDot,
-      mcNumber: `MC${vettingDot}`,
-      autoLiabilityCoverageDollars: 2_000_000,
-      cargoInsuranceCoverageDollars: 250_000,
-      safetyRatingOverride: 'SATISFACTORY',
-      operatingAuthorityStatusOverride: 'ACTIVE',
-      driverOosRatePercent: 2.3,
-      vehicleOosRatePercent: 12.1,
+      safetyRating: 'SATISFACTORY',
+      operatingAuthorityStatus: 'ACTIVE',
+      autoLiabilityInsuranceCents: 200000000,
+      cargoInsuranceCents: 25000000,
+      outOfServiceRateVehiclePct: 14.2,
+      outOfServiceRateDriverPct: 3.1,
+      nationalAvgOosVehiclePct: 20.7,
+      nationalAvgOosDriverPct: 5.5,
     });
-    setVettingResult(res);
+    setVettingResult(result);
   };
 
   const handleRunPodValidation = () => {
-    const geo = GeofenceValidator.validateDeliveryLocation(podZip, podGpsLat, podGpsLon, 0.5);
-    const damage = DamageDetectorEngine.inspect({
-      ocrRawText: podOcrText,
-      driverNotes: '',
-      consigneeNotes: '',
-      receivedPieces: 4,
-      expectedPieces: 4,
+    const damage = DamageDetectorEngine.evaluateOcrText(podOcrText);
+    const geofence = GeofenceValidator.validateDelivery({
+      destZip: podZip,
+      uploadLat: podGpsLat,
+      uploadLon: podGpsLon,
     });
 
+    const isEligible = geofence.isWithinGeofence && !damage.hasException;
+
     setPodResult({
-      geofence: geo,
+      status: isEligible ? 'VERIFIED' : 'EXCEPTION_REVIEW',
+      overallConfidence: 98.4,
+      geofence,
       damage,
-      status: damage.hasException ? 'FLAGGED_EXCEPTION' : 'VERIFIED',
-      overallConfidence: damage.hasException ? 88.5 : 98.2,
-      invoiceEligible: !damage.hasException,
-      invoiceNumber: 'INV-2026-08842',
+      invoiceEligible: isEligible,
+      invoiceNumber: isEligible ? 'INV-2026-08842' : null,
     });
   };
 
   return (
     <div className="space-y-8 font-sans">
       {/* Hero Header in Luxury Minimal Black & White */}
-      <section className="relative overflow-hidden rounded-2xl bg-[#09090b] border border-[#27272a] p-6 sm:p-8 shadow-2xl">
+      <section className="relative overflow-hidden rounded-3xl bg-[#09090b] border border-[#27272a] p-6 sm:p-8 lg:p-10 shadow-2xl">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-          <div className="space-y-2 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-700/80 text-neutral-300 text-[11px] font-mono font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              PRODUCTION READY • ENTERPRISE LTL OS
+          <div className="space-y-3 max-w-3xl">
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-700/80 text-neutral-300 text-[11px] font-mono font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                PRODUCTION READY • ENTERPRISE LTL OS
+              </span>
+              <button
+                onClick={() =>
+                  setActiveUseCase({
+                    title: 'Enterprise LTL Freight Operating System',
+                    phase: 'Architecture Overview',
+                    category: 'Core Lifecycle Platform',
+                    summary:
+                      'A unified operating system automating freight procurement, rating, dispatch, compliance, and instant settlement.',
+                    whyItMatters:
+                      'Freight brokers lose hours juggling spreadsheets, multiple rater portals, and carrier PDF invoices. Apex unifies the entire workflow into a sub-second autonomous pipeline.',
+                    brokerBenefits: [
+                      'Autonomous RFQ intake with 28ms PCF density & NMFC classification',
+                      'Direct BYOC + Wholesale algorithmic rating with knapsack split optimization',
+                      'Real-time FMCSA QCMobile authority and $1M auto liability insurance validation',
+                      'Driver mobile PWA signature capture with 0.5-mile GPS Haversine geofence verification',
+                      'Sub-60s automated invoicing and instant same-day RTP/FedNow QuickPay disbursement',
+                    ],
+                    workflowStage: 'Complete Freight Lifecycle (Phase 1 through Phase 6)',
+                  })
+                }
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 text-xs font-sans transition"
+                title="View Full Platform Use Case"
+              >
+                <Eye className="w-3.5 h-3.5 text-white" />
+                <span>View Use Case</span>
+              </button>
             </div>
+
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-white tracking-tight font-normal">
               Enterprise LTL Freight Operating System
             </h1>
-            <p className="text-xs sm:text-sm text-neutral-400 font-sans leading-relaxed">
-              AI Multi-Modal RFQ Ingestion, Hybrid Multi-Carrier Rating (BYOC + Wholesale), Combinatorial Split Optimizer, Real-Time Kanban Dispatch, Geotagged POD Capture &amp; Instant Sub-Minute Settlement.
-            </p>
           </div>
 
           <div className="flex flex-wrap lg:flex-col gap-2.5 flex-shrink-0 w-full lg:w-auto">
             <Link
               href="/invoices"
-              className="px-4 py-2.5 rounded-xl bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs shadow transition flex items-center justify-center gap-2"
+              className="px-5 py-3 rounded-xl bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs shadow transition flex items-center justify-center gap-2"
             >
               <DollarSign className="w-4 h-4" />
               <span>Invoicing &amp; Re-Bill Dispute Desk</span>
             </Link>
             <Link
               href="/dispatch"
-              className="px-4 py-2.5 rounded-xl bg-[#18181b] hover:bg-[#27272a] text-white font-sans font-semibold text-xs border border-neutral-700 transition flex items-center justify-center gap-2"
+              className="px-5 py-3 rounded-xl bg-[#121215] hover:bg-neutral-800 text-white font-sans font-medium text-xs border border-neutral-800 transition flex items-center justify-center gap-2"
             >
               <KanbanSquare className="w-4 h-4 text-neutral-400" />
               <span>Open Dispatch Desk</span>
             </Link>
             <Link
               href="/review/01916362-7901-7080-867c-9b8895092s01"
-              className="px-4 py-2.5 rounded-xl bg-[#121215] hover:bg-[#1c1c21] text-neutral-300 hover:text-white font-sans font-medium text-xs border border-neutral-800 transition flex items-center justify-center gap-2"
+              className="px-5 py-3 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white font-sans font-medium text-xs border border-neutral-800 transition flex items-center justify-center gap-2"
             >
               <FileCheck2 className="w-4 h-4 text-neutral-400" />
               <span>Review Active RFQs</span>
@@ -240,10 +283,10 @@ function HomePageContent() {
         </div>
 
         {/* Executive KPI Bento Row with Space Grotesk Numbers */}
-        <div id="kpis" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-8 pt-6 border-t border-[#27272a]/80">
-          <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-4 space-y-1">
+        <div id="kpis" className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 pt-6 border-t border-[#27272a]/80">
+          <div className="bg-[#121215] border border-neutral-800/80 rounded-2xl p-5 space-y-1.5 shadow-md">
             <div className="text-xs text-neutral-400 font-sans font-medium flex items-center gap-1.5">
-              <Truck className="w-3.5 h-3.5 text-neutral-300" />
+              <Truck className="w-4 h-4 text-neutral-300" />
               <span>Active Freight Pipeline</span>
             </div>
             <div className="text-2xl sm:text-3xl font-mono font-bold text-white tracking-tight">
@@ -254,9 +297,9 @@ function HomePageContent() {
             </div>
           </div>
 
-          <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-4 space-y-1">
+          <div className="bg-[#121215] border border-neutral-800/80 rounded-2xl p-5 space-y-1.5 shadow-md">
             <div className="text-xs text-neutral-400 font-sans font-medium flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-neutral-300" />
+              <Clock className="w-4 h-4 text-neutral-300" />
               <span>AI Extraction Speed</span>
             </div>
             <div className="text-2xl sm:text-3xl font-mono font-bold text-white tracking-tight">
@@ -267,9 +310,9 @@ function HomePageContent() {
             </div>
           </div>
 
-          <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-4 space-y-1">
+          <div className="bg-[#121215] border border-neutral-800/80 rounded-2xl p-5 space-y-1.5 shadow-md">
             <div className="text-xs text-neutral-400 font-sans font-medium flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-neutral-300" />
+              <TrendingUp className="w-4 h-4 text-neutral-300" />
               <span>Gross Margin Realized</span>
             </div>
             <div className="text-2xl sm:text-3xl font-mono font-bold text-white tracking-tight">
@@ -280,9 +323,9 @@ function HomePageContent() {
             </div>
           </div>
 
-          <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-4 space-y-1">
+          <div className="bg-[#121215] border border-neutral-800/80 rounded-2xl p-5 space-y-1.5 shadow-md">
             <div className="text-xs text-neutral-400 font-sans font-medium flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-neutral-300" />
+              <ShieldCheck className="w-4 h-4 text-neutral-300" />
               <span>Carrier Compliance</span>
             </div>
             <div className="text-2xl sm:text-3xl font-mono font-bold text-white tracking-tight">
@@ -325,160 +368,388 @@ function HomePageContent() {
         })}
       </div>
 
-      {/* TAB CONTENT 1: ALL SYSTEMS OVERVIEW */}
+      {/* TAB CONTENT 1: ALL SYSTEMS OVERVIEW (CLEAN, SPACIOUS CARDS WITH EYE BUTTONS) */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {/* Card 1: Phase 1 */}
-          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 hover:border-neutral-600 transition shadow-lg flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-neutral-900 border border-neutral-700/80 flex items-center justify-center text-white">
-                  <FileCheck2 className="w-5 h-5" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Card 1: Phase 1 AI Ingestion */}
+          <div className="bg-[#09090b] border border-[#27272a] rounded-3xl p-7 hover:border-neutral-600 transition shadow-xl flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="w-12 h-12 rounded-2xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white">
+                  <FileCheck2 className="w-6 h-6" />
                 </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-900 text-neutral-300 border border-neutral-800">
-                  Phase 1.1–1.9
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-neutral-900 text-neutral-400 border border-neutral-800">
+                    Phase 1.1–1.9
+                  </span>
+                  <button
+                    onClick={() =>
+                      setActiveUseCase({
+                        title: 'AI RFQ Ingestion & Density Engine',
+                        phase: 'Phase 1.1–1.9',
+                        category: 'Freight Intake & Classification',
+                        summary:
+                          'Parses unformatted customer email bodies, attachments, and spreadsheets into clean, structured shipment manifests in 28ms.',
+                        whyItMatters:
+                          'Brokers typically waste 10–15 minutes per quote manually calculating PCF density and looking up NMFC classification codes. This eliminates typing errors and protects carrier re-class penalties.',
+                        brokerBenefits: [
+                          'Extracts lanes, weight, pallets, and dimensions from raw text',
+                          'Computes exact PCF (Pounds Per Cubic Foot) and recommends standard NMFC class',
+                          'Detects 15+ liability accessorials (liftgate, inside delivery, appointment required)',
+                          'Generates cryptographic SHA-256 audit ledger for legal rate verification',
+                        ],
+                        workflowStage: 'Step 1: Intake & Class Validation',
+                        targetTab: 'ingestion',
+                      })
+                    }
+                    title="Click to view full Use Case"
+                    className="p-2 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+
               <div>
-                <h3 className="text-lg font-serif text-white font-normal">AI RFQ Ingestion &amp; Density</h3>
-                <p className="text-xs text-neutral-400 mt-1 font-sans">
-                  Multi-modal extraction (PDF/Excel/Email), PCF density, 11-tier NMFC, and SHA-256 audit ledger.
-                </p>
-              </div>
-              <div className="space-y-1.5 text-xs text-neutral-300 font-sans pt-2">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" /> 102 Benchmark Dataset (100%)
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" /> 15+ Accessorial Keyword Detector
+                <h3 className="text-xl font-serif text-white font-normal">AI RFQ Ingestion &amp; Density</h3>
+                <div className="mt-3 flex items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-lg bg-[#121215] border border-neutral-800 text-neutral-300 font-mono text-xs">
+                    28ms AI Parsing • 100% Accuracy
+                  </span>
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => handleTabChange('ingestion')}
-              className="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-lg border border-neutral-700/80 flex items-center justify-center gap-1.5 transition mt-4"
-            >
-              Test AI Extraction <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+
+            <div className="pt-4 border-t border-neutral-800/80 flex items-center gap-2">
+              <button
+                onClick={() => handleTabChange('ingestion')}
+                className="flex-1 py-2.5 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-xl shadow transition text-center"
+              >
+                Test AI Ingestion
+              </button>
+              <button
+                onClick={() =>
+                  setActiveUseCase({
+                    title: 'AI RFQ Ingestion & Density Engine',
+                    phase: 'Phase 1.1–1.9',
+                    category: 'Freight Intake & Classification',
+                    summary:
+                      'Parses unformatted customer email bodies, attachments, and spreadsheets into clean, structured shipment manifests in 28ms.',
+                    whyItMatters:
+                      'Brokers typically waste 10–15 minutes per quote manually calculating PCF density and looking up NMFC classification codes. This eliminates typing errors and protects carrier re-class penalties.',
+                    brokerBenefits: [
+                      'Extracts lanes, weight, pallets, and dimensions from raw text',
+                      'Computes exact PCF (Pounds Per Cubic Foot) and recommends standard NMFC class',
+                      'Detects 15+ liability accessorials (liftgate, inside delivery, appointment required)',
+                      'Generates cryptographic SHA-256 audit ledger for legal rate verification',
+                    ],
+                    workflowStage: 'Step 1: Intake & Class Validation',
+                    targetTab: 'ingestion',
+                  })
+                }
+                title="View Use Case"
+                className="p-2.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {/* Card 2: Phase 2 */}
-          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 hover:border-neutral-600 transition shadow-lg flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-neutral-900 border border-neutral-700/80 flex items-center justify-center text-white">
-                  <Zap className="w-5 h-5" />
+          {/* Card 2: Phase 2 Rating & Split Optimizer */}
+          <div className="bg-[#09090b] border border-[#27272a] rounded-3xl p-7 hover:border-neutral-600 transition shadow-xl flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="w-12 h-12 rounded-2xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white">
+                  <Zap className="w-6 h-6" />
                 </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-900 text-neutral-300 border border-neutral-800">
-                  Phase 2.1–2.9
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-neutral-900 text-neutral-400 border border-neutral-800">
+                    Phase 2.1–2.9
+                  </span>
+                  <button
+                    onClick={() =>
+                      setActiveUseCase({
+                        title: 'Rating & Combinatorial Split Optimizer',
+                        phase: 'Phase 2.1–2.9',
+                        category: 'Algorithmic Pricing & Margin Protection',
+                        summary:
+                          'Simultaneously prices across direct carrier tariffs (BYOC) and platform wholesale contracts with knapsack load splitting.',
+                        whyItMatters:
+                          'Brokers frequently miss $200–$400 in savings on 4+ pallet shipments because quoting multiple carriers or volume splits takes too long. Apex evaluates all permutations in real time.',
+                        brokerBenefits: [
+                          'Compares direct BYOC tariffs against wholesale platform contracts',
+                          'Algorithmic knapsack multi-shipment split optimizer',
+                          'Live SSE streaming rate matrix with sub-second responsiveness',
+                          'Automated minimum gross profit margins ($75.00 profit floor)',
+                        ],
+                        workflowStage: 'Step 2: Pricing & Routing Optimization',
+                        targetTab: 'quoting',
+                      })
+                    }
+                    title="Click to view full Use Case"
+                    className="p-2 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+
               <div>
-                <h3 className="text-lg font-serif text-white font-normal">Rating &amp; Split Optimizer</h3>
-                <p className="text-xs text-neutral-400 mt-1 font-sans">
-                  Direct BYOC adapters, CzarLite tariffs, platform wholesale, and knapsack split optimizer.
-                </p>
-              </div>
-              <div className="space-y-1.5 text-xs text-neutral-300 font-sans pt-2">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" /> 5 Tier-1 Carriers (XPO, Estes, SAIA)
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" /> Real-Time SSE Rate Streamer
+                <h3 className="text-xl font-serif text-white font-normal">Rating &amp; Split Optimizer</h3>
+                <div className="mt-3 flex items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-lg bg-[#121215] border border-neutral-800 text-neutral-300 font-mono text-xs">
+                    5 Tier-1 Carriers • Knapsack Splits
+                  </span>
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => handleTabChange('quoting')}
-              className="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-lg border border-neutral-700/80 flex items-center justify-center gap-1.5 transition mt-4"
-            >
-              Rate Simulation <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+
+            <div className="pt-4 border-t border-neutral-800/80 flex items-center gap-2">
+              <button
+                onClick={() => handleTabChange('quoting')}
+                className="flex-1 py-2.5 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-xl shadow transition text-center"
+              >
+                Simulate Rating
+              </button>
+              <button
+                onClick={() =>
+                  setActiveUseCase({
+                    title: 'Rating & Combinatorial Split Optimizer',
+                    phase: 'Phase 2.1–2.9',
+                    category: 'Algorithmic Pricing & Margin Protection',
+                    summary:
+                      'Simultaneously prices across direct carrier tariffs (BYOC) and platform wholesale contracts with knapsack load splitting.',
+                    whyItMatters:
+                      'Brokers frequently miss $200–$400 in savings on 4+ pallet shipments because quoting multiple carriers or volume splits takes too long. Apex evaluates all permutations in real time.',
+                    brokerBenefits: [
+                      'Compares direct BYOC tariffs against wholesale platform contracts',
+                      'Algorithmic knapsack multi-shipment split optimizer',
+                      'Live SSE streaming rate matrix with sub-second responsiveness',
+                      'Automated minimum gross profit margins ($75.00 profit floor)',
+                    ],
+                    workflowStage: 'Step 2: Pricing & Routing Optimization',
+                    targetTab: 'quoting',
+                  })
+                }
+                title="View Use Case"
+                className="p-2.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {/* Card 3: Phase 3 */}
-          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 hover:border-neutral-600 transition shadow-lg flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-neutral-900 border border-neutral-700/80 flex items-center justify-center text-white">
-                  <KanbanSquare className="w-5 h-5" />
+          {/* Card 3: Phase 3 Dispatch & VICS eBOL */}
+          <div className="bg-[#09090b] border border-[#27272a] rounded-3xl p-7 hover:border-neutral-600 transition shadow-xl flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="w-12 h-12 rounded-2xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white">
+                  <KanbanSquare className="w-6 h-6" />
                 </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-900 text-neutral-300 border border-neutral-800">
-                  Phase 3.1–3.8
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-neutral-900 text-neutral-400 border border-neutral-800">
+                    Phase 3.1–3.8
+                  </span>
+                  <button
+                    onClick={() =>
+                      setActiveUseCase({
+                        title: 'Dispatch & VICS eBOL State Machine',
+                        phase: 'Phase 3.1–3.8',
+                        category: 'Tender Operations & Documentation',
+                        summary:
+                          'A 10-stage lifecycle Kanban state machine managing load tendering, EDI 204/990 payloads, and standard VICS Bill of Lading generation.',
+                        whyItMatters:
+                          'Missing paperwork or tender delays lead to driver detention and cancelled pickups. This guarantees every load has a valid GS1-128 barcode eBOL and automatic milestone tracking.',
+                        brokerBenefits: [
+                          '10-stage state machine from UNASSIGNED through IN_TRANSIT and SETTLED',
+                          'Standard VICS electronic Bill of Lading (eBOL) generation with barcodes',
+                          'Electronic tender dispatches via REST webhooks and EDI 204/990',
+                          'Automated FMCSA safety gatekeeper prior to carrier dispatch',
+                        ],
+                        workflowStage: 'Step 3: Tender & Documentation',
+                        targetTab: 'dispatch',
+                        targetHref: '/dispatch',
+                      })
+                    }
+                    title="Click to view full Use Case"
+                    className="p-2 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+
               <div>
-                <h3 className="text-lg font-serif text-white font-normal">Dispatch &amp; VICS eBOL</h3>
-                <p className="text-xs text-neutral-400 mt-1 font-sans">
-                  10-stage Kanban state machine, 1-click booking, EDI 204/990, and VICS eBOL PDFs.
-                </p>
-              </div>
-              <div className="space-y-1.5 text-xs text-neutral-300 font-sans pt-2">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" /> Standard VICS eBOL PDF Engine
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" /> FMCSA Safety &amp; $1M Insurance
+                <h3 className="text-xl font-serif text-white font-normal">Dispatch &amp; VICS eBOL</h3>
+                <div className="mt-3 flex items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-lg bg-[#121215] border border-neutral-800 text-neutral-300 font-mono text-xs">
+                    10-Stage State Machine • GS1-128
+                  </span>
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => handleTabChange('dispatch')}
-              className="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-lg border border-neutral-700/80 flex items-center justify-center gap-1.5 transition mt-4"
-            >
-              View Dispatch <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+
+            <div className="pt-4 border-t border-neutral-800/80 flex items-center gap-2">
+              <button
+                onClick={() => handleTabChange('dispatch')}
+                className="flex-1 py-2.5 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-xl shadow transition text-center"
+              >
+                View Dispatch
+              </button>
+              <button
+                onClick={() =>
+                  setActiveUseCase({
+                    title: 'Dispatch & VICS eBOL State Machine',
+                    phase: 'Phase 3.1–3.8',
+                    category: 'Tender Operations & Documentation',
+                    summary:
+                      'A 10-stage lifecycle Kanban state machine managing load tendering, EDI 204/990 payloads, and standard VICS Bill of Lading generation.',
+                    whyItMatters:
+                      'Missing paperwork or tender delays lead to driver detention and cancelled pickups. This guarantees every load has a valid GS1-128 barcode eBOL and automatic milestone tracking.',
+                    brokerBenefits: [
+                      '10-stage state machine from UNASSIGNED through IN_TRANSIT and SETTLED',
+                      'Standard VICS electronic Bill of Lading (eBOL) generation with barcodes',
+                      'Electronic tender dispatches via REST webhooks and EDI 204/990',
+                      'Automated FMCSA safety gatekeeper prior to carrier dispatch',
+                    ],
+                    workflowStage: 'Step 3: Tender & Documentation',
+                    targetTab: 'dispatch',
+                    targetHref: '/dispatch',
+                  })
+                }
+                title="View Use Case"
+                className="p-2.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {/* Card 4: Phase 4 */}
-          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 hover:border-neutral-600 transition shadow-lg flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-neutral-900 border border-neutral-700/80 flex items-center justify-center text-white">
-                  <Camera className="w-5 h-5" />
+          {/* Card 4: Phase 4 Geotagged POD & Invoicing */}
+          <div className="bg-[#09090b] border border-[#27272a] rounded-3xl p-7 hover:border-neutral-600 transition shadow-xl flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="w-12 h-12 rounded-2xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white">
+                  <Camera className="w-6 h-6" />
                 </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-900 text-neutral-300 border border-neutral-800">
-                  Phase 4.1–4.4
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-neutral-900 text-neutral-400 border border-neutral-800">
+                    Phase 4.1–4.4
+                  </span>
+                  <button
+                    onClick={() =>
+                      setActiveUseCase({
+                        title: 'Geotagged POD & Sub-60s Invoicing',
+                        phase: 'Phase 4.1–4.4',
+                        category: 'Delivery Verification & Settlement',
+                        summary:
+                          'A driver mobile PWA signature pad with Haversine GPS geofence validation that triggers customer billing in under 60 seconds.',
+                        whyItMatters:
+                          'Brokers usually wait 3–7 days for drivers to email PODs before they can bill shippers, tying up massive working capital. This issues verified customer invoices within seconds of delivery.',
+                        brokerBenefits: [
+                          'Zero-install driver mobile PWA web interface for instant photo upload',
+                          '0.5-mile Haversine GPS distance calculation against delivery destination',
+                          'OCR extraction of consignee handwriting and damaged package notes',
+                          'Sub-60s automated customer invoice dispatch with verified POD attached',
+                        ],
+                        workflowStage: 'Step 4: Delivery Verification & Billing',
+                        targetTab: 'pod-invoicing',
+                        targetHref: '/invoices',
+                      })
+                    }
+                    title="Click to view full Use Case"
+                    className="p-2 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+
               <div>
-                <h3 className="text-lg font-serif text-white font-normal">Geotagged POD &amp; Billing</h3>
-                <p className="text-xs text-neutral-400 mt-1 font-sans">
-                  Driver PWA signature pad, Haversine 0.5mi geofence, damage scanner, and &lt;60s PDF invoicing.
-                </p>
-              </div>
-              <div className="space-y-1.5 text-xs text-neutral-300 font-sans pt-2">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" /> Multi-Point EXIF &amp; OCR Check
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" /> Instant Customer Invoicing PDF
+                <h3 className="text-xl font-serif text-white font-normal">Geotagged POD &amp; Billing</h3>
+                <div className="mt-3 flex items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-lg bg-[#121215] border border-neutral-800 text-neutral-300 font-mono text-xs">
+                    0.5mi Geofence • &lt;60s Invoicing
+                  </span>
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => handleTabChange('pod-invoicing')}
-              className="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-lg border border-neutral-700/80 flex items-center justify-center gap-1.5 transition mt-4"
-            >
-              Simulate POD <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+
+            <div className="pt-4 border-t border-neutral-800/80 flex items-center gap-2">
+              <button
+                onClick={() => handleTabChange('pod-invoicing')}
+                className="flex-1 py-2.5 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-xl shadow transition text-center"
+              >
+                Simulate POD
+              </button>
+              <button
+                onClick={() =>
+                  setActiveUseCase({
+                    title: 'Geotagged POD & Sub-60s Invoicing',
+                    phase: 'Phase 4.1–4.4',
+                    category: 'Delivery Verification & Settlement',
+                    summary:
+                      'A driver mobile PWA signature pad with Haversine GPS geofence validation that triggers customer billing in under 60 seconds.',
+                    whyItMatters:
+                      'Brokers usually wait 3–7 days for drivers to email PODs before they can bill shippers, tying up massive working capital. This issues verified customer invoices within seconds of delivery.',
+                    brokerBenefits: [
+                      'Zero-install driver mobile PWA web interface for instant photo upload',
+                      '0.5-mile Haversine GPS distance calculation against delivery destination',
+                      'OCR extraction of consignee handwriting and damaged package notes',
+                      'Sub-60s automated customer invoice dispatch with verified POD attached',
+                    ],
+                    workflowStage: 'Step 4: Delivery Verification & Billing',
+                    targetTab: 'pod-invoicing',
+                    targetHref: '/invoices',
+                  })
+                }
+                title="View Use Case"
+                className="p-2.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* TAB CONTENT 2: PHASE 1 AI INGESTION */}
       {activeTab === 'ingestion' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-[#09090b] border border-[#27272a] rounded-3xl p-7 shadow-xl">
           <div className="space-y-4">
-            <div>
-              <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
-                Phase 1 Interactive Simulator
-              </span>
-              <h3 className="text-xl font-serif text-white mt-1">Multi-Modal Freight Ingestion &amp; Parser</h3>
-              <p className="text-xs text-neutral-400 font-sans">
-                Paste unformatted freight email text or request body to trigger the real-time AI density &amp; NMFC classifier.
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
+                  Phase 1 Interactive Simulator
+                </span>
+                <h3 className="text-xl font-serif text-white mt-0.5">Multi-Modal Freight Ingestion &amp; Parser</h3>
+              </div>
+              <button
+                onClick={() =>
+                  setActiveUseCase({
+                    title: 'AI RFQ Ingestion & Density Engine',
+                    phase: 'Phase 1.1–1.9',
+                    category: 'Freight Intake & Classification',
+                    summary:
+                      'Parses unformatted customer email bodies, attachments, and spreadsheets into clean, structured shipment manifests in 28ms.',
+                    whyItMatters:
+                      'Brokers typically waste 10–15 minutes per quote manually calculating PCF density and looking up NMFC classification codes. This eliminates typing errors and protects carrier re-class penalties.',
+                    brokerBenefits: [
+                      'Extracts lanes, weight, pallets, and dimensions from raw text',
+                      'Computes exact PCF (Pounds Per Cubic Foot) and recommends standard NMFC class',
+                      'Detects 15+ liability accessorials (liftgate, inside delivery, appointment required)',
+                      'Generates cryptographic SHA-256 audit ledger for legal rate verification',
+                    ],
+                    workflowStage: 'Step 1: Intake & Class Validation',
+                  })
+                }
+                className="p-2 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition flex items-center gap-1 text-xs"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Use Case</span>
+              </button>
             </div>
+
             <textarea
               value={rfqText}
               onChange={(e) => setRfqText(e.target.value)}
@@ -487,13 +758,13 @@ function HomePageContent() {
             />
             <button
               onClick={handleRunAiExtraction}
-              className="px-4 py-2.5 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-xl shadow flex items-center gap-2 transition"
+              className="px-5 py-3 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-xl shadow flex items-center gap-2 transition"
             >
               <Sparkles className="w-4 h-4" /> Run Real-Time AI Extraction
             </button>
           </div>
 
-          <div className="bg-[#121215] border border-neutral-800 rounded-xl p-5 space-y-4">
+          <div className="bg-[#121215] border border-neutral-800 rounded-2xl p-6 space-y-4">
             <h4 className="font-sans font-semibold text-xs text-white flex items-center justify-between">
               <span>Structured Extraction Output</span>
               {extractedData && (
@@ -504,32 +775,32 @@ function HomePageContent() {
             {extractedData ? (
               <div className="space-y-3 text-xs font-sans">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-[#09090b] p-3 rounded-lg border border-neutral-800">
+                  <div className="bg-[#09090b] p-3.5 rounded-xl border border-neutral-800">
                     <span className="text-neutral-500 text-[10px] uppercase font-mono">Origin Lane</span>
                     <div className="text-white font-medium mt-0.5">{extractedData.origin}</div>
                   </div>
-                  <div className="bg-[#09090b] p-3 rounded-lg border border-neutral-800">
+                  <div className="bg-[#09090b] p-3.5 rounded-xl border border-neutral-800">
                     <span className="text-neutral-500 text-[10px] uppercase font-mono">Destination Lane</span>
                     <div className="text-white font-medium mt-0.5">{extractedData.destination}</div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-[#09090b] p-3 rounded-lg border border-neutral-800 text-center">
+                  <div className="bg-[#09090b] p-3.5 rounded-xl border border-neutral-800 text-center">
                     <span className="text-neutral-500 text-[10px] uppercase font-mono">PCF Density</span>
                     <div className="text-white font-mono font-bold text-sm mt-0.5">{extractedData.pcfDensity} PCF</div>
                   </div>
-                  <div className="bg-[#09090b] p-3 rounded-lg border border-neutral-800 text-center">
+                  <div className="bg-[#09090b] p-3.5 rounded-xl border border-neutral-800 text-center">
                     <span className="text-neutral-500 text-[10px] uppercase font-mono">NMFC Class</span>
                     <div className="text-white font-mono font-bold text-sm mt-0.5">Class {extractedData.recommendedClass}</div>
                   </div>
-                  <div className="bg-[#09090b] p-3 rounded-lg border border-neutral-800 text-center">
+                  <div className="bg-[#09090b] p-3.5 rounded-xl border border-neutral-800 text-center">
                     <span className="text-neutral-500 text-[10px] uppercase font-mono">Weight / Plts</span>
                     <div className="text-white font-mono font-bold text-sm mt-0.5">3.2k# (4 Plts)</div>
                   </div>
                 </div>
 
-                <div className="bg-[#09090b] p-3 rounded-lg border border-neutral-800">
+                <div className="bg-[#09090b] p-3.5 rounded-xl border border-neutral-800">
                   <span className="text-neutral-500 text-[10px] uppercase font-mono">Detected Accessorials:</span>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
                     {extractedData.accessorials.map((acc: string) => (
@@ -541,8 +812,8 @@ function HomePageContent() {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-10 text-neutral-500 text-xs italic font-sans">
-                Click &quot;Run Real-Time AI Extraction&quot; above to analyze freight specs.
+              <div className="text-center py-12 text-neutral-500 text-xs italic font-sans">
+                Click &quot;Run Real-Time AI Extraction&quot; to parse shipment specs.
               </div>
             )}
           </div>
@@ -551,58 +822,84 @@ function HomePageContent() {
 
       {/* TAB CONTENT 3: PHASE 2 HYBRID RATING */}
       {activeTab === 'quoting' && (
-        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6 shadow-xl">
+        <div className="bg-[#09090b] border border-[#27272a] rounded-3xl p-7 space-y-6 shadow-xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
                 Phase 2 Live Rating Engine
               </span>
-              <h3 className="text-xl font-serif text-white mt-1">Multi-Carrier Comparison &amp; Dynamic Margins</h3>
+              <h3 className="text-xl font-serif text-white mt-0.5">Multi-Carrier Comparison &amp; Dynamic Margins</h3>
             </div>
-            <button
-              onClick={handleRunLiveRating}
-              disabled={isQuoting}
-              className="px-4 py-2.5 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-xl shadow flex items-center gap-2 transition"
-            >
-              <Zap className="w-4 h-4" /> {isQuoting ? 'Streaming Rates...' : 'Rate Across 5 Carriers'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() =>
+                  setActiveUseCase({
+                    title: 'Rating & Combinatorial Split Optimizer',
+                    phase: 'Phase 2.1–2.9',
+                    category: 'Algorithmic Pricing & Margin Protection',
+                    summary:
+                      'Simultaneously prices across direct carrier tariffs (BYOC) and platform wholesale contracts with knapsack load splitting.',
+                    whyItMatters:
+                      'Brokers frequently miss $200–$400 in savings on 4+ pallet shipments because quoting multiple carriers or volume splits takes too long. Apex evaluates all permutations in real time.',
+                    brokerBenefits: [
+                      'Compares direct BYOC tariffs against wholesale platform contracts',
+                      'Algorithmic knapsack multi-shipment split optimizer',
+                      'Live SSE streaming rate matrix with sub-second responsiveness',
+                      'Automated minimum gross profit margins ($75.00 profit floor)',
+                    ],
+                    workflowStage: 'Step 2: Pricing & Routing Optimization',
+                  })
+                }
+                className="p-2.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition flex items-center gap-1.5 text-xs"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Use Case</span>
+              </button>
+              <button
+                onClick={handleRunLiveRating}
+                disabled={isQuoting}
+                className="px-5 py-2.5 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-xl shadow flex items-center gap-2 transition"
+              >
+                <Zap className="w-4 h-4" /> {isQuoting ? 'Streaming Rates...' : 'Rate Across 5 Carriers'}
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-[#121215] border border-neutral-800 p-3 rounded-xl">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-[#121215] border border-neutral-800 p-4 rounded-xl">
               <label className="text-[10px] font-mono text-neutral-500 uppercase">Origin ZIP</label>
               <input
                 type="text"
                 value={originZip}
                 onChange={(e) => setOriginZip(e.target.value)}
-                className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none"
+                className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none mt-1"
               />
             </div>
-            <div className="bg-[#121215] border border-neutral-800 p-3 rounded-xl">
+            <div className="bg-[#121215] border border-neutral-800 p-4 rounded-xl">
               <label className="text-[10px] font-mono text-neutral-500 uppercase">Destination ZIP</label>
               <input
                 type="text"
                 value={destZip}
                 onChange={(e) => setDestZip(e.target.value)}
-                className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none"
+                className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none mt-1"
               />
             </div>
-            <div className="bg-[#121215] border border-neutral-800 p-3 rounded-xl">
+            <div className="bg-[#121215] border border-neutral-800 p-4 rounded-xl">
               <label className="text-[10px] font-mono text-neutral-500 uppercase">Pallets</label>
               <input
                 type="number"
                 value={pallets}
                 onChange={(e) => setPallets(parseInt(e.target.value) || 1)}
-                className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none"
+                className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none mt-1"
               />
             </div>
-            <div className="bg-[#121215] border border-neutral-800 p-3 rounded-xl">
+            <div className="bg-[#121215] border border-neutral-800 p-4 rounded-xl">
               <label className="text-[10px] font-mono text-neutral-500 uppercase">Weight (lbs)</label>
               <input
                 type="number"
                 value={weightLbs}
                 onChange={(e) => setWeightLbs(parseInt(e.target.value) || 500)}
-                className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none"
+                className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none mt-1"
               />
             </div>
           </div>
@@ -613,34 +910,34 @@ function HomePageContent() {
                 <table className="w-full text-left text-xs border border-neutral-800 rounded-xl overflow-hidden font-sans">
                   <thead className="bg-[#121215] text-neutral-400 font-sans font-semibold uppercase text-[10px]">
                     <tr>
-                      <th className="p-3">Carrier / Account</th>
-                      <th className="p-3">Source Tag</th>
-                      <th className="p-3 text-right">Carrier Cost</th>
-                      <th className="p-3 text-right">Broker Margin</th>
-                      <th className="p-3 text-right">Customer Price</th>
-                      <th className="p-3 text-center">Transit</th>
-                      <th className="p-3 text-center">Action</th>
+                      <th className="py-3 px-4">Carrier / Account</th>
+                      <th className="py-3 px-4">Source Tag</th>
+                      <th className="py-3 px-4 text-right">Carrier Cost</th>
+                      <th className="py-3 px-4 text-right">Broker Margin</th>
+                      <th className="py-3 px-4 text-right">Customer Price</th>
+                      <th className="py-3 px-4 text-center">Transit</th>
+                      <th className="py-3 px-4 text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-800 bg-[#09090b] font-mono">
                     {quoteResults.map((q) => (
                       <tr key={q.scac} className="hover:bg-neutral-900/60 transition">
-                        <td className="p-3 font-medium text-white font-sans">{q.carrier}</td>
-                        <td className="p-3">
+                        <td className="py-3 px-4 font-medium text-white font-sans">{q.carrier}</td>
+                        <td className="py-3 px-4">
                           <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-neutral-900 text-neutral-300 border border-neutral-800">
                             {q.badge}
                           </span>
                         </td>
-                        <td className="p-3 text-right text-neutral-300 font-data">${q.totalCarrierCost.toFixed(2)}</td>
-                        <td className="p-3 text-right text-white font-data">+${q.margin.toFixed(2)}</td>
-                        <td className="p-3 text-right font-bold text-white text-sm font-data">${q.customerPrice.toFixed(2)}</td>
-                        <td className="p-3 text-center font-sans text-neutral-300">
+                        <td className="py-3 px-4 text-right text-neutral-300">${q.totalCarrierCost.toFixed(2)}</td>
+                        <td className="py-3 px-4 text-right text-white">+${q.margin.toFixed(2)}</td>
+                        <td className="py-3 px-4 text-right font-bold text-white text-sm">${q.customerPrice.toFixed(2)}</td>
+                        <td className="py-3 px-4 text-center font-sans text-neutral-300">
                           {q.transitDays} Days {q.isGuaranteed && '⚡'}
                         </td>
-                        <td className="p-3 text-center">
+                        <td className="py-3 px-4 text-center">
                           <Link
                             href="/quote/accept"
-                            className="px-2.5 py-1 bg-white hover:bg-neutral-200 text-black rounded text-[10px] font-bold font-sans transition"
+                            className="px-3 py-1 bg-white hover:bg-neutral-200 text-black rounded-lg text-[11px] font-bold font-sans transition shadow"
                           >
                             Book Quote
                           </Link>
@@ -657,60 +954,83 @@ function HomePageContent() {
 
       {/* TAB CONTENT 4: PHASE 3 DISPATCH */}
       {activeTab === 'dispatch' && (
-        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6 shadow-xl">
-          <div>
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
-              Phase 3 Dispatch Desk &amp; Digital BOL
-            </span>
-            <h3 className="text-xl font-serif text-white mt-1">Lifecycle State Machine &amp; Instant VICS eBOL PDFs</h3>
-            <p className="text-xs text-neutral-400 font-sans">
-              Live integration with direct REST tenders, ANSI X12 EDI 204/990 payloads, and GS1-128 barcodes.
-            </p>
+        <div className="bg-[#09090b] border border-[#27272a] rounded-3xl p-7 space-y-6 shadow-xl">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
+                Phase 3 Dispatch Desk &amp; Digital BOL
+              </span>
+              <h3 className="text-xl font-serif text-white mt-0.5">Lifecycle State Machine &amp; Instant VICS eBOL PDFs</h3>
+            </div>
+            <button
+              onClick={() =>
+                setActiveUseCase({
+                  title: 'Dispatch & VICS eBOL State Machine',
+                  phase: 'Phase 3.1–3.8',
+                  category: 'Tender Operations & Documentation',
+                  summary:
+                    'A 10-stage lifecycle Kanban state machine managing load tendering, EDI 204/990 payloads, and standard VICS Bill of Lading generation.',
+                  whyItMatters:
+                    'Missing paperwork or tender delays lead to driver detention and cancelled pickups. This guarantees every load has a valid GS1-128 barcode eBOL and automatic milestone tracking.',
+                  brokerBenefits: [
+                    '10-stage state machine from UNASSIGNED through IN_TRANSIT and SETTLED',
+                    'Standard VICS electronic Bill of Lading (eBOL) generation with barcodes',
+                    'Electronic tender dispatches via REST webhooks and EDI 204/990',
+                    'Automated FMCSA safety gatekeeper prior to carrier dispatch',
+                  ],
+                  workflowStage: 'Step 3: Tender & Documentation',
+                })
+              }
+              className="p-2.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition flex items-center gap-1.5 text-xs"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Use Case</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-[#121215] border border-neutral-800 rounded-xl p-5 space-y-3">
-              <h4 className="font-sans font-semibold text-white text-xs flex items-center gap-2">
-                <KanbanSquare className="w-4 h-4 text-neutral-400" /> Kanban Dispatch Board
-              </h4>
-              <p className="text-xs text-neutral-400 font-sans">
-                Manage 10-column shipment progression from UNASSIGNED to DELIVERED and SETTLED with audit validation.
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-[#121215] border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-md flex flex-col justify-between">
+              <div className="space-y-2">
+                <h4 className="font-sans font-semibold text-white text-sm flex items-center gap-2">
+                  <KanbanSquare className="w-4 h-4 text-neutral-400" /> Kanban Dispatch Board
+                </h4>
+                <div className="text-xs text-neutral-400 font-mono">10 Operational Columns</div>
+              </div>
               <Link
                 href="/dispatch"
-                className="block w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-lg text-center border border-neutral-700/80 transition"
+                className="w-full py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-xl text-center border border-neutral-700/80 transition block"
               >
                 Launch Dispatch Desk
               </Link>
             </div>
 
-            <div className="bg-[#121215] border border-neutral-800 rounded-xl p-5 space-y-3">
-              <h4 className="font-sans font-semibold text-white text-xs flex items-center gap-2">
-                <FileText className="w-4 h-4 text-neutral-400" /> Standard VICS eBOL Generator
-              </h4>
-              <p className="text-xs text-neutral-400 font-sans">
-                Generate high-resolution printable VICS Bill of Lading PDFs with machine-readable GS1-128 barcodes.
-              </p>
+            <div className="bg-[#121215] border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-md flex flex-col justify-between">
+              <div className="space-y-2">
+                <h4 className="font-sans font-semibold text-white text-sm flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-neutral-400" /> Standard VICS eBOL
+                </h4>
+                <div className="text-xs text-neutral-400 font-mono">GS1-128 Machine-Readable</div>
+              </div>
               <a
                 href="/api/v1/shipments/01916362-7901-7080-867c-9b8895092s01/ebol?format=pdf"
                 target="_blank"
                 rel="noreferrer"
-                className="block w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-lg text-center border border-neutral-700/80 transition"
+                className="w-full py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-xl text-center border border-neutral-700/80 transition block"
               >
                 View Sample eBOL PDF
               </a>
             </div>
 
-            <div className="bg-[#121215] border border-neutral-800 rounded-xl p-5 space-y-3">
-              <h4 className="font-sans font-semibold text-white text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-neutral-400" /> 1-Click Shipper Portal
-              </h4>
-              <p className="text-xs text-neutral-400 font-sans">
-                Single-use HMAC-SHA256 signed action tokens allowing instant shipper self-serve quote acceptance.
-              </p>
+            <div className="bg-[#121215] border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-md flex flex-col justify-between">
+              <div className="space-y-2">
+                <h4 className="font-sans font-semibold text-white text-sm flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-neutral-400" /> 1-Click Shipper Portal
+                </h4>
+                <div className="text-xs text-neutral-400 font-mono">HMAC-SHA256 Token Booking</div>
+              </div>
               <Link
                 href="/quote/accept"
-                className="block w-full py-2 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-lg text-center transition"
+                className="w-full py-2.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl text-center transition block shadow"
               >
                 Open Shipper Booking View
               </Link>
@@ -721,19 +1041,42 @@ function HomePageContent() {
 
       {/* TAB CONTENT 5: PHASE 3.8 FMCSA VETTING */}
       {activeTab === 'vetting' && (
-        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6 shadow-xl">
-          <div>
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
-              Phase 3.8 Safety &amp; Compliance Gatekeeper
-            </span>
-            <h3 className="text-xl font-serif text-white mt-1">FMCSA QCMobile / SaferWeb Carrier Validator</h3>
-            <p className="text-xs text-neutral-400 font-sans">
-              Enforces Active Operating Authority, Satisfactory Safety Ratings, $1,000,000 Auto Liability, and Out-of-Service limits before allowing tender dispatch.
-            </p>
+        <div className="bg-[#09090b] border border-[#27272a] rounded-3xl p-7 space-y-6 shadow-xl">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
+                Phase 3.8 Safety &amp; Compliance Gatekeeper
+              </span>
+              <h3 className="text-xl font-serif text-white mt-0.5">FMCSA QCMobile / SaferWeb Carrier Validator</h3>
+            </div>
+            <button
+              onClick={() =>
+                setActiveUseCase({
+                  title: 'FMCSA Safety & Operating Authority Gate',
+                  phase: 'Phase 3.8',
+                  category: 'Carrier Compliance & Fraud Prevention',
+                  summary:
+                    'Automated real-time background checks against the official FMCSA database before issuing load tenders.',
+                  whyItMatters:
+                    'Brokers face severe vicarious liability if they dispatch an unvetted carrier that has an out-of-service order, expired insurance, or chameleon MC registration. This prevents fraudulent tenders automatically.',
+                  brokerBenefits: [
+                    'Validates Active Operating Authority and DOT safety status in real time',
+                    'Verifies $1,000,000 auto liability and $100,000+ cargo insurance thresholds',
+                    'Flags high driver/vehicle Out-of-Service (OOS) rates above national averages',
+                    'Blocks chameleon MCs (<90 days old) from sensitive commercial freight',
+                  ],
+                  workflowStage: 'Pre-Dispatch Carrier Vetting Gate',
+                })
+              }
+              className="p-2.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition flex items-center gap-1.5 text-xs"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Use Case</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-[#121215] border border-neutral-800 rounded-xl p-5 space-y-4">
+            <div className="bg-[#121215] border border-neutral-800 rounded-2xl p-6 space-y-4">
               <h4 className="font-sans font-semibold text-xs text-white">Test Carrier Compliance</h4>
               <div className="space-y-3">
                 <div>
@@ -742,7 +1085,7 @@ function HomePageContent() {
                     type="text"
                     value={vettingCarrier}
                     onChange={(e) => setVettingCarrier(e.target.value)}
-                    className="w-full bg-[#09090b] border border-neutral-800 rounded-lg p-2 text-xs font-mono text-white focus:outline-none focus:border-neutral-600"
+                    className="w-full bg-[#09090b] border border-neutral-800 rounded-xl p-2.5 text-xs font-mono text-white focus:outline-none focus:border-neutral-600 mt-1"
                   />
                 </div>
                 <div>
@@ -751,37 +1094,37 @@ function HomePageContent() {
                     type="text"
                     value={vettingDot}
                     onChange={(e) => setVettingDot(e.target.value)}
-                    className="w-full bg-[#09090b] border border-neutral-800 rounded-lg p-2 text-xs font-mono text-white focus:outline-none focus:border-neutral-600"
+                    className="w-full bg-[#09090b] border border-neutral-800 rounded-xl p-2.5 text-xs font-mono text-white focus:outline-none focus:border-neutral-600 mt-1"
                   />
                 </div>
                 <button
                   onClick={handleRunVetting}
-                  className="w-full py-2.5 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-lg shadow flex items-center justify-center gap-2 transition"
+                  className="w-full py-3 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-xl shadow flex items-center justify-center gap-2 transition"
                 >
                   <ShieldCheck className="w-4 h-4" /> Evaluate FMCSA Safety Thresholds
                 </button>
               </div>
             </div>
 
-            <div className="bg-[#121215] border border-neutral-800 rounded-xl p-5 space-y-4">
+            <div className="bg-[#121215] border border-neutral-800 rounded-2xl p-6 space-y-4">
               <h4 className="font-sans font-semibold text-xs text-white">Compliance Audit Result</h4>
               {vettingResult ? (
                 <div className="space-y-3 text-xs font-mono">
-                  <div className="flex justify-between items-center bg-[#09090b] p-3 rounded-lg border border-neutral-800">
+                  <div className="flex justify-between items-center bg-[#09090b] p-3.5 rounded-xl border border-neutral-800">
                     <span className="font-sans font-semibold text-white">Approval Status:</span>
-                    <span className="px-2 py-0.5 rounded font-bold font-mono bg-neutral-800 text-white border border-neutral-700">
-                      APPROVED (SCORE: {vettingResult.safetyScore}/100)
+                    <span className="px-2.5 py-1 rounded-full font-bold font-mono bg-neutral-900 text-white border border-neutral-700">
+                      APPROVED ({vettingResult.safetyScore}/100)
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="bg-[#09090b] p-2.5 rounded-lg border border-neutral-800">Authority: <span className="text-white font-bold">ACTIVE</span></div>
-                    <div className="bg-[#09090b] p-2.5 rounded-lg border border-neutral-800">Safety: <span className="text-white font-bold">SATISFACTORY</span></div>
-                    <div className="bg-[#09090b] p-2.5 rounded-lg border border-neutral-800">Auto Liab: <span className="text-white font-bold">$2,000,000</span></div>
-                    <div className="bg-[#09090b] p-2.5 rounded-lg border border-neutral-800">Cargo: <span className="text-white font-bold">$250,000</span></div>
+                    <div className="bg-[#09090b] p-3 rounded-xl border border-neutral-800">Authority: <span className="text-white font-bold">ACTIVE</span></div>
+                    <div className="bg-[#09090b] p-3 rounded-xl border border-neutral-800">Safety: <span className="text-white font-bold">SATISFACTORY</span></div>
+                    <div className="bg-[#09090b] p-3 rounded-xl border border-neutral-800">Auto Liab: <span className="text-white font-bold">$2,000,000</span></div>
+                    <div className="bg-[#09090b] p-3 rounded-xl border border-neutral-800">Cargo: <span className="text-white font-bold">$250,000</span></div>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-neutral-500 text-xs italic font-sans">
+                <div className="text-center py-12 text-neutral-500 text-xs italic font-sans">
                   Click &quot;Evaluate FMCSA Safety Thresholds&quot; to audit carrier.
                 </div>
               )}
@@ -792,44 +1135,59 @@ function HomePageContent() {
 
       {/* TAB CONTENT 6: PHASE 4 GEOTAGGED POD & INVOICING */}
       {activeTab === 'pod-invoicing' && (
-        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6 shadow-xl">
+        <div className="bg-[#09090b] border border-[#27272a] rounded-3xl p-7 space-y-6 shadow-xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
                 Phase 4 Interactive Simulator
               </span>
-              <h3 className="text-xl font-serif text-white mt-1">Multi-Point Geotagged POD &amp; Invoicing</h3>
-              <p className="text-xs text-neutral-400 font-sans">
-                Test Haversine geofence boundary validation, OCR damage/shortage keyword extraction, and &lt;60s automated invoice generation.
-              </p>
+              <h3 className="text-xl font-serif text-white mt-0.5">Multi-Point Geotagged POD &amp; Invoicing</h3>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() =>
+                  setActiveUseCase({
+                    title: 'Geotagged POD & Sub-60s Invoicing',
+                    phase: 'Phase 4.1–4.4',
+                    category: 'Delivery Verification & Settlement',
+                    summary:
+                      'A driver mobile PWA signature pad with Haversine GPS geofence validation that triggers customer billing in under 60 seconds.',
+                    whyItMatters:
+                      'Brokers usually wait 3–7 days for drivers to email PODs before they can bill shippers, tying up massive working capital. This issues verified customer invoices within seconds of delivery.',
+                    brokerBenefits: [
+                      'Zero-install driver mobile PWA web interface for instant photo upload',
+                      '0.5-mile Haversine GPS distance calculation against delivery destination',
+                      'OCR extraction of consignee handwriting and damaged package notes',
+                      'Sub-60s automated customer invoice dispatch with verified POD attached',
+                    ],
+                    workflowStage: 'Step 4: Delivery Verification & Billing',
+                  })
+                }
+                className="p-2.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition flex items-center gap-1.5 text-xs"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Use Case</span>
+              </button>
               <Link
                 href="/pod/demo-pod-token-2026"
-                className="px-3 py-1.5 bg-[#121215] hover:bg-[#1c1c21] text-white font-sans font-medium text-xs rounded-lg border border-neutral-800 flex items-center gap-1.5 transition"
+                className="px-4 py-2.5 bg-[#121215] hover:bg-neutral-800 text-white font-sans font-medium text-xs rounded-xl border border-neutral-800 flex items-center gap-1.5 transition"
               >
                 <Camera className="w-3.5 h-3.5 text-neutral-400" /> Open Mobile PWA
-              </Link>
-              <Link
-                href="/invoices"
-                className="px-3 py-1.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-lg flex items-center gap-1.5 transition"
-              >
-                <FileText className="w-3.5 h-3.5" /> Invoicing Desk
               </Link>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-[#121215] border border-neutral-800 rounded-xl p-5 space-y-4">
+            <div className="bg-[#121215] border border-neutral-800 rounded-2xl p-6 space-y-4">
               <h4 className="font-sans font-semibold text-xs text-white">1. Simulate Inbound POD Upload</h4>
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="text-[10px] uppercase font-mono text-neutral-500">Destination ZIP (Geofence Centroid)</label>
+                  <label className="text-[10px] uppercase font-mono text-neutral-500">Destination ZIP (Centroid)</label>
                   <input
                     type="text"
                     value={podZip}
                     onChange={(e) => setPodZip(e.target.value)}
-                    className="w-full bg-[#09090b] border border-neutral-800 rounded-lg p-2 font-mono text-white mt-1 focus:outline-none focus:border-neutral-600"
+                    className="w-full bg-[#09090b] border border-neutral-800 rounded-xl p-2.5 font-mono text-white mt-1 focus:outline-none focus:border-neutral-600"
                   />
                 </div>
 
@@ -841,7 +1199,7 @@ function HomePageContent() {
                       step="0.0001"
                       value={podGpsLat}
                       onChange={(e) => setPodGpsLat(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-[#09090b] border border-neutral-800 rounded-lg p-2 font-mono text-white mt-1 focus:outline-none focus:border-neutral-600"
+                      className="w-full bg-[#09090b] border border-neutral-800 rounded-xl p-2.5 font-mono text-white mt-1 focus:outline-none focus:border-neutral-600"
                     />
                   </div>
                   <div>
@@ -851,59 +1209,59 @@ function HomePageContent() {
                       step="0.0001"
                       value={podGpsLon}
                       onChange={(e) => setPodGpsLon(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-[#09090b] border border-neutral-800 rounded-lg p-2 font-mono text-white mt-1 focus:outline-none focus:border-neutral-600"
+                      className="w-full bg-[#09090b] border border-neutral-800 rounded-xl p-2.5 font-mono text-white mt-1 focus:outline-none focus:border-neutral-600"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase font-mono text-neutral-500">OCR Text / Receiver Handwriting</label>
+                  <label className="text-[10px] uppercase font-mono text-neutral-500">OCR Text / Receiver Notes</label>
                   <textarea
                     rows={3}
                     value={podOcrText}
                     onChange={(e) => setPodOcrText(e.target.value)}
-                    className="w-full bg-[#09090b] border border-neutral-800 rounded-lg p-2 font-mono text-white mt-1 focus:outline-none focus:border-neutral-600"
+                    className="w-full bg-[#09090b] border border-neutral-800 rounded-xl p-2.5 font-mono text-white mt-1 focus:outline-none focus:border-neutral-600"
                   />
                 </div>
 
                 <button
                   onClick={handleRunPodValidation}
-                  className="w-full py-2.5 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-lg shadow flex items-center justify-center gap-2 transition"
+                  className="w-full py-3 bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs rounded-xl shadow flex items-center justify-center gap-2 transition"
                 >
                   <Sparkles className="w-4 h-4" /> Run Multi-Point POD Validation &amp; Invoicing
                 </button>
               </div>
             </div>
 
-            <div className="bg-[#121215] border border-neutral-800 rounded-xl p-5 space-y-4">
+            <div className="bg-[#121215] border border-neutral-800 rounded-2xl p-6 space-y-4">
               <h4 className="font-sans font-semibold text-xs text-white">2. Validation &amp; Billing Output</h4>
               {podResult ? (
                 <div className="space-y-3 text-xs font-mono">
-                  <div className="flex justify-between items-center bg-[#09090b] p-3 rounded-lg border border-neutral-800">
+                  <div className="flex justify-between items-center bg-[#09090b] p-3.5 rounded-xl border border-neutral-800">
                     <span className="font-sans font-semibold text-white">POD Status:</span>
-                    <span className="px-2 py-0.5 rounded font-bold font-mono bg-neutral-900 text-white border border-neutral-700">
+                    <span className="px-2.5 py-1 rounded-full font-bold font-mono bg-neutral-900 text-white border border-neutral-700">
                       {podResult.status} ({podResult.overallConfidence}%)
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="bg-[#09090b] p-2.5 rounded-lg border border-neutral-800">
+                    <div className="bg-[#09090b] p-3 rounded-xl border border-neutral-800">
                       Geofence: <span className="text-white font-bold">{podResult.geofence.distanceMiles} mi ({podResult.geofence.isWithinGeofence ? 'PASS' : 'FAIL'})</span>
                     </div>
-                    <div className="bg-[#09090b] p-2.5 rounded-lg border border-neutral-800">
+                    <div className="bg-[#09090b] p-3 rounded-xl border border-neutral-800">
                       Signature: <span className="text-white font-bold">DETECTED (98%)</span>
                     </div>
-                    <div className="bg-[#09090b] p-2.5 rounded-lg border border-neutral-800">
+                    <div className="bg-[#09090b] p-3 rounded-xl border border-neutral-800">
                       Damage: <span className="text-white font-bold">{podResult.damage.hasException ? 'FLAGGED' : 'CLEAN'}</span>
                     </div>
-                    <div className="bg-[#09090b] p-2.5 rounded-lg border border-neutral-800">
+                    <div className="bg-[#09090b] p-3 rounded-xl border border-neutral-800">
                       Invoice: <span className="text-white font-bold">{podResult.invoiceEligible ? 'AUTO-ISSUED (<60s)' : 'HELD'}</span>
                     </div>
                   </div>
 
                   {podResult.invoiceEligible && (
-                    <div className="bg-[#09090b] border border-neutral-700 rounded-lg p-3 text-[11px] text-neutral-300 font-sans">
-                      <div className="font-semibold text-white flex items-center gap-1">
+                    <div className="bg-[#09090b] border border-neutral-700 rounded-xl p-3.5 text-[11px] text-neutral-300 font-sans">
+                      <div className="font-semibold text-white flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5 text-white" /> Customer Invoice Generated:
                       </div>
                       <div className="text-xs font-mono text-neutral-200 mt-1">
@@ -913,8 +1271,8 @@ function HomePageContent() {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-10 text-neutral-500 text-xs italic font-sans">
-                  Click &quot;Run Multi-Point POD Validation &amp; Invoicing&quot; to execute simulation.
+                <div className="text-center py-12 text-neutral-500 text-xs italic font-sans">
+                  Click &quot;Run Multi-Point POD Validation &amp; Invoicing&quot; to execute.
                 </div>
               )}
             </div>
@@ -924,64 +1282,166 @@ function HomePageContent() {
 
       {/* TAB CONTENT 7: PHASE 6 QUICKPAY FINTECH */}
       {activeTab === 'quickpay' && (
-        <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-6 shadow-xl">
+        <div className="bg-[#09090b] border border-[#27272a] rounded-3xl p-7 space-y-6 shadow-xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
                 Phase 6.1 – 6.4 Active • Monetization Engine #2
               </span>
-              <h3 className="text-xl font-serif text-white mt-1">Embedded Carrier QuickPay &amp; Ledger</h3>
-              <p className="text-xs text-neutral-400 font-sans">
-                1-Click accelerated payout (&lt; 2 hrs via RTP/FedNow) in exchange for 2.0%–2.5% discount fee spread.
-              </p>
+              <h3 className="text-xl font-serif text-white mt-0.5">Embedded Carrier QuickPay &amp; Ledger</h3>
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                onClick={() =>
+                  setActiveUseCase({
+                    title: 'Embedded Carrier QuickPay & Balanced Ledger',
+                    phase: 'Phase 6.1–6.4',
+                    category: 'Fintech Banking Rails & Spread Monetization',
+                    summary:
+                      'Accelerates carrier disbursements via RTP/FedNow in exchange for a 2.0%–2.5% discount fee retained as high-margin brokerage revenue.',
+                    whyItMatters:
+                      'Carriers urgently need cash flow to fuel trucks and pay drivers. Offering automated instant pay eliminates third-party factoring company NOAs while turning standard accounts payable into a direct revenue driver.',
+                    brokerBenefits: [
+                      'Instant Same-Day RTP/FedNow settlement (&lt;2 hours) with 2.5% take-rate',
+                      'Bank routing change fraud hold (30 days) and UCC Article 9 NOA conflict detection',
+                      'Double-entry balanced general ledger entries with zero penny discrepancy invariant',
+                      'Automated IRS Form 1099-NEC annual nonemployee compensation reporting',
+                    ],
+                    workflowStage: 'Phase 6: Carrier Settlement & Working Capital',
+                    targetHref: '/quickpay',
+                  })
+                }
+                className="p-2.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition flex items-center gap-1.5 text-xs"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Use Case</span>
+              </button>
               <Link
                 href="/quickpay/demo-qp-token-2026"
-                className="px-3.5 py-2 rounded-lg bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs transition shadow flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs transition shadow flex items-center gap-1.5"
               >
                 <Zap className="w-3.5 h-3.5" />
-                Launch 1-Click Portal
-              </Link>
-              <Link
-                href="/quickpay"
-                className="px-3.5 py-2 rounded-lg bg-[#121215] hover:bg-[#1c1c21] text-neutral-300 font-sans font-medium text-xs border border-neutral-800 transition"
-              >
-                Fintech Management Desk
+                1-Click Portal
               </Link>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-[#121215] rounded-xl p-5 border border-neutral-800 space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-[#121215] rounded-2xl p-6 border border-neutral-800 space-y-3 shadow-md">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-neutral-400 uppercase">Instant Same-Day (2.5%)</span>
-                <span className="px-1.5 py-0.2 rounded bg-neutral-900 text-white border border-neutral-700 text-[10px] font-mono">&lt; 2 Hours</span>
+                <span className="px-2 py-0.5 rounded-full bg-neutral-900 text-white border border-neutral-700 text-[10px] font-mono">&lt; 2 Hours</span>
               </div>
-              <div className="text-2xl font-mono font-bold text-white">$780.00 Net</div>
+              <div className="text-3xl font-mono font-bold text-white">$780.00 Net</div>
               <div className="text-xs text-neutral-400 font-mono">Gross: $800.00 • Fee: -$20.00</div>
               <div className="text-[11px] text-neutral-400 font-sans">RTP / FedNow direct to JPMorgan Chase</div>
             </div>
 
-            <div className="bg-[#121215] rounded-xl p-5 border border-neutral-800 space-y-3">
+            <div className="bg-[#121215] rounded-2xl p-6 border border-neutral-800 space-y-3 shadow-md">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-neutral-400 uppercase">Next-Day ACH (2.0%)</span>
-                <span className="px-1.5 py-0.2 rounded bg-neutral-900 text-neutral-300 border border-neutral-700 text-[10px] font-mono">Next Morning</span>
+                <span className="px-2 py-0.5 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-700 text-[10px] font-mono">Next Morning</span>
               </div>
-              <div className="text-2xl font-mono font-bold text-white">$784.00 Net</div>
+              <div className="text-3xl font-mono font-bold text-white">$784.00 Net</div>
               <div className="text-xs text-neutral-400 font-mono">Gross: $800.00 • Fee: -$16.00</div>
               <div className="text-[11px] text-neutral-400 font-sans">Same-Day ACH electronic disbursement</div>
             </div>
 
-            <div className="bg-[#121215] rounded-xl p-5 border border-neutral-800 space-y-3">
+            <div className="bg-[#121215] rounded-2xl p-6 border border-neutral-800 space-y-3 shadow-md">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-neutral-400 uppercase">Standard Terms (0.0%)</span>
-                <span className="px-1.5 py-0.2 rounded bg-neutral-900 text-neutral-400 border border-neutral-700 text-[10px] font-mono">Net 30</span>
+                <span className="px-2 py-0.5 rounded-full bg-neutral-900 text-neutral-400 border border-neutral-700 text-[10px] font-mono">Net 30</span>
               </div>
-              <div className="text-2xl font-mono font-bold text-white">$800.00 Net</div>
+              <div className="text-3xl font-mono font-bold text-white">$800.00 Net</div>
               <div className="text-xs text-neutral-400 font-mono">Gross: $800.00 • Fee: $0.00</div>
               <div className="text-[11px] text-neutral-400 font-sans">Standard 30-day payout schedule</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Use Case Modal Popover */}
+      {activeUseCase && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <button
+              onClick={() => setActiveUseCase(null)}
+              className="absolute top-6 right-6 p-2 rounded-xl bg-[#121215] text-neutral-400 hover:text-white border border-neutral-800 transition"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-700 text-white font-mono text-[10px] font-bold">
+                  {activeUseCase.phase}
+                </span>
+                <span className="text-xs text-neutral-400 font-mono">{activeUseCase.category}</span>
+              </div>
+              <h3 className="text-2xl font-serif text-white font-normal">{activeUseCase.title}</h3>
+            </div>
+
+            <div className="space-y-4 text-xs font-sans">
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-neutral-300" /> What This Feature Does
+                </div>
+                <p className="text-neutral-300 leading-relaxed">{activeUseCase.summary}</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-neutral-300" /> Why Freight Brokers Need It
+                </div>
+                <p className="text-neutral-300 leading-relaxed">{activeUseCase.whyItMatters}</p>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono">
+                  Key Automated Capabilities:
+                </div>
+                <div className="space-y-2">
+                  {activeUseCase.brokerBenefits.map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-neutral-300">
+                      <CheckCircle2 className="w-4 h-4 text-white shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-neutral-800 flex items-center justify-between gap-3">
+              <span className="text-[11px] text-neutral-400 font-mono">{activeUseCase.workflowStage}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveUseCase(null)}
+                  className="px-4 py-2 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-300 font-sans text-xs transition"
+                >
+                  Close
+                </button>
+                {activeUseCase.targetTab && (
+                  <button
+                    onClick={() => {
+                      handleTabChange(activeUseCase.targetTab!);
+                      setActiveUseCase(null);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs shadow transition flex items-center gap-1.5"
+                  >
+                    Open Simulator <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {activeUseCase.targetHref && (
+                  <Link
+                    href={activeUseCase.targetHref}
+                    className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs shadow transition flex items-center gap-1.5"
+                  >
+                    Open Workspace <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>
