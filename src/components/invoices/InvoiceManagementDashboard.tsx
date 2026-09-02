@@ -533,7 +533,7 @@ function InvoiceManagementDashboardContent() {
   });
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans text-white">
       {/* Header Banner */}
       <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-2xl space-y-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -569,7 +569,7 @@ function InvoiceManagementDashboardContent() {
           </div>
         </div>
 
-        {/* Global Financial KPI Row with Space Grotesk Numbers */}
+        {/* Global Financial KPI Row */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 pt-4 border-t border-[#27272a]">
           <div className="bg-[#121215] border border-neutral-800/80 rounded-xl p-3.5">
             <div className="text-[11px] text-neutral-400 font-sans font-medium flex items-center gap-1.5">
@@ -628,7 +628,7 @@ function InvoiceManagementDashboardContent() {
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div className="flex border-b border-[#27272a] gap-1 sm:gap-2 overflow-x-auto pb-1 custom-scrollbar">
+      <div className="flex border-b border-[#27272a] gap-1 sm:gap-2 overflow-x-auto pb-1 custom-scrollbar font-sans">
         {[
           { id: 'overview', label: 'Overview & KPIs', icon: BarChart3 },
           { id: 'invoices', label: `Invoices (${invoices.length})`, icon: FileText },
@@ -651,9 +651,9 @@ function InvoiceManagementDashboardContent() {
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id as any)}
-              className={`px-3 py-2 text-xs font-sans font-medium rounded-t-xl transition flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
+              className={`px-3 py-2 text-xs font-sans rounded-t-xl transition flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
                 isActive
-                  ? 'border-white text-white bg-[#121215] font-semibold'
+                  ? 'border-white text-white bg-[#121215] font-bold'
                   : 'border-transparent text-neutral-400 hover:text-white hover:bg-[#0c0c0e]'
               }`}
             >
@@ -664,9 +664,7 @@ function InvoiceManagementDashboardContent() {
         })}
       </div>
 
-      {/* ========================================================================= */}
-      {/* PHASE 5: RE-BILL AUDIT, DISPUTES, CLAIMS, SUPPLEMENTAL, RECOVERY & SCORECARDS */}
-      {/* ========================================================================= */}
+      {/* Phase 5 Subtabs */}
       {(activeTab === 'rebill' ||
         activeTab === 'disputes' ||
         activeTab === 'claims_lifecycle' ||
@@ -676,111 +674,109 @@ function InvoiceManagementDashboardContent() {
         <Phase5DisputeWorkspace activeSubTab={activeTab} />
       )}
 
-      {/* ========================================================================= */}
       {/* TAB 1: OVERVIEW & DSO KPIS */}
-      {/* ========================================================================= */}
       {activeTab === 'overview' && (
-        <div className="space-y-6">
+        <div className="space-y-6 font-sans">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Cash Acceleration & Sub-Minute Billing Card */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 shadow-xl">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold font-mono text-emerald-400 uppercase tracking-wider">
+                <span className="text-xs font-mono font-bold text-neutral-300 uppercase tracking-wider">
                   Cash Flow Velocity
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-neutral-900 text-white border border-neutral-700">
                   Real-Time
                 </span>
               </div>
-              <h3 className="text-lg font-black text-white">Sub-Minute Automated Billing</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h3 className="text-lg font-serif text-white font-normal">Sub-Minute Automated Billing</h3>
+              <p className="text-xs text-neutral-400 leading-relaxed font-sans">
                 Invoices are generated, validated, cryptographically sealed, and dispatched to shipper Accounts Payable within 60 seconds of clean OCR geofenced delivery receipt capture.
               </p>
-              <div className="space-y-2 pt-2 border-t border-slate-800 text-xs">
-                <div className="flex justify-between text-slate-300">
+              <div className="space-y-2 pt-2 border-t border-neutral-800 text-xs font-sans">
+                <div className="flex justify-between text-neutral-300">
                   <span>Average Billing Turnaround:</span>
-                  <span className="font-mono font-bold text-emerald-400">42 seconds</span>
+                  <span className="font-mono font-bold text-white">42 seconds</span>
                 </div>
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-neutral-300">
                   <span>DSO Reduction:</span>
-                  <span className="font-mono font-bold text-indigo-400">21.4 days (vs 45d industry avg)</span>
+                  <span className="font-mono font-bold text-white">21.4 days (vs 45d industry avg)</span>
                 </div>
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-neutral-300">
                   <span>Floating-Point Rounding Error Rate:</span>
-                  <span className="font-mono font-bold text-teal-400">0.00% (Strict Integer Cents)</span>
+                  <span className="font-mono font-bold text-neutral-300">0.00% (Strict Integer Cents)</span>
                 </div>
               </div>
             </div>
 
-            {/* Regulatory Compliance & S3 WORM Vault Card */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+            {/* Regulatory Compliance Card */}
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 shadow-xl">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold font-mono text-indigo-400 uppercase tracking-wider">
+                <span className="text-xs font-mono font-bold text-neutral-300 uppercase tracking-wider">
                   Regulatory Compliance
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  FMCSA & DOT
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-neutral-900 text-white border border-neutral-700">
+                  FMCSA &amp; DOT
                 </span>
               </div>
-              <h3 className="text-lg font-black text-white">FMCSA § 379 & S3 WORM Protection</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h3 className="text-lg font-serif text-white font-normal">FMCSA § 379 &amp; S3 WORM Protection</h3>
+              <p className="text-xs text-neutral-400 leading-relaxed font-sans">
                 Complete 5-document load settlement archives (eBOL, signed POD, Rate Con, Freight Invoice, and $1M Insurance Cert) are sealed with Merkle Root SHA-256 hashes and locked with 7-year AWS S3 Object Lock in COMPLIANCE mode.
               </p>
-              <div className="space-y-2 pt-2 border-t border-slate-800 text-xs">
-                <div className="flex justify-between text-slate-300">
+              <div className="space-y-2 pt-2 border-t border-neutral-800 text-xs font-sans">
+                <div className="flex justify-between text-neutral-300">
                   <span>Preservation Requirement:</span>
                   <span className="font-mono font-bold text-white">49 CFR § 379 (3-Year Min)</span>
                 </div>
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-neutral-300">
                   <span>Statutory DOT Audit Lock:</span>
-                  <span className="font-mono font-bold text-amber-400">7-Year Immutable WORM</span>
+                  <span className="font-mono font-bold text-white">7-Year Immutable WORM</span>
                 </div>
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-neutral-300">
                   <span>Tamper-Proof Audit Seals:</span>
-                  <span className="font-mono font-bold text-emerald-400">100% Cryptographic Match</span>
+                  <span className="font-mono font-bold text-white">100% Cryptographic Match</span>
                 </div>
               </div>
             </div>
 
-            {/* Quick Financial Operations Shortcuts */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+            {/* Financial Operations Shortcuts */}
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 shadow-xl">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold font-mono text-amber-400 uppercase tracking-wider">
+                <span className="text-xs font-mono font-bold text-neutral-300 uppercase tracking-wider">
                   Quick Actions
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-neutral-900 text-white border border-neutral-700">
                   Broker Operations
                 </span>
               </div>
-              <h3 className="text-lg font-black text-white">Financial Automation Hub</h3>
-              <div className="space-y-2.5 pt-1">
+              <h3 className="text-lg font-serif text-white font-normal">Financial Automation Hub</h3>
+              <div className="space-y-2.5 pt-1 font-sans">
                 <button
                   onClick={() => setActiveTab('invoices')}
-                  className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold flex items-center justify-between border border-slate-700 transition"
+                  className="w-full py-2.5 px-3 bg-[#121215] hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center justify-between border border-neutral-800 transition"
                 >
                   <span className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5 text-emerald-400" /> Review Customer Invoices
+                    <FileText className="w-3.5 h-3.5 text-neutral-400" /> Review Customer Invoices
                   </span>
-                  <ChevronRight className="w-4 h-4 text-slate-500" />
+                  <ChevronRight className="w-4 h-4 text-neutral-400" />
                 </button>
                 <button
                   onClick={handleRunDunning}
                   disabled={isDunningRunning}
-                  className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold flex items-center justify-between border border-slate-700 transition"
+                  className="w-full py-2.5 px-3 bg-[#121215] hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center justify-between border border-neutral-800 transition"
                 >
                   <span className="flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5 text-amber-400" /> Trigger AR Dunning Cadence
+                    <Calendar className="w-3.5 h-3.5 text-neutral-400" /> Trigger AR Dunning Cadence
                   </span>
-                  <ChevronRight className="w-4 h-4 text-slate-500" />
+                  <ChevronRight className="w-4 h-4 text-neutral-400" />
                 </button>
                 <button
                   onClick={() => setActiveTab('accounting')}
-                  className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold flex items-center justify-between border border-slate-700 transition"
+                  className="w-full py-2.5 px-3 bg-[#121215] hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center justify-between border border-neutral-800 transition"
                 >
                   <span className="flex items-center gap-2">
-                    <Database className="w-3.5 h-3.5 text-indigo-400" /> Sync QuickBooks Online Ledger
+                    <Database className="w-3.5 h-3.5 text-neutral-400" /> Sync QuickBooks Online Ledger
                   </span>
-                  <ChevronRight className="w-4 h-4 text-slate-500" />
+                  <ChevronRight className="w-4 h-4 text-neutral-400" />
                 </button>
               </div>
             </div>
@@ -788,54 +784,54 @@ function InvoiceManagementDashboardContent() {
 
           {/* Aging Summary & Margin Breakdown Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 font-sans">
               <div className="flex justify-between items-center">
-                <h4 className="font-bold text-white text-sm flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-indigo-400" /> Accounts Receivable Aging Breakdown
+                <h4 className="font-serif font-normal text-white text-sm flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-neutral-400" /> Accounts Receivable Aging Breakdown
                 </h4>
-                <span className="text-xs font-mono text-emerald-400">95.4% Current</span>
+                <span className="text-xs font-mono text-white font-bold">95.4% Current</span>
               </div>
-              <div className="space-y-2 text-xs">
+              <div className="space-y-3 text-xs">
                 <div>
-                  <div className="flex justify-between text-slate-300 font-mono text-[11px] mb-1">
+                  <div className="flex justify-between text-neutral-300 font-mono text-[11px] mb-1">
                     <span>Current (0-30 Days): $2,914.90</span>
-                    <span className="text-emerald-400">64.6%</span>
+                    <span className="text-white">64.6%</span>
                   </div>
-                  <div className="w-full bg-slate-950 rounded-full h-2">
-                    <div className="bg-emerald-500 h-2 rounded-full" style={{ width: '64.6%' }} />
+                  <div className="w-full bg-[#121215] rounded-full h-2 border border-neutral-800">
+                    <div className="bg-white h-2 rounded-full" style={{ width: '64.6%' }} />
                   </div>
                 </div>
                 <div>
-                  <div className="flex justify-between text-slate-300 font-mono text-[11px] mb-1">
+                  <div className="flex justify-between text-neutral-300 font-mono text-[11px] mb-1">
                     <span>1-30 Days Past Due: $1,595.00</span>
-                    <span className="text-amber-400">35.4%</span>
+                    <span className="text-neutral-400">35.4%</span>
                   </div>
-                  <div className="w-full bg-slate-950 rounded-full h-2">
-                    <div className="bg-amber-500 h-2 rounded-full" style={{ width: '35.4%' }} />
+                  <div className="w-full bg-[#121215] rounded-full h-2 border border-neutral-800">
+                    <div className="bg-neutral-400 h-2 rounded-full" style={{ width: '35.4%' }} />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 font-sans">
               <div className="flex justify-between items-center">
-                <h4 className="font-bold text-white text-sm flex items-center gap-2">
-                  <Award className="w-4 h-4 text-emerald-400" /> Realized Gross Margin Performance
+                <h4 className="font-serif font-normal text-white text-sm flex items-center gap-2">
+                  <Award className="w-4 h-4 text-neutral-400" /> Realized Gross Margin Performance
                 </h4>
-                <span className="text-xs font-mono text-emerald-400 font-bold">18.62% GP Realized</span>
+                <span className="text-xs font-mono text-white font-bold">18.62% GP Realized</span>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono bg-slate-950 p-3 rounded-2xl border border-slate-800">
+              <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono bg-[#121215] p-3.5 rounded-xl border border-neutral-800">
                 <div>
-                  <span className="text-slate-500 text-[10px] block font-sans">Total Invoiced</span>
+                  <span className="text-neutral-400 text-[10px] block font-sans">Total Invoiced</span>
                   <span className="text-white font-bold">${totalInvoiced.toFixed(2)}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 text-[10px] block font-sans">Carrier Cost</span>
-                  <span className="text-slate-400 font-bold">${totalCarrierCost.toFixed(2)}</span>
+                  <span className="text-neutral-400 text-[10px] block font-sans">Carrier Cost</span>
+                  <span className="text-neutral-300 font-bold">${totalCarrierCost.toFixed(2)}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 text-[10px] block font-sans">Gross Profit</span>
-                  <span className="text-emerald-400 font-bold">${realizedGp.toFixed(2)}</span>
+                  <span className="text-neutral-400 text-[10px] block font-sans">Gross Profit</span>
+                  <span className="text-white font-bold">${realizedGp.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -843,30 +839,28 @@ function InvoiceManagementDashboardContent() {
         </div>
       )}
 
-      {/* ========================================================================= */}
       {/* TAB 2: CUSTOMER INVOICES */}
-      {/* ========================================================================= */}
       {activeTab === 'invoices' && (
-        <div className="space-y-4">
+        <div className="space-y-4 font-sans">
           {/* Filter Bar */}
-          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-[#09090b] p-3.5 rounded-2xl border border-[#27272a]">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
               <input
                 type="text"
                 placeholder="Search by Shipper, Invoice #, PO #, Shipment..."
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                className="w-full pl-9 pr-4 py-2 bg-[#121215] border border-neutral-800 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-600 font-sans"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <Filter className="w-3.5 h-3.5 text-slate-400" />
+              <Filter className="w-3.5 h-3.5 text-neutral-400" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 font-semibold focus:outline-none focus:border-indigo-500"
+                className="bg-[#121215] border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white font-sans focus:outline-none focus:border-neutral-600"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="ISSUED">Issued</option>
@@ -876,9 +870,9 @@ function InvoiceManagementDashboardContent() {
             </div>
           </div>
 
-          <div className="overflow-x-auto border border-slate-800 rounded-2xl bg-slate-900/80 shadow-xl">
+          <div className="overflow-x-auto border border-[#27272a] rounded-2xl bg-[#09090b] shadow-xl font-sans">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-800">
+              <thead className="bg-[#121215] text-neutral-400 font-semibold uppercase text-[10px] tracking-wider border-b border-neutral-800 font-mono">
                 <tr>
                   <th className="p-3.5">Invoice # / PO</th>
                   <th className="p-3.5">Shipper Client</th>
@@ -892,44 +886,44 @@ function InvoiceManagementDashboardContent() {
                   <th className="p-3.5 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 font-mono">
+              <tbody className="divide-y divide-neutral-800/80 font-sans">
                 {filteredInvoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-900/60 transition">
-                    <td className="p-3.5">
+                  <tr key={inv.id} className="hover:bg-neutral-900/60 transition">
+                    <td className="p-3.5 font-mono">
                       <div className="font-bold text-white text-xs">{inv.invoiceNumber}</div>
-                      <div className="text-[10px] text-indigo-300 font-medium">{inv.customerPoNumber}</div>
+                      <div className="text-[10px] text-neutral-400">{inv.customerPoNumber}</div>
                     </td>
                     <td className="p-3.5 font-sans">
-                      <div className="font-bold text-slate-200">{inv.shipperName}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">{inv.shipperEmail}</div>
+                      <div className="font-bold text-white">{inv.shipperName}</div>
+                      <div className="text-[10px] text-neutral-400 font-mono">{inv.shipperEmail}</div>
                     </td>
                     <td className="p-3.5 font-sans">
-                      <div className="text-slate-300 font-medium">{inv.origin} $\rightarrow$ {inv.destination}</div>
-                      <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Verified POD Attached ({inv.podGeofenceDistance})
+                      <div className="text-neutral-200 font-medium">{inv.origin} $\rightarrow$ {inv.destination}</div>
+                      <div className="text-[10px] text-neutral-400 font-mono flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-white" /> Verified POD ({inv.podGeofenceDistance})
                       </div>
                     </td>
-                    <td className="p-3.5 text-right text-slate-300">${inv.linehaulAmount.toFixed(2)}</td>
-                    <td className="p-3.5 text-right text-slate-400">
+                    <td className="p-3.5 text-right font-mono text-neutral-300">${inv.linehaulAmount.toFixed(2)}</td>
+                    <td className="p-3.5 text-right font-mono text-neutral-400">
                       +${(inv.fuelSurcharge + inv.accessorials).toFixed(2)}
                     </td>
-                    <td className="p-3.5 text-right font-bold text-white text-sm font-sans">
+                    <td className="p-3.5 text-right font-mono font-bold text-white text-sm">
                       ${inv.totalAmount.toFixed(2)}
                     </td>
-                    <td className="p-3.5 text-center font-sans text-slate-300">
+                    <td className="p-3.5 text-center font-sans text-neutral-300">
                       <div>{inv.dueDate}</div>
-                      <div className="text-[10px] text-slate-500">{inv.paymentTermsDays} Days Term</div>
+                      <div className="text-[10px] text-neutral-500 font-mono">{inv.paymentTermsDays} Days Term</div>
                     </td>
                     <td className="p-3.5 text-center font-sans">
                       {inv.qboSynced ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30 flex items-center justify-center gap-1">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-neutral-900 text-white border border-neutral-700 flex items-center justify-center gap-1">
                           <Check className="w-3 h-3" /> Synced ({inv.qboDocNumber})
                         </span>
                       ) : (
                         <button
                           onClick={() => handleSyncQbo(inv.id)}
                           disabled={isSyncingQbo === inv.id}
-                          className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white border border-indigo-500/30 flex items-center justify-center gap-1 transition"
+                          className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-[#121215] hover:bg-neutral-800 text-white border border-neutral-800 flex items-center justify-center gap-1 transition"
                         >
                           <RefreshCw className={`w-3 h-3 ${isSyncingQbo === inv.id ? 'animate-spin' : ''}`} />
                           {isSyncingQbo === inv.id ? 'Syncing...' : 'Push QBO'}
@@ -937,15 +931,7 @@ function InvoiceManagementDashboardContent() {
                       )}
                     </td>
                     <td className="p-3.5 text-center">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold font-sans ${
-                          inv.status === 'PAID'
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : inv.status === 'OVERDUE'
-                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                            : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                        }`}
-                      >
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-neutral-900 text-white border border-neutral-700">
                         {inv.status}
                       </span>
                     </td>
@@ -953,22 +939,22 @@ function InvoiceManagementDashboardContent() {
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => setSelectedInvoice(inv)}
-                          className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold border border-slate-700 flex items-center gap-1 transition"
+                          className="px-2.5 py-1 bg-[#121215] hover:bg-neutral-800 text-white rounded-lg text-[11px] font-medium border border-neutral-800 flex items-center gap-1 transition"
                         >
-                          <Eye className="w-3 h-3 text-indigo-400" /> View
+                          <Eye className="w-3 h-3 text-neutral-400" /> View
                         </button>
                         <a
                           href={`/api/v1/invoices/${inv.id}/pdf`}
                           target="_blank"
-                          className="px-2.5 py-1 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white rounded-lg text-[11px] font-bold border border-indigo-500/30 flex items-center gap-1 transition"
+                          className="px-2.5 py-1 bg-[#121215] hover:bg-neutral-800 text-white rounded-lg text-[11px] font-medium border border-neutral-800 flex items-center gap-1 transition"
                         >
-                          <FileText className="w-3 h-3" /> PDF
+                          <FileText className="w-3 h-3 text-neutral-400" /> PDF
                         </a>
                         {!inv.wormSealed && (
                           <button
                             onClick={() => handleSealWormArchive(inv)}
                             disabled={isSealingWorm}
-                            className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 rounded-lg text-[11px] font-bold border border-amber-500/30 flex items-center gap-1 transition"
+                            className="px-2.5 py-1 bg-white hover:bg-neutral-200 text-black rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow"
                           >
                             <Lock className="w-3 h-3" /> Seal WORM
                           </button>
@@ -983,81 +969,58 @@ function InvoiceManagementDashboardContent() {
         </div>
       )}
 
-      {/* ========================================================================= */}
       {/* TAB 3: VERIFIED PODS FEED */}
-      {/* ========================================================================= */}
       {activeTab === 'pods' && (
-        <div className="space-y-4">
+        <div className="space-y-4 font-sans">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {podRecords.map((pod) => (
               <div
                 key={pod.id}
-                className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3.5 shadow-lg hover:border-slate-700 transition"
+                className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 space-y-3.5 shadow-lg hover:border-neutral-700 transition"
               >
                 <div className="flex justify-between items-start">
-                  <span className="font-mono text-xs font-bold text-white bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                  <span className="font-mono text-xs font-bold text-white bg-[#121215] px-2.5 py-1 rounded border border-neutral-800">
                     {pod.shipmentRef}
                   </span>
-                  <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                      pod.status === 'VERIFIED'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                    }`}
-                  >
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-neutral-900 text-white border border-neutral-700">
                     {pod.status}
                   </span>
                 </div>
 
-                <div className="space-y-1.5 text-xs">
-                  <div className="text-slate-300 font-bold">{pod.consigneeName}</div>
-                  <div className="text-slate-400 flex items-center gap-1 text-[11px]">
-                    <Clock className="w-3 h-3 text-slate-500" /> Delivered: {pod.submittedAt}
+                <div className="space-y-1.5 text-xs font-sans">
+                  <div className="text-white font-bold">{pod.consigneeName}</div>
+                  <div className="text-neutral-400 flex items-center gap-1 text-[11px]">
+                    <Clock className="w-3 h-3 text-neutral-500" /> Delivered: {pod.submittedAt}
                   </div>
-                  <div className="text-slate-500 text-[10px] font-mono">Device: {pod.device}</div>
+                  <div className="text-neutral-400 text-[10px] font-mono">Device: {pod.device}</div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono bg-[#121215] p-3 rounded-xl border border-neutral-800">
                   <div>
-                    <span className="text-slate-500 block text-[9px] uppercase font-sans">Geofence (Haversine)</span>
-                    <span className="text-emerald-400 font-bold">{pod.geofenceDistance} (PASS)</span>
+                    <span className="text-neutral-500 block text-[9px] uppercase font-sans">Geofence (Haversine)</span>
+                    <span className="text-white font-bold">{pod.geofenceDistance} (PASS)</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[9px] uppercase font-sans">OCR Signature</span>
-                    <span className="text-emerald-400 font-bold">DETECTED ({pod.confidenceScore}%)</span>
+                    <span className="text-neutral-500 block text-[9px] uppercase font-sans">OCR Signature</span>
+                    <span className="text-white font-bold">DETECTED ({pod.confidenceScore}%)</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[9px] uppercase font-sans">Pieces</span>
+                    <span className="text-neutral-500 block text-[9px] uppercase font-sans">Pieces</span>
                     <span className="text-white font-bold">{pod.receivedPieces}/{pod.expectedPieces} Plts</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[9px] uppercase font-sans">Damage Notation</span>
-                    <span className={pod.damageFlagged ? 'text-rose-400 font-bold' : 'text-slate-400'}>
+                    <span className="text-neutral-500 block text-[9px] uppercase font-sans">Damage Notation</span>
+                    <span className="text-neutral-300 font-bold">
                       {pod.damageFlagged ? 'FLAGGED (HIGH)' : 'NONE (CLEAN)'}
                     </span>
                   </div>
                 </div>
 
-                {pod.damageFlagged && (
-                  <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-2.5 text-[11px] text-rose-300 space-y-1">
-                    <div className="font-bold flex items-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5 text-rose-400" /> Exception Keywords:
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {pod.damageKeywords?.map((kw: string) => (
-                        <span key={kw} className="bg-rose-500/20 px-1.5 py-0.2 rounded text-[10px] font-mono">
-                          {kw}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 <button
                   onClick={() => setSelectedPod(pod)}
-                  className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 flex items-center justify-center gap-1.5 transition"
+                  className="w-full py-2 bg-[#121215] hover:bg-neutral-800 text-white text-xs font-medium rounded-xl border border-neutral-800 flex items-center justify-center gap-1.5 transition"
                 >
-                  <Eye className="w-3.5 h-3.5 text-emerald-400" /> Inspect Geotag & EXIF Data
+                  <Eye className="w-3.5 h-3.5 text-neutral-400" /> Inspect Geotag &amp; EXIF Data
                 </button>
               </div>
             ))}
@@ -1065,50 +1028,48 @@ function InvoiceManagementDashboardContent() {
         </div>
       )}
 
-      {/* ========================================================================= */}
       {/* TAB 4: CLAIMS & DELIVERY EXCEPTIONS DESK */}
-      {/* ========================================================================= */}
       {activeTab === 'exceptions' && (
-        <div className="space-y-4">
+        <div className="space-y-4 font-sans">
           {exceptions.map((exc) => (
             <div
               key={exc.id}
-              className="bg-slate-900 border border-rose-500/40 rounded-2xl p-5 space-y-4 shadow-xl"
+              className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 space-y-4 shadow-xl"
             >
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2.5 py-0.5 rounded text-xs font-mono font-bold">
+                  <span className="bg-neutral-900 text-white border border-neutral-700 px-2.5 py-0.5 rounded text-xs font-mono font-bold">
                     SEVERITY: {exc.severity}
                   </span>
                   <span className="text-sm font-bold text-white">Shipment: {exc.shipmentRef}</span>
-                  <span className="text-xs text-slate-400 font-mono">Carrier: {exc.carrierName}</span>
+                  <span className="text-xs text-neutral-400 font-mono">Carrier: {exc.carrierName}</span>
                 </div>
 
-                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-neutral-900 text-white border border-neutral-700">
                   STATUS: {exc.status}
                 </span>
               </div>
 
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
-                <div className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+              <div className="bg-[#121215] border border-neutral-800 rounded-xl p-4 space-y-2">
+                <div className="text-xs text-neutral-400 font-mono uppercase tracking-wider">
                   OCR Delivery Receipt Handwriting Transcription:
                 </div>
-                <div className="text-xs font-mono text-amber-300 italic bg-slate-900/60 p-3 rounded-lg border border-slate-800">
+                <div className="text-xs font-mono text-neutral-200 italic bg-[#09090b] p-3 rounded-lg border border-neutral-800">
                   {exc.notationSnippet}
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-800">
-                <div className="flex items-center gap-4 text-xs font-mono text-slate-300">
-                  <div>Shortage: <span className="text-rose-400 font-bold">{exc.piecesShort} Pallet Short</span></div>
-                  <div>Estimated Claim: <span className="text-emerald-400 font-bold">${exc.claimEstimate.toFixed(2)}</span></div>
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-neutral-800">
+                <div className="flex items-center gap-4 text-xs font-mono text-neutral-300">
+                  <div>Shortage: <span className="text-white font-bold">{exc.piecesShort} Pallet Short</span></div>
+                  <div>Estimated Claim: <span className="text-white font-bold">${exc.claimEstimate.toFixed(2)}</span></div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <button className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition">
+                  <button className="px-3 py-1.5 bg-[#121215] hover:bg-neutral-800 text-white font-medium text-xs rounded-xl border border-neutral-800 transition">
                     View POD Proof
                   </button>
-                  <button className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white font-bold text-xs rounded-xl border border-rose-500/30 transition">
+                  <button className="px-3 py-1.5 bg-white hover:bg-neutral-200 text-black font-bold text-xs rounded-xl shadow transition">
                     File Carrier Claim (1-Click)
                   </button>
                 </div>
@@ -1118,67 +1079,60 @@ function InvoiceManagementDashboardContent() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 5: ACCOUNTING SYNC (QBO / XERO) */}
-      {/* ========================================================================= */}
+      {/* TAB 5: ACCOUNTING SYNC */}
       {activeTab === 'accounting' && (
-        <div className="space-y-6">
-          {/* Connection Status Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+        <div className="space-y-6 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 shadow-xl">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-lg">
+                <div className="w-10 h-10 rounded-2xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white font-bold text-lg font-mono">
                   QB
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <h3 className="text-base font-serif text-white font-normal flex items-center gap-2">
                     QuickBooks Online (Production Connection)
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      LIVE & HEALTHY
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-neutral-900 text-white border border-neutral-700">
+                      LIVE &amp; HEALTHY
                     </span>
                   </h3>
-                  <p className="text-xs text-slate-400">Realm ID: 91303492810 • OAuth2 Token Active (Refreshes automatically)</p>
+                  <p className="text-xs text-neutral-400 font-mono">Realm ID: 91303492810 • OAuth2 Token Active</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 flex items-center gap-1.5 transition">
-                  <RefreshCw className="w-3.5 h-3.5 text-indigo-400" /> Force Full Reconciliation
-                </button>
-              </div>
+              <button className="px-3 py-2 bg-[#121215] hover:bg-neutral-800 text-white text-xs font-medium rounded-xl border border-neutral-800 flex items-center gap-1.5 transition">
+                <RefreshCw className="w-3.5 h-3.5 text-neutral-400" /> Force Full Reconciliation
+              </button>
             </div>
 
-            {/* GL Mappings */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-800 text-xs">
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <span className="text-slate-500 text-[10px] block uppercase font-bold">Revenue GL</span>
-                <span className="font-mono font-bold text-emerald-400">4000 - Freight Revenue</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-neutral-800 text-xs font-mono">
+              <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">Revenue GL</span>
+                <span className="font-mono font-bold text-white">4000 - Freight Revenue</span>
               </div>
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <span className="text-slate-500 text-[10px] block uppercase font-bold">Carrier Expense GL</span>
-                <span className="font-mono font-bold text-rose-400">5000 - Carrier COGS</span>
+              <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">Carrier Expense GL</span>
+                <span className="font-mono font-bold text-white">5000 - Carrier COGS</span>
               </div>
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <span className="text-slate-500 text-[10px] block uppercase font-bold">Accounts Receivable</span>
-                <span className="font-mono font-bold text-indigo-400">1200 - Customer AR</span>
+              <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">Accounts Receivable</span>
+                <span className="font-mono font-bold text-white">1200 - Customer AR</span>
               </div>
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <span className="text-slate-500 text-[10px] block uppercase font-bold">Accounts Payable</span>
-                <span className="font-mono font-bold text-amber-400">2000 - Carrier AP</span>
+              <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">Accounts Payable</span>
+                <span className="font-mono font-bold text-white">2000 - Carrier AP</span>
               </div>
             </div>
           </div>
 
-          {/* Sync Transaction Logs Table */}
-          <div className="overflow-x-auto border border-slate-800 rounded-2xl bg-slate-900/80 shadow-xl">
-            <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+          <div className="overflow-x-auto border border-[#27272a] rounded-2xl bg-[#09090b] shadow-xl">
+            <div className="p-4 border-b border-[#27272a] flex justify-between items-center">
+              <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-neutral-300">
                 Idempotent Accounting Sync Ledger
               </h4>
-              <span className="text-xs text-slate-400 font-mono">Auto-Sync on Verified Settlement</span>
+              <span className="text-xs text-neutral-400 font-mono">Auto-Sync on Verified Settlement</span>
             </div>
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-800">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-[#121215] text-neutral-400 font-semibold uppercase text-[10px] border-b border-neutral-800">
                 <tr>
                   <th className="p-3.5">Sync Type</th>
                   <th className="p-3.5">Reference #</th>
@@ -1189,32 +1143,26 @@ function InvoiceManagementDashboardContent() {
                   <th className="p-3.5 text-center">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 font-mono">
+              <tbody className="divide-y divide-neutral-800/80">
                 {syncLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-900/60 transition">
+                  <tr key={log.id} className="hover:bg-neutral-900/60 transition">
                     <td className="p-3.5">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-neutral-900 text-white border border-neutral-700">
                         {log.syncType}
                       </span>
                     </td>
                     <td className="p-3.5 text-white font-bold">{log.referenceNumber}</td>
-                    <td className="p-3.5 text-right text-emerald-400 font-bold">{log.amount}</td>
-                    <td className="p-3.5 text-slate-400">{log.externalPlatformId || 'Pending'}</td>
+                    <td className="p-3.5 text-right text-white font-bold">{log.amount}</td>
+                    <td className="p-3.5 text-neutral-400">{log.externalPlatformId || 'Pending'}</td>
                     <td className="p-3.5 text-center font-sans">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                          log.status === 'SUCCESS'
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        }`}
-                      >
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-neutral-900 text-white border border-neutral-700 font-mono">
                         {log.status}
                       </span>
                     </td>
-                    <td className="p-3.5 text-slate-400 text-[11px] font-sans">{log.syncedAt}</td>
+                    <td className="p-3.5 text-neutral-400 text-[11px] font-sans">{log.syncedAt}</td>
                     <td className="p-3.5 text-center font-sans">
                       {log.status !== 'SUCCESS' && (
-                        <button className="px-2.5 py-1 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white rounded-lg text-[10px] font-bold border border-indigo-500/30 transition">
+                        <button className="px-2.5 py-1 bg-[#121215] hover:bg-neutral-800 text-white rounded-lg text-[10px] font-bold border border-neutral-800 transition">
                           Retry Sync
                         </button>
                       )}
@@ -1227,79 +1175,74 @@ function InvoiceManagementDashboardContent() {
         </div>
       )}
 
-      {/* ========================================================================= */}
       {/* TAB 6: AR AGING & AUTOMATED DUNNING DESK */}
-      {/* ========================================================================= */}
       {activeTab === 'aging' && (
-        <div className="space-y-6">
-          {/* Dunning Controls Bar */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+        <div className="space-y-6 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 shadow-xl">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h3 className="text-lg font-black text-white">Automated Accounts Receivable & Dunning Engine</h3>
-                <p className="text-xs text-slate-400">
-                  Cadence triggers: T-5 (Friendly reminder), T-0 (Due today), T+7 (Past due notice), T+14 (Urgent), T+30 (Credit hold & final demand).
+                <h3 className="text-lg font-serif text-white font-normal">Automated Accounts Receivable &amp; Dunning Engine</h3>
+                <p className="text-xs text-neutral-400 font-sans">
+                  Cadence triggers: T-5 (Friendly reminder), T-0 (Due today), T+7 (Past due notice), T+14 (Urgent), T+30 (Credit hold &amp; final demand).
                 </p>
               </div>
               <button
                 onClick={handleRunDunning}
                 disabled={isDunningRunning}
-                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs rounded-xl shadow-lg flex items-center gap-2 transition disabled:opacity-50"
+                className="px-4 py-2.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow flex items-center gap-2 transition disabled:opacity-50"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-4 h-4 text-black" />
                 {isDunningRunning ? 'Dispatching Dunning Batch...' : 'Run Automated Dunning Cadence'}
               </button>
             </div>
 
-            {/* Visual Aging Bar Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-4 border-t border-slate-800 font-mono text-center">
-              <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                <span className="text-emerald-400 text-[10px] block uppercase font-bold font-sans">Current (0-30d)</span>
-                <span className="text-lg font-black text-white mt-1 block">$2,914.90</span>
-                <span className="text-[10px] text-slate-500 font-sans">3 Invoices (64.6%)</span>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-4 border-t border-[#27272a] font-mono text-center">
+              <div className="bg-[#121215] p-3 rounded-2xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">Current (0-30d)</span>
+                <span className="text-lg font-bold text-white mt-1 block">$2,914.90</span>
+                <span className="text-[10px] text-neutral-500 font-sans">3 Invoices (64.6%)</span>
               </div>
-              <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                <span className="text-amber-400 text-[10px] block uppercase font-bold font-sans">1-30 Days Past Due</span>
-                <span className="text-lg font-black text-amber-400 mt-1 block">$1,595.00</span>
-                <span className="text-[10px] text-slate-500 font-sans">1 Invoice (35.4%)</span>
+              <div className="bg-[#121215] p-3 rounded-2xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">1-30 Days Past Due</span>
+                <span className="text-lg font-bold text-white mt-1 block">$1,595.00</span>
+                <span className="text-[10px] text-neutral-500 font-sans">1 Invoice (35.4%)</span>
               </div>
-              <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                <span className="text-slate-400 text-[10px] block uppercase font-bold font-sans">31-60 Days Past Due</span>
-                <span className="text-lg font-black text-slate-400 mt-1 block">$0.00</span>
-                <span className="text-[10px] text-slate-500 font-sans">0 Invoices (0%)</span>
+              <div className="bg-[#121215] p-3 rounded-2xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">31-60 Days Past Due</span>
+                <span className="text-lg font-bold text-neutral-400 mt-1 block">$0.00</span>
+                <span className="text-[10px] text-neutral-500 font-sans">0 Invoices (0%)</span>
               </div>
-              <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                <span className="text-slate-400 text-[10px] block uppercase font-bold font-sans">61-90 Days Past Due</span>
-                <span className="text-lg font-black text-slate-400 mt-1 block">$0.00</span>
-                <span className="text-[10px] text-slate-500 font-sans">0 Invoices (0%)</span>
+              <div className="bg-[#121215] p-3 rounded-2xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">61-90 Days Past Due</span>
+                <span className="text-lg font-bold text-neutral-400 mt-1 block">$0.00</span>
+                <span className="text-[10px] text-neutral-500 font-sans">0 Invoices (0%)</span>
               </div>
-              <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                <span className="text-rose-400 text-[10px] block uppercase font-bold font-sans">90+ Days (Credit Hold)</span>
-                <span className="text-lg font-black text-rose-400 mt-1 block">$0.00</span>
-                <span className="text-[10px] text-slate-500 font-sans">0 Invoices (0%)</span>
+              <div className="bg-[#121215] p-3 rounded-2xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">90+ Days (Credit Hold)</span>
+                <span className="text-lg font-bold text-neutral-400 mt-1 block">$0.00</span>
+                <span className="text-[10px] text-neutral-500 font-sans">0 Invoices (0%)</span>
               </div>
             </div>
           </div>
 
-          {/* Dunning Stage Logs */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-              Active Dunning Communications & Cadence Dispatch
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 space-y-3">
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-neutral-300">
+              Active Dunning Communications &amp; Cadence Dispatch
             </h4>
             <div className="space-y-2">
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+              <div className="bg-[#121215] border border-neutral-800 rounded-xl p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
                 <div>
                   <div className="font-bold text-white flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px]">
+                    <span className="px-2 py-0.5 rounded bg-neutral-900 text-white font-mono text-[10px] border border-neutral-700">
                       PAST_DUE_T_PLUS_7
                     </span>
                     Titan Heavy Industries • INV-2026-08845 ($1,595.00)
                   </div>
-                  <div className="text-slate-400 text-[11px]">Recipient: payables@titanheavy.com • Days Past Due: 13 Days</div>
+                  <div className="text-neutral-400 text-[11px] font-sans">Recipient: payables@titanheavy.com • Days Past Due: 13 Days</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-emerald-400 font-mono text-[11px] font-bold">Email Dispatched</span>
-                  <button className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-[10px] font-bold border border-slate-700">
+                  <span className="text-white font-mono text-[11px] font-bold">Email Dispatched</span>
+                  <button className="px-2.5 py-1 bg-[#09090b] hover:bg-neutral-800 text-white rounded-lg text-[10px] font-bold border border-neutral-700">
                     Resend Notice
                   </button>
                 </div>
@@ -1309,45 +1252,42 @@ function InvoiceManagementDashboardContent() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 7: GROSS MARGIN & SALES COMMISSIONS */}
-      {/* ========================================================================= */}
+      {/* TAB 7: GROSS MARGIN & COMMISSIONS */}
       {activeTab === 'commissions' && (
-        <div className="space-y-6">
+        <div className="space-y-6 font-sans">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-              <span className="text-slate-400 text-xs font-semibold">Total Realized GP (MTD)</span>
-              <div className="text-2xl font-black text-emerald-400 font-mono mt-1">${realizedGp.toFixed(2)}</div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Average Margin: {realizedMarginPct.toFixed(2)}%</div>
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-4">
+              <span className="text-neutral-400 text-xs font-sans">Total Realized GP (MTD)</span>
+              <div className="text-2xl font-mono font-bold text-white mt-1">${realizedGp.toFixed(2)}</div>
+              <div className="text-[11px] text-neutral-400 mt-0.5 font-mono">Average Margin: {realizedMarginPct.toFixed(2)}%</div>
             </div>
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-              <span className="text-slate-400 text-xs font-semibold">Total Commissions Accrued</span>
-              <div className="text-2xl font-black text-white font-mono mt-1">
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-4">
+              <span className="text-neutral-400 text-xs font-sans">Total Commissions Accrued</span>
+              <div className="text-2xl font-mono font-bold text-white mt-1">
                 ${salesReps.reduce((s, r) => s + r.commissionEarned, 0).toFixed(2)}
               </div>
-              <div className="text-[11px] text-indigo-400 mt-0.5">Across {salesReps.length} Freight Brokers</div>
+              <div className="text-[11px] text-neutral-400 mt-0.5 font-mono">Across {salesReps.length} Freight Brokers</div>
             </div>
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-              <span className="text-slate-400 text-xs font-semibold">Brokerage Net Retained Profit</span>
-              <div className="text-2xl font-black text-teal-300 font-mono mt-1">
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-4">
+              <span className="text-neutral-400 text-xs font-sans">Brokerage Net Retained Profit</span>
+              <div className="text-2xl font-mono font-bold text-white mt-1">
                 ${(realizedGp - salesReps.reduce((s, r) => s + r.commissionEarned, 0)).toFixed(2)}
               </div>
-              <div className="text-[11px] text-teal-400 mt-0.5">Net Broker Margin Retained</div>
+              <div className="text-[11px] text-neutral-400 mt-0.5 font-mono">Net Broker Margin Retained</div>
             </div>
           </div>
 
-          {/* Sales Reps Table */}
-          <div className="overflow-x-auto border border-slate-800 rounded-2xl bg-slate-900/80 shadow-xl">
-            <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                Broker Sales Rep Quotas & Commission Ledger
+          <div className="overflow-x-auto border border-[#27272a] rounded-2xl bg-[#09090b] shadow-xl">
+            <div className="p-4 border-b border-[#27272a] flex justify-between items-center">
+              <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-neutral-300">
+                Broker Sales Rep Quotas &amp; Commission Ledger
               </h4>
-              <button className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 rounded-xl text-xs font-bold border border-emerald-500/30 transition">
+              <button className="px-3 py-1.5 bg-white text-black font-bold text-xs rounded-xl shadow transition">
                 Approve All Accrued Payouts
               </button>
             </div>
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-800">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-[#121215] text-neutral-400 font-semibold uppercase text-[10px] border-b border-neutral-800">
                 <tr>
                   <th className="p-3.5">Sales Representative</th>
                   <th className="p-3.5 text-right">Invoiced Volume</th>
@@ -1360,34 +1300,28 @@ function InvoiceManagementDashboardContent() {
                   <th className="p-3.5 text-center">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 font-mono">
+              <tbody className="divide-y divide-neutral-800/80">
                 {salesReps.map((rep) => (
-                  <tr key={rep.id} className="hover:bg-slate-900/60 transition">
+                  <tr key={rep.id} className="hover:bg-neutral-900/60 transition">
                     <td className="p-3.5 font-sans">
                       <div className="font-bold text-white text-xs">{rep.name}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">{rep.email}</div>
+                      <div className="text-[10px] text-neutral-400 font-mono">{rep.email}</div>
                     </td>
-                    <td className="p-3.5 text-right text-slate-300">${rep.totalInvoiced.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td className="p-3.5 text-right text-slate-400">${rep.carrierCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td className="p-3.5 text-right font-bold text-emerald-400">${rep.realizedGp.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td className="p-3.5 text-center text-slate-300">{rep.marginPct.toFixed(2)}%</td>
-                    <td className="p-3.5 text-center font-bold text-indigo-300">{rep.appliedCommPct.toFixed(1)}%</td>
-                    <td className="p-3.5 text-right font-black text-white text-sm font-sans">
+                    <td className="p-3.5 text-right text-neutral-300">${rep.totalInvoiced.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="p-3.5 text-right text-neutral-400">${rep.carrierCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="p-3.5 text-right font-bold text-white">${rep.realizedGp.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="p-3.5 text-center text-neutral-300">{rep.marginPct.toFixed(2)}%</td>
+                    <td className="p-3.5 text-center font-bold text-white">{rep.appliedCommPct.toFixed(1)}%</td>
+                    <td className="p-3.5 text-right font-bold text-white text-sm">
                       ${rep.commissionEarned.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
                     <td className="p-3.5 text-center font-sans">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                          rep.status === 'APPROVED'
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        }`}
-                      >
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-neutral-900 text-white border border-neutral-700">
                         {rep.status}
                       </span>
                     </td>
                     <td className="p-3.5 text-center font-sans">
-                      <button className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-[11px] font-bold border border-slate-700 transition">
+                      <button className="px-2.5 py-1 bg-[#121215] hover:bg-neutral-800 text-white rounded-lg text-[11px] font-medium border border-neutral-800 transition">
                         Approve Payout
                       </button>
                     </td>
@@ -1399,55 +1333,52 @@ function InvoiceManagementDashboardContent() {
         </div>
       )}
 
-      {/* ========================================================================= */}
       {/* TAB 8: S3 WORM VAULT EXPLORER */}
-      {/* ========================================================================= */}
       {activeTab === 'worm' && (
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
+        <div className="space-y-6 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 shadow-2xl">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-mono font-bold mb-1">
+                <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-neutral-900 border border-neutral-700 text-white text-xs font-mono font-bold mb-1">
                   <Lock className="w-3.5 h-3.5" /> S3 OBJECT LOCK (COMPLIANCE MODE)
                 </div>
-                <h3 className="text-xl font-black text-white">Settlement Document Vault & Merkle Root Registry</h3>
-                <p className="text-xs text-slate-400 max-w-2xl">
-                  Immutable WORM storage sealed pursuant to FMCSA 49 CFR § 379 and DOT 7-Year Statutory Audit regulations. Once locked in COMPLIANCE mode, archives cannot be overwritten or deleted by any AWS user or root account.
+                <h3 className="text-xl font-serif text-white font-normal">Settlement Document Vault &amp; Merkle Root Registry</h3>
+                <p className="text-xs text-neutral-400 max-w-2xl font-sans">
+                  Immutable WORM storage sealed pursuant to FMCSA 49 CFR § 379 and DOT 7-Year Statutory Audit regulations. Once locked in COMPLIANCE mode, archives cannot be overwritten or deleted.
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span className="px-3 py-2 bg-[#121215] border border-neutral-800 text-white rounded-xl text-xs font-mono font-bold flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-white" />
                   100% Cryptographic Integrity
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-800 text-xs">
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <span className="text-slate-500 text-[10px] block uppercase font-bold">Retention Mode</span>
-                <span className="font-mono font-bold text-emerald-400">COMPLIANCE (Immutable)</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-neutral-800 text-xs font-mono">
+              <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">Retention Mode</span>
+                <span className="font-mono font-bold text-white">COMPLIANCE (Immutable)</span>
               </div>
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <span className="text-slate-500 text-[10px] block uppercase font-bold">Mandatory Duration</span>
+              <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">Mandatory Duration</span>
                 <span className="font-mono font-bold text-white">7 Years (DOT Statutory)</span>
               </div>
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <span className="text-slate-500 text-[10px] block uppercase font-bold">Hashing Standard</span>
-                <span className="font-mono font-bold text-indigo-400">SHA-256 (FIPS PUB 180-4)</span>
+              <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">Hashing Standard</span>
+                <span className="font-mono font-bold text-white">SHA-256 (FIPS PUB 180-4)</span>
               </div>
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <span className="text-slate-500 text-[10px] block uppercase font-bold">Total Vault Packages</span>
-                <span className="font-mono font-bold text-amber-400">{wormPackages.length} Archived</span>
+              <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800">
+                <span className="text-neutral-400 text-[10px] block uppercase font-sans">Total Vault Packages</span>
+                <span className="font-mono font-bold text-white">{wormPackages.length} Archived</span>
               </div>
             </div>
           </div>
 
-          {/* WORM Packages Table */}
-          <div className="overflow-x-auto border border-slate-800 rounded-2xl bg-slate-900/80 shadow-xl">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-800">
+          <div className="overflow-x-auto border border-[#27272a] rounded-2xl bg-[#09090b] shadow-xl">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-[#121215] text-neutral-400 font-semibold uppercase text-[10px] border-b border-neutral-800">
                 <tr>
                   <th className="p-3.5">Package Reference / Load</th>
                   <th className="p-3.5">Merkle Root SHA-256 Seal</th>
@@ -1458,61 +1389,52 @@ function InvoiceManagementDashboardContent() {
                   <th className="p-3.5 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 font-mono">
+              <tbody className="divide-y divide-neutral-800/80">
                 {wormPackages.map((pkg) => (
-                  <tr key={pkg.id} className="hover:bg-slate-900/60 transition">
+                  <tr key={pkg.id} className="hover:bg-neutral-900/60 transition">
                     <td className="p-3.5">
                       <div className="font-bold text-white text-xs">{pkg.packageReference}</div>
-                      <div className="text-[10px] text-indigo-300 font-medium font-sans">
+                      <div className="text-[10px] text-neutral-400 font-sans">
                         Shipment: {pkg.shipmentRef} | Invoice: {pkg.invoiceNumber}
                       </div>
                     </td>
                     <td className="p-3.5">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] text-teal-400 font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                        <span className="text-[11px] text-white font-bold bg-[#121215] px-2 py-0.5 rounded border border-neutral-800">
                           {pkg.merkleRootHash.substring(0, 16)}...{pkg.merkleRootHash.substring(48)}
                         </span>
                         <button
                           onClick={() => handleCopy(pkg.merkleRootHash, pkg.id)}
-                          className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition"
-                          title="Copy Full SHA-256 Hash"
+                          className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-white transition"
                         >
-                          {copiedHash === pkg.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          {copiedHash === pkg.id ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
                       </div>
                     </td>
-                    <td className="p-3.5 text-slate-400 text-[11px]">
+                    <td className="p-3.5 text-neutral-400 text-[11px]">
                       <div>{pkg.s3Bucket}</div>
-                      <div className="text-[10px] text-slate-500 truncate max-w-xs">{pkg.s3ObjectKey}</div>
+                      <div className="text-[10px] text-neutral-500 truncate max-w-xs">{pkg.s3ObjectKey}</div>
                     </td>
                     <td className="p-3.5 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-neutral-900 text-white border border-neutral-700">
                         {pkg.retentionMode}
                       </span>
                     </td>
-                    <td className="p-3.5 text-center text-amber-300 font-bold">
+                    <td className="p-3.5 text-center text-white font-bold">
                       {pkg.retainUntilDate} (7 Yrs)
                     </td>
                     <td className="p-3.5 text-center">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          pkg.isLegalHoldActive
-                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                            : 'bg-slate-800 text-slate-400'
-                        }`}
-                      >
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#121215] text-neutral-400 border border-neutral-800">
                         {pkg.isLegalHoldActive ? 'ACTIVE' : 'OFF'}
                       </span>
                     </td>
                     <td className="p-3.5 text-center font-sans">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => setSelectedWormPackage(pkg)}
-                          className="px-2.5 py-1 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white rounded-lg text-[11px] font-bold border border-indigo-500/30 flex items-center gap-1 transition"
-                        >
-                          <Layers className="w-3 h-3" /> Inspect Bundle (5 Docs)
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => setSelectedWormPackage(pkg)}
+                        className="px-2.5 py-1 bg-[#121215] hover:bg-neutral-800 text-white rounded-lg text-[11px] font-medium border border-neutral-800 flex items-center gap-1 transition"
+                      >
+                        <Layers className="w-3 h-3 text-neutral-400" /> Inspect Bundle (5 Docs)
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -1522,74 +1444,65 @@ function InvoiceManagementDashboardContent() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL 1: ITEMIZE INVOICE DETAIL MODAL */}
-      {/* ========================================================================= */}
+      {/* MODALS */}
       {selectedInvoice && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
             <div className="flex justify-between items-start">
               <div>
-                <span className="text-[10px] font-mono uppercase font-bold text-emerald-400">
+                <span className="text-[10px] font-mono font-bold text-white uppercase tracking-wider">
                   VERIFIED AUDITED INVOICE
                 </span>
-                <h3 className="text-xl font-black text-white mt-0.5">{selectedInvoice.invoiceNumber}</h3>
-                <div className="text-xs text-slate-400">PO: {selectedInvoice.customerPoNumber}</div>
+                <h3 className="text-xl font-serif text-white font-normal mt-0.5">{selectedInvoice.invoiceNumber}</h3>
+                <div className="text-xs text-neutral-400 font-mono">PO: {selectedInvoice.customerPoNumber}</div>
               </div>
               <button
                 onClick={() => setSelectedInvoice(null)}
-                className="text-slate-400 hover:text-white text-sm font-bold bg-slate-950 p-1.5 rounded-lg"
+                className="text-neutral-400 hover:text-white text-sm font-bold bg-[#121215] p-1.5 rounded-lg border border-neutral-800"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-2 text-xs">
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
-                <span className="text-slate-400 text-[10px] uppercase font-bold">Shipper Billing Contact</span>
+            <div className="space-y-3 text-xs">
+              <div className="bg-[#121215] p-3.5 rounded-xl border border-neutral-800 space-y-1">
+                <span className="text-neutral-400 text-[10px] uppercase font-mono">Shipper Billing Contact</span>
                 <div className="text-white font-bold">{selectedInvoice.shipperName}</div>
-                <div className="text-slate-400 font-mono">{selectedInvoice.shipperEmail}</div>
+                <div className="text-neutral-400 font-mono">{selectedInvoice.shipperEmail}</div>
               </div>
 
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-slate-400 text-[10px] uppercase font-bold">Itemized Billing Summary</span>
-                <div className="flex justify-between text-slate-300 font-mono">
+              <div className="bg-[#121215] p-3.5 rounded-xl border border-neutral-800 space-y-2 font-mono">
+                <span className="text-neutral-400 text-[10px] uppercase font-mono">Itemized Billing Summary</span>
+                <div className="flex justify-between text-neutral-300">
                   <span>Line-Haul Freight Charge:</span>
                   <span>${selectedInvoice.linehaulAmount.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-slate-300 font-mono">
+                <div className="flex justify-between text-neutral-300">
                   <span>Fuel Surcharge:</span>
                   <span>${selectedInvoice.fuelSurcharge.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-slate-300 font-mono">
+                <div className="flex justify-between text-neutral-300">
                   <span>Approved Accessorials:</span>
                   <span>${selectedInvoice.accessorials.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-white font-bold font-mono pt-2 border-t border-slate-800 text-sm">
+                <div className="flex justify-between text-white font-bold pt-2 border-t border-neutral-800 text-sm">
                   <span>Net Total Amount:</span>
-                  <span className="text-emerald-400">${selectedInvoice.totalAmount.toFixed(2)}</span>
+                  <span className="text-white">${selectedInvoice.totalAmount.toFixed(2)}</span>
                 </div>
-              </div>
-
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[11px] font-mono text-slate-400 space-y-1">
-                <div className="font-sans font-bold text-slate-300">Remittance Instructions (ACH / Wire):</div>
-                <div>Bank: JPMorgan Chase Bank, N.A.</div>
-                <div>Routing: 122000496 | Account: 8849102941</div>
-                <div>Remit Email: payments@apexltlos.com</div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-2 border-t border-neutral-800">
               <button
                 onClick={() => setSelectedInvoice(null)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl"
+                className="px-4 py-2 bg-[#121215] hover:bg-neutral-800 text-white font-medium text-xs rounded-xl border border-neutral-800"
               >
                 Close
               </button>
               <a
                 href={`/api/v1/invoices/${selectedInvoice.id}/pdf`}
                 target="_blank"
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 transition"
+                className="px-4 py-2 bg-white hover:bg-neutral-200 text-black font-bold text-xs rounded-xl flex items-center gap-1.5 transition shadow"
               >
                 <FileText className="w-3.5 h-3.5" /> Download PDF Invoice
               </a>
@@ -1598,52 +1511,41 @@ function InvoiceManagementDashboardContent() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL 2: POD EXIF & GEOFENCE INSPECTOR MODAL */}
-      {/* ========================================================================= */}
       {selectedPod && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
             <div className="flex justify-between items-start">
               <div>
-                <span className="text-[10px] font-mono uppercase font-bold text-emerald-400">
+                <span className="text-[10px] font-mono font-bold text-white uppercase tracking-wider">
                   GEOTAGGED PROOF OF DELIVERY AUDIT
                 </span>
-                <h3 className="text-lg font-black text-white mt-0.5">{selectedPod.shipmentRef}</h3>
-                <div className="text-xs text-slate-400">{selectedPod.consigneeName}</div>
+                <h3 className="text-lg font-serif text-white font-normal mt-0.5">{selectedPod.shipmentRef}</h3>
+                <div className="text-xs text-neutral-400">{selectedPod.consigneeName}</div>
               </div>
               <button
                 onClick={() => setSelectedPod(null)}
-                className="text-slate-400 hover:text-white text-sm font-bold bg-slate-950 p-1.5 rounded-lg"
+                className="text-neutral-400 hover:text-white text-sm font-bold bg-[#121215] p-1.5 rounded-lg border border-neutral-800"
               >
                 ✕
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-2">
-                <div className="text-slate-400 text-[10px] uppercase font-bold">GPS & EXIF Metadata</div>
-                <div className="grid grid-cols-2 gap-2 font-mono text-slate-300">
+              <div className="bg-[#121215] p-3.5 rounded-xl border border-neutral-800 space-y-2">
+                <div className="text-neutral-400 text-[10px] font-mono uppercase">GPS &amp; EXIF Metadata</div>
+                <div className="grid grid-cols-2 gap-2 font-mono text-neutral-300">
                   <div>Latitude: <span className="text-white font-bold">{selectedPod.gpsLat}° N</span></div>
                   <div>Longitude: <span className="text-white font-bold">{selectedPod.gpsLng}° W</span></div>
-                  <div>Haversine Distance: <span className="text-emerald-400 font-bold">{selectedPod.geofenceDistance}</span></div>
-                  <div>Scanner Device: <span className="text-indigo-300 font-bold">{selectedPod.device}</span></div>
-                </div>
-              </div>
-
-              <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-2">
-                <div className="text-slate-400 text-[10px] uppercase font-bold">OCR Transcription & Signature Attestation</div>
-                <div className="font-mono text-emerald-400 text-xs">Signature Confidence: {selectedPod.confidenceScore}% (VERIFIED)</div>
-                <div className="text-slate-400 text-[11px]">
-                  Piece count matched: {selectedPod.receivedPieces} of {selectedPod.expectedPieces} pallets delivered exception-free.
+                  <div>Distance: <span className="text-white font-bold">{selectedPod.geofenceDistance}</span></div>
+                  <div>Device: <span className="text-white font-bold">{selectedPod.device}</span></div>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-2 border-t border-neutral-800">
               <button
                 onClick={() => setSelectedPod(null)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl"
+                className="px-4 py-2 bg-[#121215] hover:bg-neutral-800 text-white font-medium text-xs rounded-xl border border-neutral-800"
               >
                 Close
               </button>
@@ -1652,101 +1554,39 @@ function InvoiceManagementDashboardContent() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL 3: S3 WORM 5-DOCUMENT BUNDLE INSPECTOR MODAL */}
-      {/* ========================================================================= */}
       {selectedWormPackage && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl">
             <div className="flex justify-between items-start">
               <div>
-                <span className="text-[10px] font-mono uppercase font-bold text-amber-400 flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> FMCSA § 379 & DOT 7-YEAR WORM SETTLEMENT ARCHIVE
+                <span className="text-[10px] font-mono font-bold text-white flex items-center gap-1">
+                  <Lock className="w-3 h-3" /> FMCSA § 379 &amp; DOT 7-YEAR WORM VAULT
                 </span>
-                <h3 className="text-lg font-black text-white mt-0.5">{selectedWormPackage.packageReference}</h3>
-                <div className="text-xs text-slate-400 font-mono">
-                  Shipment: {selectedWormPackage.shipmentRef} | Retention Mode: {selectedWormPackage.retentionMode}
-                </div>
+                <h3 className="text-lg font-serif text-white font-normal mt-0.5">{selectedWormPackage.packageReference}</h3>
               </div>
               <button
                 onClick={() => setSelectedWormPackage(null)}
-                className="text-slate-400 hover:text-white text-sm font-bold bg-slate-950 p-1.5 rounded-lg"
+                className="text-neutral-400 hover:text-white text-sm font-bold bg-[#121215] p-1.5 rounded-lg border border-neutral-800"
               >
                 ✕
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-1.5 font-mono">
-                <div className="text-indigo-400 text-[10px] uppercase font-bold font-sans">
-                  Merkle Root Cryptographic Seal (SHA-256)
-                </div>
-                <div className="text-white text-[11px] font-bold break-all bg-slate-900 p-2 rounded-xl border border-slate-800">
+              <div className="bg-[#121215] p-3.5 rounded-xl border border-neutral-800 space-y-1.5 font-mono">
+                <div className="text-white text-[10px] uppercase font-mono">Merkle Root Seal (SHA-256)</div>
+                <div className="text-white text-[11px] font-bold break-all bg-[#09090b] p-2 rounded.xl border border-neutral-800">
                   {selectedWormPackage.merkleRootHash}
-                </div>
-                <div className="text-[10px] text-slate-500 font-sans">
-                  Immutable S3 Object Lock expires: <strong>{selectedWormPackage.retainUntilDate}</strong> (7-Year Mandatory Lock)
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                  5 Sealed Regulatory Documents in Bundle:
-                </div>
-                <div className="space-y-1.5 max-h-56 overflow-y-auto">
-                  {selectedWormPackage.bundleManifest?.map((doc: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs font-mono"
-                    >
-                      <div>
-                        <div className="font-bold text-slate-200 text-[11px] flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          {idx + 1}. {doc.documentType}
-                        </div>
-                        <div className="text-[10px] text-slate-400 truncate max-w-sm">{doc.documentName}</div>
-                        <div className="text-[9px] text-sky-400">
-                          SHA-256: {doc.fileHashSha256.substring(0, 16)}...{doc.fileHashSha256.substring(48)}
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-slate-400">{(doc.sizeBytes / 1024).toFixed(1)} KB</span>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+            <div className="flex justify-end gap-2 pt-2 border-t border-neutral-800">
               <button
                 onClick={() => setSelectedWormPackage(null)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl"
+                className="px-4 py-2 bg-[#121215] hover:bg-neutral-800 text-white font-medium text-xs rounded-xl border border-neutral-800"
               >
                 Close
-              </button>
-              <button
-                onClick={() => {
-                  const blob = new Blob([
-                    `FMCSA 49 CFR § 379 COMPLIANCE AUDIT CERTIFICATE\n\n` +
-                    `Package Reference: ${selectedWormPackage.packageReference}\n` +
-                    `Shipment Reference: ${selectedWormPackage.shipmentRef}\n` +
-                    `Invoice Number: ${selectedWormPackage.invoiceNumber}\n` +
-                    `Merkle Root Hash: ${selectedWormPackage.merkleRootHash}\n` +
-                    `Retention Mode: ${selectedWormPackage.retentionMode}\n` +
-                    `Retain Until: ${selectedWormPackage.retainUntilDate}\n` +
-                    `Sealed Timestamp: ${selectedWormPackage.sealedAt}\n` +
-                    `S3 Target: s3://${selectedWormPackage.s3Bucket}/${selectedWormPackage.s3ObjectKey}\n\n` +
-                    `MANIFEST OF 5 SEALED DOCUMENTS:\n` +
-                    selectedWormPackage.bundleManifest?.map((d: any, i: number) => `${i + 1}. [${d.documentType}] ${d.documentName} | SHA256: ${d.fileHashSha256} | ${d.sizeBytes} bytes`).join('\n')
-                  ], { type: 'text/plain' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `Compliance_Certificate_${selectedWormPackage.packageReference}.txt`;
-                  a.click();
-                }}
-                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 transition"
-              >
-                <Download className="w-3.5 h-3.5" /> Download Compliance Certificate
               </button>
             </div>
           </div>
@@ -1763,4 +1603,3 @@ export const InvoiceManagementDashboard: React.FC = () => {
     </Suspense>
   );
 };
-
