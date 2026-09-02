@@ -18,6 +18,9 @@ import {
   KanbanSquare,
   Radio,
   Send,
+  Eye,
+  X,
+  Info,
 } from 'lucide-react';
 import { KanbanBoardState, DispatchCard } from '../../lib/dispatch/dispatch-board-engine';
 import { DISPATCH_BOARD_COLUMNS, DispatchBoardColumn } from '../../db/schema';
@@ -29,6 +32,7 @@ function KanbanDispatchBoardContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchFilter, setSearchFilter] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [showUseCaseModal, setShowUseCaseModal] = useState(false);
 
   useEffect(() => {
     const v = searchParams.get('view');
@@ -133,6 +137,15 @@ function KanbanDispatchBoardContent() {
               className="w-full bg-[#121215] border border-neutral-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-neutral-500 font-sans focus:outline-none focus:border-neutral-600"
             />
           </div>
+
+          <button
+            onClick={() => setShowUseCaseModal(true)}
+            className="px-3 py-1.5 bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white text-xs font-sans font-medium rounded-lg border border-neutral-800 flex items-center gap-1.5 transition"
+            title="View Dispatch Desk Use Case"
+          >
+            <Eye className="w-3.5 h-3.5 text-white" />
+            <span>Use Case</span>
+          </button>
 
           <button
             onClick={fetchBoard}
@@ -362,6 +375,80 @@ function KanbanDispatchBoardContent() {
             })}
           </div>
         </>
+      )}
+
+      {/* Interactive Use Case Modal */}
+      {showUseCaseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <button
+              onClick={() => setShowUseCaseModal(false)}
+              className="absolute top-6 right-6 p-2 rounded-xl bg-[#121215] text-neutral-400 hover:text-white border border-neutral-800 transition"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-700 text-white font-mono text-[10px] font-bold">
+                  Phase 3.1–3.8
+                </span>
+                <span className="text-xs text-neutral-400 font-mono">Tender &amp; Dispatch Operations</span>
+              </div>
+              <h3 className="text-2xl font-serif text-white font-normal">LTL Operations Kanban &amp; eBOL Desk</h3>
+            </div>
+
+            <div className="space-y-4 text-xs font-sans">
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-neutral-300" /> What This Feature Does
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  A high-velocity 10-stage Kanban dispatch desk managing the entire freight lifecycle from UNASSIGNED to TENDER_SENT, IN_TRANSIT, DELIVERED, and SETTLED.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-neutral-300" /> Why Freight Brokers Need It
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  Brokers struggle to track carrier tender acceptance, resulting in missed pickups and emergency rate spikes. This board gives 1-click status advancement, automated EDI 204/990 tendering, and instant GS1-128 barcode eBOL generation.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono">
+                  Key Automated Capabilities:
+                </div>
+                <div className="space-y-2">
+                  {[
+                    '10-stage Kanban lifecycle state machine with 1-click stage advancement',
+                    'Electronic Bill of Lading (eBOL) PDF generator with GS1-128 barcodes',
+                    'Automated carrier tender dispatches via REST webhooks and EDI 204/990',
+                    'Real-time FMCSA safety gate check prior to carrier tender confirmation',
+                  ].map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-neutral-300">
+                      <CheckCircle2 className="w-4 h-4 text-white shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-neutral-800 flex items-center justify-between">
+              <span className="text-[11px] text-neutral-400 font-mono">Step 3 in Freight Procurement Lifecycle</span>
+              <button
+                onClick={() => setShowUseCaseModal(false)}
+                className="px-5 py-2.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow transition"
+              >
+                Got It, Return to Board
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

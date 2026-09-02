@@ -16,6 +16,9 @@ import {
   Radio,
   Layers,
   AlertTriangle,
+  Eye,
+  X,
+  Info,
 } from 'lucide-react';
 import { QuoteComparisonMatrix } from './QuoteComparisonMatrix';
 import { SplitSavingsHighlightCard } from './SplitSavingsHighlightCard';
@@ -88,6 +91,7 @@ function Phase2QuotingWorkspaceContent({
   const [isBooked, setIsBooked] = useState(false);
   const [bookingMessage, setBookingMessage] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [showUseCaseModal, setShowUseCaseModal] = useState(false);
 
   useEffect(() => {
     const v = searchParams.get('view');
@@ -307,6 +311,14 @@ function Phase2QuotingWorkspaceContent({
 
         <div className="flex items-center gap-2.5">
           <button
+            onClick={() => setShowUseCaseModal(true)}
+            className="px-3 py-2 bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white text-xs font-sans font-medium rounded-xl transition border border-neutral-800 flex items-center gap-1.5"
+            title="View Rating Engine Use Case"
+          >
+            <Eye className="w-3.5 h-3.5 text-white" />
+            <span>Use Case</span>
+          </button>
+          <button
             onClick={fetchRatesProgressive}
             disabled={isLoading}
             className="px-3.5 py-2 bg-[#121215] hover:bg-neutral-800 text-neutral-200 text-xs font-sans font-medium rounded-xl transition border border-neutral-800 flex items-center gap-1.5"
@@ -432,6 +444,80 @@ function Phase2QuotingWorkspaceContent({
             </div>
             <div className="text-neutral-400 text-[11px]">
               Connected Carriers: SAIA LTL (28ms), XPO Logistics (45ms), Estes Express (52ms), R+L Carriers (39ms).
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Use Case Modal */}
+      {showUseCaseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <button
+              onClick={() => setShowUseCaseModal(false)}
+              className="absolute top-6 right-6 p-2 rounded-xl bg-[#121215] text-neutral-400 hover:text-white border border-neutral-800 transition"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-700 text-white font-mono text-[10px] font-bold">
+                  Phase 2.1–2.9
+                </span>
+                <span className="text-xs text-neutral-400 font-mono">Algorithmic Pricing Desk</span>
+              </div>
+              <h3 className="text-2xl font-serif text-white font-normal">Rating &amp; Combinatorial Split Optimizer</h3>
+            </div>
+
+            <div className="space-y-4 text-xs font-sans">
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-neutral-300" /> What This Feature Does
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  Queries 5 Tier-1 carriers across direct tariffs (BYOC) and platform wholesale contracts simultaneously, evaluating whether splitting multi-pallet shipments beats single-carrier pricing.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-neutral-300" /> Why Freight Brokers Need It
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  LTL carriers steeply penalize 4+ pallet shipments with volume surcharges. Our knapsack algorithm calculates if routing 2 pallets on Carrier A and 2 on Carrier B saves $200–$400, while enforcing your brokerage profit floor ($75.00/load minimum).
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono">
+                  Key Automated Capabilities:
+                </div>
+                <div className="space-y-2">
+                  {[
+                    'Direct BYOC tariffs vs. Platform Wholesale discount rate comparison',
+                    'Algorithmic knapsack split optimizer for 4+ pallet loads',
+                    'Volume-LTL limit warning watcher (flags >5,000 lbs or >750 cu ft)',
+                    'Live SSE real-time streaming matrix with sub-second response times',
+                  ].map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-neutral-300">
+                      <CheckCircle2 className="w-4 h-4 text-white shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-neutral-800 flex items-center justify-between">
+              <span className="text-[11px] text-neutral-400 font-mono">Step 2 in Freight Procurement Lifecycle</span>
+              <button
+                onClick={() => setShowUseCaseModal(false)}
+                className="px-5 py-2.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow transition"
+              >
+                Got It, Return to Rating
+              </button>
             </div>
           </div>
         </div>

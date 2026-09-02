@@ -18,6 +18,9 @@ import {
   Calculator,
   Lock,
   Search,
+  Eye,
+  X,
+  Info,
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { QuickPayFeeEngine } from '../../lib/quickpay/quickpay-fee-engine';
@@ -26,6 +29,7 @@ import { CarrierFraudScoringEngine } from '../../lib/quickpay/carrier-fraud-scor
 function QuickPayManagementDashboardContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'payouts' | 'vetting' | 'ledger' | 'tax-1099'>('payouts');
+  const [showUseCaseModal, setShowUseCaseModal] = useState(false);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -227,12 +231,19 @@ function QuickPayManagementDashboardContent() {
             </span>
             <span className="text-xs text-neutral-400 font-mono">Revenue Engine #2</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight flex items-center gap-2">
-            Carrier QuickPay &amp; Double-Entry Ledger
-          </h1>
-          <p className="text-sm text-neutral-400 font-sans mt-0.5">
-            Real-time RTP/FedNow accelerated settlement, E-SIGN legal contracts, balanced journal ledger &amp; Form 1099-NEC tax automation.
-          </p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight flex items-center gap-2">
+              Carrier QuickPay &amp; Double-Entry Ledger
+            </h1>
+            <button
+              onClick={() => setShowUseCaseModal(true)}
+              className="px-3 py-1 rounded-full bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 text-xs font-sans transition flex items-center gap-1.5"
+              title="View QuickPay Fintech Use Case"
+            >
+              <Eye className="w-3.5 h-3.5 text-white" />
+              <span>Use Case</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -760,6 +771,81 @@ function QuickPayManagementDashboardContent() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Use Case Modal */}
+      {showUseCaseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <button
+              onClick={() => setShowUseCaseModal(false)}
+              className="absolute top-6 right-6 p-2 rounded-xl bg-[#121215] text-neutral-400 hover:text-white border border-neutral-800 transition"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-700 text-white font-mono text-[10px] font-bold">
+                  Phase 6.1–6.4
+                </span>
+                <span className="text-xs text-neutral-400 font-mono">Fintech Spread &amp; Carrier Banking Rails</span>
+              </div>
+              <h3 className="text-2xl font-serif text-white font-normal">Carrier QuickPay &amp; Balanced Ledger Desk</h3>
+            </div>
+
+            <div className="space-y-4 text-xs font-sans">
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-neutral-300" /> What This Feature Does
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  Offers carriers instant same-day settlement via RTP/FedNow in exchange for a 2.0%–2.5% discount fee, managed on a double-entry general ledger with automated Form 1099-NEC tax reporting.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-neutral-300" /> Why Freight Brokers Need It
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  Carriers urgently need liquidity to fuel trucks and pay drivers. Instead of losing carriers to factoring houses, brokers turn accounts payable into high-margin revenue while preventing fraud with 30-day bank routing lockouts.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono">
+                  Key Automated Capabilities:
+                </div>
+                <div className="space-y-2">
+                  {[
+                    'Instant Same-Day RTP/FedNow settlement (<2 hours) with 2.5% fee capture',
+                    'Bank account change fraud scoring (30-day freeze on routing changes)',
+                    'UCC Article 9 factoring company Notice of Assignment (NOA) conflict checks',
+                    'Double-entry balanced general ledger entries with zero penny variance',
+                    'Automated annual IRS Form 1099-NEC nonemployee compensation generation',
+                  ].map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-neutral-300">
+                      <CheckCircle2 className="w-4 h-4 text-white shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-neutral-800 flex items-center justify-between">
+              <span className="text-[11px] text-neutral-400 font-mono">Phase 6 Fintech Desk</span>
+              <button
+                onClick={() => setShowUseCaseModal(false)}
+                className="px-5 py-2.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow transition"
+              >
+                Got It, Return to QuickPay
+              </button>
+            </div>
           </div>
         </div>
       )}

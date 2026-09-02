@@ -39,6 +39,7 @@ import {
   ShieldAlert,
   PlusCircle,
   Percent,
+  X,
 } from 'lucide-react';
 import { Phase5DisputeWorkspace } from './Phase5DisputeWorkspace';
 
@@ -102,6 +103,7 @@ function InvoiceManagementDashboardContent() {
   const [isDunningRunning, setIsDunningRunning] = useState(false);
   const [isSealingWorm, setIsSealingWorm] = useState(false);
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
+  const [showUseCaseModal, setShowUseCaseModal] = useState(false);
 
   // 1. Mock Invoices
   const [invoices, setInvoices] = useState<any[]>([
@@ -542,12 +544,19 @@ function InvoiceManagementDashboardContent() {
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               SUB-MINUTE DSO SETTLEMENT &amp; S3 WORM COMPLIANCE VAULT
             </div>
-            <h1 className="text-2xl sm:text-3xl font-serif text-white tracking-tight font-normal">
-              Broker Invoicing &amp; Settlement Dashboard
-            </h1>
-            <p className="text-xs text-neutral-400 max-w-3xl font-sans">
-              Unified financial operating desk: Sub-60s automated customer billing, verified POD streams, QBO/Xero ledger sync, AR dunning, gross margin commissions, and FMCSA § 379 S3 WORM compliance archiving.
-            </p>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-serif text-white tracking-tight font-normal">
+                Broker Invoicing &amp; Settlement Dashboard
+              </h1>
+              <button
+                onClick={() => setShowUseCaseModal(true)}
+                className="px-3 py-1 rounded-full bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 text-xs font-sans transition flex items-center gap-1.5"
+                title="View Invoicing Desk Use Case"
+              >
+                <Eye className="w-3.5 h-3.5 text-white" />
+                <span>Use Case</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2.5">
@@ -1587,6 +1596,81 @@ function InvoiceManagementDashboardContent() {
                 className="px-4 py-2 bg-[#121215] hover:bg-neutral-800 text-white font-medium text-xs rounded-xl border border-neutral-800"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Use Case Modal */}
+      {showUseCaseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <button
+              onClick={() => setShowUseCaseModal(false)}
+              className="absolute top-6 right-6 p-2 rounded-xl bg-[#121215] text-neutral-400 hover:text-white border border-neutral-800 transition"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-700 text-white font-mono text-[10px] font-bold">
+                  Phase 4.1–5.6
+                </span>
+                <span className="text-xs text-neutral-400 font-mono">Settlement &amp; Dispute Desk</span>
+              </div>
+              <h3 className="text-2xl font-serif text-white font-normal">Broker Invoicing &amp; Re-Bill Dispute Desk</h3>
+            </div>
+
+            <div className="space-y-4 text-xs font-sans">
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-neutral-300" /> What This Feature Does
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  Triggers sub-60 second customer billing upon GPS-verified delivery, audits inbound carrier re-bills against rate confirmations, and manages 30-day FMCSA legal disputes.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-neutral-300" /> Why Freight Brokers Need It
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  Carriers overbill brokers on accessorials and re-weighs on 15% of shipments. Apex flags discrepancies against cryptographic rate locks, auto-generates legal dispute packages, and collects 20% contingency recovery fees.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono">
+                  Key Automated Capabilities:
+                </div>
+                <div className="space-y-2">
+                  {[
+                    'Sub-60s customer invoice generation with attached geotagged POD & eBOL',
+                    'Re-Bill line-item auditor comparing carrier bills to rate confirmations',
+                    '30-day statutory FMCSA clock tracker with automated 49 CFR dispute packages',
+                    '20% Recovery Billing contingency fee tracking on clawed-back carrier overcharges',
+                    'FMCSA § 379 3-year compliance vault sealed with SHA-256 Merkle proofs',
+                  ].map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-neutral-300">
+                      <CheckCircle2 className="w-4 h-4 text-white shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-neutral-800 flex items-center justify-between">
+              <span className="text-[11px] text-neutral-400 font-mono">Phase 4 &amp; 5 Settlement Desk</span>
+              <button
+                onClick={() => setShowUseCaseModal(false)}
+                className="px-5 py-2.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow transition"
+              >
+                Got It, Return to Invoicing
               </button>
             </div>
           </div>

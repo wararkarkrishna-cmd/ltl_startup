@@ -18,6 +18,9 @@ import {
   Sparkles,
   PieChart,
   Percent,
+  Eye,
+  X,
+  Info,
 } from 'lucide-react';
 import { ExecutiveRoiMetrics } from '../../lib/analytics/executive-roi-engine';
 
@@ -27,6 +30,7 @@ function ExecutiveRoiDashboardContent() {
   const [metrics, setMetrics] = useState<ExecutiveRoiMetrics | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeSubView, setActiveSubView] = useState<'overview' | 'economic_value' | 'labor_saved' | 'split_savings' | 'spreads'>('overview');
+  const [showUseCaseModal, setShowUseCaseModal] = useState(false);
 
   useEffect(() => {
     const viewParam = searchParams.get('view');
@@ -74,9 +78,19 @@ function ExecutiveRoiDashboardContent() {
             </span>
             <span className="text-[10px] text-neutral-500 font-mono">Phase 6.7 Active</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif text-white tracking-tight font-normal">
-            Executive Financial ROI Audit
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-serif text-white tracking-tight font-normal">
+              Executive Financial ROI Audit
+            </h1>
+            <button
+              onClick={() => setShowUseCaseModal(true)}
+              className="px-3 py-1 rounded-full bg-[#121215] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 text-xs font-sans transition flex items-center gap-1.5"
+              title="View Executive ROI Use Case"
+            >
+              <Eye className="w-3.5 h-3.5 text-white" />
+              <span>Use Case</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -408,6 +422,81 @@ function ExecutiveRoiDashboardContent() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Interactive Use Case Modal */}
+      {showUseCaseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <button
+              onClick={() => setShowUseCaseModal(false)}
+              className="absolute top-6 right-6 p-2 rounded-xl bg-[#121215] text-neutral-400 hover:text-white border border-neutral-800 transition"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-700 text-white font-mono text-[10px] font-bold">
+                  Phase 6.7
+                </span>
+                <span className="text-xs text-neutral-400 font-mono">Executive Financial Engine</span>
+              </div>
+              <h3 className="text-2xl font-serif text-white font-normal">Executive Financial ROI Audit</h3>
+            </div>
+
+            <div className="space-y-4 text-xs font-sans">
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-neutral-300" /> What This Feature Does
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  Measures and proves exact dollar return across 4 core economic value streams: labor hours saved, split load arbitrage, carrier re-bill clawbacks, and QuickPay spread capture.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-1.5">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-neutral-300" /> Why Freight Brokers Need It
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  Brokerage owners need verified financial justification for board presentations and investor reporting. This dashboard computes exact bottom-line EBIT impact down to the dollar and exports presentation-ready board PDFs.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <div className="font-semibold text-white uppercase tracking-wider text-[10px] font-mono">
+                  Key Automated Capabilities:
+                </div>
+                <div className="space-y-2">
+                  {[
+                    '4-stream economic value attribution (Labor, Splits, Disputes, QuickPay)',
+                    'Automatic calculation of human labor hours recovered from clerical tasks',
+                    'Combinatorial split optimization savings tracking across all booked freight',
+                    'Carrier dispute desk recovery tracking (reclaimed money from billing errors)',
+                    '1-click official Board of Directors PDF audit report generator',
+                  ].map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-neutral-300">
+                      <CheckCircle2 className="w-4 h-4 text-white shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-neutral-800 flex items-center justify-between">
+              <span className="text-[11px] text-neutral-400 font-mono">Phase 6 Executive Audit Desk</span>
+              <button
+                onClick={() => setShowUseCaseModal(false)}
+                className="px-5 py-2.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow transition"
+              >
+                Got It, Return to Audit
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
