@@ -40,6 +40,7 @@ import {
   PlusCircle,
   Percent,
   X,
+  Info,
 } from 'lucide-react';
 import { Phase5DisputeWorkspace } from './Phase5DisputeWorkspace';
 
