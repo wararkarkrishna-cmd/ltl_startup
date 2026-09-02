@@ -201,11 +201,12 @@ function HomePageContent() {
       receivedPieces: 4,
       expectedPieces: 4,
     });
-    const geofence = GeofenceValidator.validateDelivery({
-      destZip: podZip,
-      uploadLat: podGpsLat,
-      uploadLon: podGpsLon,
-    });
+    const geofence = GeofenceValidator.validateDeliveryLocation(
+      podZip,
+      podGpsLat,
+      podGpsLon,
+      0.5
+    );
 
     const isEligible = geofence.isWithinGeofence && !damage.hasException;
 
