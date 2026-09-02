@@ -196,7 +196,11 @@ function HomePageContent() {
   };
 
   const handleRunPodValidation = () => {
-    const damage = DamageDetectorEngine.evaluateOcrText(podOcrText);
+    const damage = DamageDetectorEngine.inspect({
+      ocrRawText: podOcrText,
+      receivedPieces: 4,
+      expectedPieces: 4,
+    });
     const geofence = GeofenceValidator.validateDelivery({
       destZip: podZip,
       uploadLat: podGpsLat,
