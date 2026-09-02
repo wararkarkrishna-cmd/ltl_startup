@@ -474,23 +474,24 @@ export const Phase5DisputeWorkspace: React.FC<{
       {/* TAB: RE-BILL AUDIT & INGESTION (5.1 & 5.2) */}
       {/* ===================================================================== */}
       {activeSubTab === 'rebill' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#09090b] border border-[#27272a] p-5 rounded-2xl">
-            <div>
-              <h3 className="text-base font-serif font-normal text-white flex items-center gap-2">
-                <Scale className="w-5 h-5 text-white" /> Carrier Re-Bill Auditing Desk (EDI 210 &amp; PDF OCR)
-              </h3>
-              <p className="text-xs text-neutral-400 mt-1 font-sans">
-                Automated cross-comparison of carrier final invoices against contracted rate baselines. Standard $5.00 tolerance rule enforced.
-              </p>
+        <div className="space-y-6 font-sans">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#09090b] border border-[#27272a] p-6 rounded-2xl shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white">
+                <Scale className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-serif text-white font-normal">Carrier Re-Bill Auditing Desk</h3>
+                <span className="text-xs text-neutral-400 font-mono">EDI 210 &amp; PDF OCR Cross-Match</span>
+              </div>
             </div>
             <button
               onClick={handleRunAudit}
               disabled={isAuditing}
-              className="px-4 py-2 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow flex items-center gap-2 transition disabled:opacity-50"
+              className="px-5 py-2.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow transition disabled:opacity-50 flex items-center gap-2"
             >
               <RefreshCw className={`w-4 h-4 ${isAuditing ? 'animate-spin' : ''}`} />
-              {isAuditing ? 'Running Cross-Audit...' : 'Run Automated Audit'}
+              {isAuditing ? 'Auditing Invoices...' : 'Run Cross-Audit'}
             </button>
           </div>
 
@@ -499,88 +500,66 @@ export const Phase5DisputeWorkspace: React.FC<{
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#121215] text-neutral-400 border-b border-neutral-800 uppercase font-semibold text-[10px] tracking-wider font-mono">
                   <tr>
-                    <th className="p-3.5">Carrier / PRO #</th>
-                    <th className="p-3.5">Shipment Ref</th>
-                    <th className="p-3.5">Quoted Rate</th>
-                    <th className="p-3.5">Carrier Billed</th>
-                    <th className="p-3.5">Variance (Δ)</th>
-                    <th className="p-3.5">Weight / Class Δ</th>
-                    <th className="p-3.5">Audit Status</th>
-                    <th className="p-3.5 text-right">Action</th>
+                    <th className="py-4 px-5">Carrier / PRO #</th>
+                    <th className="py-4 px-5">Shipment Ref</th>
+                    <th className="py-4 px-5 text-right">Quoted Rate</th>
+                    <th className="py-4 px-5 text-right">Carrier Billed</th>
+                    <th className="py-4 px-5 text-right">Variance (Δ)</th>
+                    <th className="py-4 px-5">Class / Weight Δ</th>
+                    <th className="py-4 px-5 text-center">Audit Status</th>
+                    <th className="py-4 px-5 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-800/80 font-sans">
                   {carrierInvoices.map((inv) => (
                     <tr key={inv.id} className="hover:bg-neutral-900/60 transition">
-                      <td className="p-3.5">
+                      <td className="py-4 px-5">
                         <div className="font-bold text-white flex items-center gap-1.5">
                           <Building2 className="w-3.5 h-3.5 text-neutral-400" />
                           {inv.carrierName}
                         </div>
                         <div className="text-[10px] text-neutral-400 font-mono">PRO: {inv.proNumber}</div>
                       </td>
-                      <td className="p-3.5 font-mono text-neutral-300 font-semibold">{inv.shipmentRef}</td>
-                      <td className="p-3.5 font-mono text-neutral-200 font-semibold">${inv.quotedTotal.toFixed(2)}</td>
-                      <td className="p-3.5 font-mono text-white font-bold">${inv.invoicedTotal.toFixed(2)}</td>
-                      <td className="p-3.5">
+                      <td className="py-4 px-5 font-mono text-neutral-300 font-semibold">{inv.shipmentRef}</td>
+                      <td className="py-4 px-5 text-right font-mono text-neutral-200 font-semibold">${inv.quotedTotal.toFixed(2)}</td>
+                      <td className="py-4 px-5 text-right font-mono text-white font-bold">${inv.invoicedTotal.toFixed(2)}</td>
+                      <td className="py-4 px-5 text-right font-mono font-bold">
                         {inv.deltaTotal > 0 ? (
-                          <span className="font-mono font-bold text-white">
-                            +${inv.deltaTotal.toFixed(2)}
-                          </span>
+                          <span className="text-white">+${inv.deltaTotal.toFixed(2)}</span>
                         ) : (
-                          <span className="font-mono font-bold text-neutral-400">$0.00</span>
+                          <span className="text-neutral-500">$0.00</span>
                         )}
                       </td>
-                      <td className="p-3.5 text-[11px] text-neutral-300">
+                      <td className="py-4 px-5 text-[11px] text-neutral-300">
                         {inv.deltaWeightLbs > 0 && (
-                          <div className="text-white font-bold font-mono">+{inv.deltaWeightLbs} lbs reweigh</div>
+                          <div className="text-white font-bold font-mono">+{inv.deltaWeightLbs} lbs</div>
                         )}
                         {inv.invoicedClass !== inv.quotedClass && (
                           <div className="text-neutral-300 font-bold font-mono">Class {inv.quotedClass} → {inv.invoicedClass}</div>
                         )}
-                        {inv.unapprovedAccessorials.length > 0 && (
-                          <div className="text-neutral-400 font-medium text-[10px]">{inv.unapprovedAccessorials.join(', ')}</div>
-                        )}
-                        {inv.deltaWeightLbs === 0 && inv.invoicedClass === inv.quotedClass && inv.unapprovedAccessorials.length === 0 && (
-                          <span className="text-neutral-500">Match 100%</span>
+                        {inv.deltaWeightLbs === 0 && inv.invoicedClass === inv.quotedClass && (
+                          <span className="text-neutral-500 font-mono">Match 100%</span>
                         )}
                       </td>
-                      <td className="p-3.5">
-                        {inv.status === 'AUDITED_CLEAN' && (
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-900 text-white border border-neutral-700 flex items-center gap-1 w-fit font-mono">
-                            <CheckCircle2 className="w-3 h-3 text-white" /> CLEAN (≤$5.00)
-                          </span>
-                        )}
-                        {inv.status === 'DISCREPANCY_FLAGGED' && (
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-900 text-white border border-neutral-700 flex items-center gap-1 w-fit font-mono">
-                            <AlertTriangle className="w-3 h-3 text-white" /> OVERCHARGE
-                          </span>
-                        )}
-                        {inv.status === 'DISPUTED' && (
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-900 text-neutral-300 border border-neutral-700 flex items-center gap-1 w-fit font-mono">
-                            <Clock className="w-3 h-3 text-neutral-400" /> DISPUTE FILED
-                          </span>
-                        )}
-                        {inv.status === 'SETTLED' && (
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-900 text-white border border-neutral-700 flex items-center gap-1 w-fit font-mono">
-                            <Check className="w-3 h-3 text-white" /> CREDIT WON
-                          </span>
-                        )}
+                      <td className="py-4 px-5 text-center">
+                        <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-neutral-900 text-white border border-neutral-700">
+                          {inv.status.replace('_', ' ')}
+                        </span>
                       </td>
-                      <td className="p-3.5 text-right">
+                      <td className="py-4 px-5 text-right">
                         {inv.status === 'DISCREPANCY_FLAGGED' && (
                           <button
                             onClick={() => setShowCreateDisputeModal(inv)}
-                            className="px-3 py-1.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-[11px] rounded-lg shadow transition flex items-center gap-1 ml-auto"
+                            className="px-3.5 py-1.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-[11px] rounded-xl shadow transition flex items-center gap-1 ml-auto"
                           >
-                            <ShieldAlert className="w-3 h-3" /> Dispute Overcharge
+                            <ShieldAlert className="w-3.5 h-3.5 text-black" /> Dispute
                           </button>
                         )}
                         {inv.status === 'AUDITED_CLEAN' && (
                           <span className="text-[11px] text-white font-bold font-mono">Auto-Approved</span>
                         )}
                         {inv.status === 'SETTLED' && (
-                          <span className="text-[11px] text-white font-bold font-mono">Settled</span>
+                          <span className="text-[11px] text-neutral-400 font-bold font-mono">Settled</span>
                         )}
                       </td>
                     </tr>
@@ -596,51 +575,53 @@ export const Phase5DisputeWorkspace: React.FC<{
       {/* TAB: LEGAL DISPUTE DESK (5.3 & 5.4) */}
       {/* ===================================================================== */}
       {activeSubTab === 'disputes' && (
-        <div className="space-y-4 font-sans">
-          <div className="bg-[#09090b] border border-[#27272a] p-5 rounded-2xl">
-            <h3 className="text-base font-serif font-normal text-white flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-white" /> 49 CFR § 378 Legal Dispute Desk
-            </h3>
-            <p className="text-xs text-neutral-400 mt-1 font-sans">
-              Automated compilation of formal legal dispute packages pursuant to <strong>49 CFR § 378</strong> and <strong>49 U.S.C. § 14708</strong> with certified eBOL &amp; Geotagged POD evidence.
-            </p>
+        <div className="space-y-6 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] p-6 rounded-2xl flex items-center justify-between shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-serif text-white font-normal">Legal Dispute Desk</h3>
+                <span className="text-xs text-neutral-400 font-mono">49 CFR § 378 Statutory Overcharge Evidence</span>
+              </div>
+            </div>
+            <span className="text-xs text-neutral-400 font-mono bg-[#121215] px-3 py-1.5 rounded-xl border border-neutral-800">
+              {disputes.length} Active Disputes
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {disputes.map((d) => (
               <div
                 key={d.id}
-                className="bg-[#09090b] border border-[#27272a] hover:border-neutral-700 rounded-2xl p-5 space-y-3.5 shadow-lg transition"
+                className="bg-[#09090b] border border-[#27272a] hover:border-neutral-700 rounded-2xl p-6 space-y-4 shadow-lg transition"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[10px] font-bold font-mono text-neutral-300 uppercase tracking-wider">
+                    <span className="text-[10px] font-bold font-mono text-neutral-400 uppercase tracking-wider">
                       {d.disputeReferenceNumber}
                     </span>
                     <h4 className="text-base font-serif font-normal text-white mt-0.5">{d.carrierName}</h4>
                     <span className="text-xs text-neutral-400 font-mono">PRO: {d.carrierProNumber}</span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold font-mono border bg-neutral-900 text-white border-neutral-700">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-bold font-mono border bg-neutral-900 text-white border-neutral-700">
                     {d.status.replace('_', ' ')}
                   </span>
                 </div>
 
-                <div className="bg-[#121215] p-3 rounded-xl border border-neutral-800 space-y-1.5 text-xs font-sans">
+                <div className="bg-[#121215] p-4 rounded-xl border border-neutral-800 space-y-2 text-xs font-sans">
                   <div className="flex justify-between text-neutral-300">
                     <span>Dispute Category:</span>
                     <span className="font-bold text-white font-mono">{d.disputeCategory}</span>
                   </div>
                   <div className="flex justify-between text-neutral-300">
                     <span>Disputed Overcharge:</span>
-                    <span className="font-bold text-white font-mono text-sm">${d.disputedAmount.toFixed(2)}</span>
+                    <span className="font-mono font-bold text-white text-sm">${d.disputedAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-neutral-400 text-[11px]">
                     <span>Evidence Confidence:</span>
-                    <span className="font-bold text-white">{d.confidenceScore}% (Certified eBOL + POD)</span>
-                  </div>
-                  <div className="flex justify-between text-neutral-400 text-[11px]">
-                    <span>Assigned Claims Intake:</span>
-                    <span className="font-mono text-neutral-300">{d.claimDeskEmail}</span>
+                    <span className="font-bold text-white">{d.confidenceScore}% (eBOL + POD)</span>
                   </div>
                 </div>
 
@@ -651,9 +632,9 @@ export const Phase5DisputeWorkspace: React.FC<{
                   <div className="flex gap-2">
                     <button
                       onClick={() => setSelectedDispute(d)}
-                      className="px-3 py-1.5 bg-[#121215] hover:bg-neutral-800 text-white font-medium text-xs rounded-xl border border-neutral-800 flex items-center gap-1.5 transition"
+                      className="px-3.5 py-1.5 bg-[#121215] hover:bg-neutral-800 text-white font-medium text-xs rounded-xl border border-neutral-800 flex items-center gap-1.5 transition"
                     >
-                      <Eye className="w-3.5 h-3.5 text-neutral-400" /> View Legal PDF
+                      <Eye className="w-3.5 h-3.5 text-neutral-400" /> View PDF
                     </button>
                     {d.status !== 'CREDIT_ISSUED' && (
                       <button
@@ -661,7 +642,7 @@ export const Phase5DisputeWorkspace: React.FC<{
                           setShowCreditMemoModal(d);
                           setCreditAmountInput(d.disputedAmount.toString());
                         }}
-                        className="px-3 py-1.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl flex items-center gap-1 transition"
+                        className="px-3.5 py-1.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl flex items-center gap-1 transition shadow"
                       >
                         <DollarSign className="w-3.5 h-3.5" /> Record Credit
                       </button>
@@ -678,29 +659,35 @@ export const Phase5DisputeWorkspace: React.FC<{
       {/* TAB: CLAIMS LIFECYCLE & 30-DAY FMCSA TRACKER (5.5) */}
       {/* ===================================================================== */}
       {activeSubTab === 'claims_lifecycle' && (
-        <div className="space-y-4 font-sans">
-          <div className="bg-[#09090b] border border-[#27272a] p-5 rounded-2xl">
-            <h3 className="text-base font-serif font-normal text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-white" /> Carrier Claims State Machine &amp; 30-Day FMCSA Tracker
-            </h3>
-            <p className="text-xs text-neutral-400 mt-1 font-sans">
-              Monitors carrier response deadlines under <strong>49 CFR § 378.7 (Statutory 30-Day Claim Rule)</strong> and triggers automatic STB complaints if carriers delay.
-            </p>
+        <div className="space-y-6 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] p-6 rounded-2xl flex items-center justify-between shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white">
+                <Clock className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-serif text-white font-normal">30-Day FMCSA Claim SLA Tracker</h3>
+                <span className="text-xs text-neutral-400 font-mono">49 CFR § 378.7 Statutory Compliance Engine</span>
+              </div>
+            </div>
+            <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-neutral-900 text-white border border-neutral-700">
+              1 Claim Non-Compliant
+            </span>
           </div>
 
-          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 space-y-4 shadow-xl">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 shadow-xl">
             <h4 className="text-xs font-bold font-mono text-neutral-300 uppercase tracking-wider">
               Dispute Pipeline State Machine
             </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {[
                 { stage: '1. FLAGGED', count: '1 Load', color: 'border-neutral-700 text-neutral-300' },
                 { stage: '2. GENERATED', count: '1 Legal Pkg', color: 'border-neutral-700 text-white' },
                 { stage: '3. SUBMITTED', count: '1 Dispatched', color: 'border-neutral-700 text-white' },
-                { stage: '4. IN REVIEW', count: '1 Adjustor Assigned', color: 'border-neutral-700 text-white' },
-                { stage: '5. CREDIT WON', count: '1 Settled ($220.00)', color: 'border-white text-white bg-[#121215]' },
+                { stage: '4. IN REVIEW', count: '1 Adjustor', color: 'border-neutral-700 text-white' },
+                { stage: '5. CREDIT WON', count: '1 Settled ($220)', color: 'border-white text-white bg-[#121215]' },
               ].map((st, i) => (
-                <div key={i} className={`p-3 rounded-xl border bg-[#121215] ${st.color}`}>
+                <div key={i} className={`p-3.5 rounded-xl border bg-[#121215] ${st.color}`}>
                   <div className="text-[11px] font-bold font-mono">{st.stage}</div>
                   <div className="text-[10px] opacity-80 mt-0.5 font-sans">{st.count}</div>
                 </div>
@@ -708,32 +695,29 @@ export const Phase5DisputeWorkspace: React.FC<{
             </div>
           </div>
 
-          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 space-y-3 shadow-xl">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-3 shadow-xl">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold font-mono text-white uppercase tracking-wider flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4 text-white" /> 30-Day Statutory FMCSA Overdue Alerts
+                <AlertTriangle className="w-4 h-4 text-white" /> Statutory FMCSA Overdue Alerts
               </h4>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-neutral-900 text-white border border-neutral-700">
-                1 Claim Non-Compliant
-              </span>
             </div>
-            <div className="bg-[#121215] p-4 rounded-xl border border-neutral-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-[#121215] p-4 rounded-xl border border-neutral-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <div className="text-xs font-bold text-white flex items-center gap-2">
                   <span>DISP-2026-RL-11048 (R+L Carriers)</span>
-                  <span className="px-2 py-0.5 bg-neutral-900 border border-neutral-700 text-white font-mono text-[9px] rounded font-bold">
-                    34 DAYS ELAPSED (VIOLATION)
+                  <span className="px-2.5 py-0.5 bg-neutral-900 border border-neutral-700 text-white font-mono text-[9px] rounded font-bold">
+                    34 DAYS ELAPSED
                   </span>
                 </div>
-                <p className="text-[11px] text-neutral-400 mt-1 font-sans">
-                  Carrier failed to acknowledge or resolve $165.00 Fuel Index Mismatch overcharge within statutory 30-day window under 49 CFR § 378.7.
+                <p className="text-xs text-neutral-400 mt-1 font-sans">
+                  Carrier failed to acknowledge or resolve $165.00 Fuel Index Mismatch overcharge within statutory 30-day window.
                 </p>
               </div>
               <button
                 onClick={() =>
                   alert('STB (Surface Transportation Board) Complaint Letter compiled pursuant to 49 U.S.C. § 14708 & § 14901! Ready for regulatory submission.')
                 }
-                className="px-3.5 py-2 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow whitespace-nowrap"
+                className="px-4 py-2.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow whitespace-nowrap"
               >
                 Download STB / FMCSA Complaint
               </button>
@@ -746,63 +730,64 @@ export const Phase5DisputeWorkspace: React.FC<{
       {/* TAB: SUPPLEMENTAL INVOICES (PASS-THROUGH) (5.6) */}
       {/* ===================================================================== */}
       {activeSubTab === 'supplemental' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-            <div>
-              <h3 className="text-base font-black text-white flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-indigo-400" /> Customer Supplemental Invoicing (Pass-Through Engine)
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Passes through legitimate shipper-caused extra charges (actual weight overage or signed on-site accessorials) with an automatic <strong>+15.0% broker gross profit markup</strong>.
-              </p>
+        <div className="space-y-6 font-sans">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#09090b] border border-[#27272a] p-6 rounded-2xl shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white">
+                <PlusCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-serif text-white font-normal">Customer Supplemental Invoicing</h3>
+                <span className="text-xs text-neutral-400 font-mono">Pass-Through Engine with +15.0% Broker Margin</span>
+              </div>
             </div>
             <button
               onClick={() => setShowSupplementalModal(true)}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow flex items-center gap-1.5 transition"
+              className="px-4 py-2.5 bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs rounded-xl shadow flex items-center gap-1.5 transition"
             >
               <PlusCircle className="w-4 h-4" /> Create Supplemental Invoice
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {supplementals.map((sup) => (
               <div
                 key={sup.id}
-                className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3.5 shadow-xl"
+                className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 shadow-xl"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[10px] font-bold font-mono text-indigo-400 uppercase tracking-wider">
+                    <span className="text-[10px] font-bold font-mono text-neutral-400 uppercase tracking-wider">
                       {sup.invoiceNumber}
                     </span>
-                    <h4 className="text-base font-black text-white mt-0.5">{sup.customerName}</h4>
-                    <span className="text-xs text-slate-400 font-mono">Linked Parent: {sup.parentInvoiceNumber}</span>
+                    <h4 className="text-base font-serif font-normal text-white mt-0.5">{sup.customerName}</h4>
+                    <span className="text-xs text-neutral-400 font-mono">Linked Parent: {sup.parentInvoiceNumber}</span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-neutral-900 text-white border border-neutral-700">
                     {sup.status}
                   </span>
                 </div>
 
-                <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 space-y-2 text-xs">
-                  <div className="flex justify-between text-slate-300">
+                <div className="bg-[#121215] p-4 rounded-xl border border-neutral-800 space-y-2 text-xs font-sans">
+                  <div className="flex justify-between text-neutral-300">
                     <span>Supplemental Reason:</span>
-                    <span className="font-bold text-teal-300 font-mono">{sup.reason}</span>
+                    <span className="font-bold text-white font-mono">{sup.reason}</span>
                   </div>
-                  <div className="flex justify-between text-slate-300">
+                  <div className="flex justify-between text-neutral-300">
                     <span>Passed Carrier Cost:</span>
                     <span className="font-mono font-bold text-white">${sup.passedThroughCost.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-slate-300">
+                  <div className="flex justify-between text-neutral-300">
                     <span>Broker Markup (+{sup.markupPercent}%):</span>
-                    <span className="font-mono font-bold text-emerald-400">+${sup.markupAmount.toFixed(2)}</span>
+                    <span className="font-mono font-bold text-white">+${sup.markupAmount.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-white text-sm font-black pt-1.5 border-t border-slate-800">
+                  <div className="flex justify-between text-white text-sm font-bold pt-2 border-t border-neutral-800">
                     <span>Total Invoiced to Shipper:</span>
-                    <span className="font-mono text-emerald-400">${sup.totalCustomerPrice.toFixed(2)}</span>
+                    <span className="font-mono text-white">${sup.totalCustomerPrice.toFixed(2)}</span>
                   </div>
                 </div>
 
-                <div className="text-[11px] text-slate-400 italic bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/60">
+                <div className="text-[11px] text-neutral-400 italic bg-[#121215] p-3 rounded-xl border border-neutral-800 font-sans">
                   "{sup.supportingEvidence}"
                 </div>
               </div>
@@ -815,74 +800,61 @@ export const Phase5DisputeWorkspace: React.FC<{
       {/* TAB: RECOVERY CONTINGENCY BILLING (20% FEE) (5.7) */}
       {/* ===================================================================== */}
       {activeSubTab === 'recovery_billing' && (
-        <div className="space-y-4">
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold font-mono text-emerald-400 uppercase tracking-wider">
-                  Apex Revenue Engine #1
-                </span>
-                <h3 className="text-lg font-black text-white mt-0.5">20% Performance Contingency Recovery Billing</h3>
+        <div className="space-y-6 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] p-6 rounded-2xl flex items-center justify-between shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white">
+                <Percent className="w-5 h-5" />
               </div>
-              <span className="px-3 py-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs rounded-full shadow">
-                20.0% Success Fee
-              </span>
+              <div>
+                <h3 className="text-lg font-serif text-white font-normal">20% Performance Contingency Recovery Billing</h3>
+                <span className="text-xs text-neutral-400 font-mono">Carrier Overcharge Recovery Monetization</span>
+              </div>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Monetizes recovered carrier overcharges by generating monthly performance billing statements for broker clients.
-            </p>
+            <span className="px-3.5 py-1 rounded-full bg-white text-black font-sans font-bold text-xs shadow">
+              20.0% Success Fee
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-              <div className="text-slate-400 text-xs font-semibold">Total Overcharges Disputed</div>
-              <div className="text-xl font-black text-white mt-1 font-mono">$8,400.00</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">14 Discrepancy Claims</div>
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-xl font-sans">
+              <div className="text-neutral-400 text-xs font-sans">Total Disputed</div>
+              <div className="text-xl font-mono font-bold text-white mt-1">$8,400.00</div>
+              <div className="text-[10px] text-neutral-500 font-mono mt-0.5">14 Discrepancy Claims</div>
             </div>
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-              <div className="text-slate-400 text-xs font-semibold">Total Credits Recovered</div>
-              <div className="text-xl font-black text-emerald-400 mt-1 font-mono">$8,400.00</div>
-              <div className="text-[10px] text-emerald-400 mt-0.5">100.0% Recovery Yield</div>
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-xl font-sans">
+              <div className="text-neutral-400 text-xs font-sans">Total Credits Recovered</div>
+              <div className="text-xl font-mono font-bold text-white mt-1">$8,400.00</div>
+              <div className="text-[10px] text-neutral-500 font-mono mt-0.5">100.0% Yield</div>
             </div>
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-              <div className="text-slate-400 text-xs font-semibold">Performance Fee Revenue (20%)</div>
-              <div className="text-xl font-black text-teal-300 mt-1 font-mono">$1,680.00</div>
-              <div className="text-[10px] text-teal-400 mt-0.5">Apex Platform Profit</div>
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-xl font-sans">
+              <div className="text-neutral-400 text-xs font-sans">Broker Performance Fee (20%)</div>
+              <div className="text-xl font-mono font-bold text-white mt-1">$1,680.00</div>
+              <div className="text-[10px] text-neutral-500 font-mono mt-0.5">Apex Platform Profit</div>
             </div>
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-              <div className="text-slate-400 text-xs font-semibold">Broker Net Retained Savings</div>
-              <div className="text-xl font-black text-sky-400 mt-1 font-mono">$6,720.00</div>
-              <div className="text-[10px] text-sky-300 mt-0.5">Net Broker Cost Reduction</div>
-            </div>
-          </div>
-
-          {/* Highlight Callout */}
-          <div className="bg-gradient-to-r from-slate-900 to-indigo-950 border border-indigo-500/40 p-5 rounded-2xl space-y-2">
-            <div className="text-xs font-bold uppercase tracking-wider text-indigo-300 font-mono">
-              Monthly Statement Callout (September 2026)
-            </div>
-            <div className="text-base font-black text-white">
-              "Apex Freight Dispute Engine recovered <span className="text-emerald-400">$8,400.00</span> in carrier overcharges this month. Performance fee (20%): <span className="text-teal-300">$1,680.00</span>."
+            <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-xl font-sans">
+              <div className="text-neutral-400 text-xs font-sans">Broker Net Retained Savings</div>
+              <div className="text-xl font-mono font-bold text-white mt-1">$6,720.00</div>
+              <div className="text-[10px] text-neutral-500 font-mono mt-0.5">Net Cost Reduction</div>
             </div>
           </div>
 
-          {/* Double-Entry Ledger Box */}
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3">
-            <h4 className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider">
+          <div className="bg-[#09090b] border border-[#27272a] p-6 rounded-2xl space-y-3 font-sans shadow-xl">
+            <h4 className="text-xs font-mono font-bold text-neutral-300 uppercase tracking-wider">
               Double-Entry Financial Ledger Settlement Certification
             </h4>
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/80 space-y-2 font-mono text-xs">
-              <div className="flex justify-between text-slate-300">
-                <span className="text-emerald-400 font-bold">• DEBIT  DISPUTE_RECOVERY (Asset Realization):</span>
+            <div className="bg-[#121215] p-4 rounded-xl border border-neutral-800 space-y-2 font-mono text-xs">
+              <div className="flex justify-between text-neutral-300">
+                <span className="font-bold text-white">• DEBIT  DISPUTE_RECOVERY (Asset Realization):</span>
                 <span className="font-bold text-white">$8,400.00</span>
               </div>
-              <div className="flex justify-between text-slate-300">
-                <span className="text-sky-400 font-bold">• CREDIT CARRIER_PAYABLE (Broker Net Retained Savings):</span>
+              <div className="flex justify-between text-neutral-300">
+                <span className="font-bold text-neutral-300">• CREDIT CARRIER_PAYABLE (Broker Net Retained Savings):</span>
                 <span className="font-bold text-white">$6,720.00</span>
               </div>
-              <div className="flex justify-between text-slate-300">
-                <span className="text-teal-400 font-bold">• CREDIT PLATFORM_REVENUE (20% Contingency Performance Fee):</span>
-                <span className="font-bold text-teal-300">$1,680.00</span>
+              <div className="flex justify-between text-neutral-300">
+                <span className="font-bold text-neutral-300">• CREDIT PLATFORM_REVENUE (20% Contingency Performance Fee):</span>
+                <span className="font-bold text-white">$1,680.00</span>
               </div>
             </div>
           </div>
@@ -893,21 +865,27 @@ export const Phase5DisputeWorkspace: React.FC<{
       {/* TAB: CARRIER BILLING SCORECARDS (5.8) */}
       {/* ===================================================================== */}
       {activeSubTab === 'scorecards' && (
-        <div className="space-y-4">
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-            <h3 className="text-base font-black text-white flex items-center gap-2">
-              <Award className="w-5 h-5 text-amber-400" /> Carrier Billing Accuracy & Reliability Scorecards
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Evaluates historical billing error rates and assigns automated routing friction penalties (+bps) during load dispatch.
-            </p>
+        <div className="space-y-6 font-sans">
+          <div className="bg-[#09090b] border border-[#27272a] p-6 rounded-2xl flex items-center justify-between shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white">
+                <Award className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-serif text-white font-normal">Carrier Billing Accuracy Scorecards</h3>
+                <span className="text-xs text-neutral-400 font-mono">Routing Friction Penalties &amp; Error Frequency</span>
+              </div>
+            </div>
+            <span className="text-xs text-neutral-400 font-mono bg-[#121215] px-3 py-1.5 rounded-xl border border-neutral-800">
+              5 Carriers Evaluated
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-sans">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 font-sans">
             {scorecards.map((sc) => (
               <div
                 key={sc.scac}
-                className="bg-[#09090b] border border-[#27272a] rounded-2xl p-5 space-y-4 shadow-xl"
+                className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 space-y-4 shadow-xl"
               >
                 <div className="flex items-start justify-between">
                   <div>

@@ -75,11 +75,8 @@ function ExecutiveRoiDashboardContent() {
             <span className="text-[10px] text-neutral-500 font-mono">Phase 6.7 Active</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-serif text-white tracking-tight font-normal">
-            Continuous Software &amp; Fintech ROI Audit
+            Executive Financial ROI Audit
           </h1>
-          <p className="text-xs text-neutral-400 mt-1 font-sans">
-            Real-time provable value metrics, labor hours saved, rate optimization spread, and QuickPay margins.
-          </p>
         </div>
 
         <div className="flex items-center gap-3">
