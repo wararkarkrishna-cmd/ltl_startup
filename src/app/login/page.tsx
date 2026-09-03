@@ -20,6 +20,8 @@ import {
   FileText,
 } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   const router = useRouter();
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');

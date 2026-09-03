@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbClient } from '../../../../../../db/client';
-import { VicsEbolGenerator, VicsEbolData } from '../../../../../../lib/documents/ebol-generator';
+import { dbClient } from '@/db/client';
+import { VicsEbolGenerator, VicsEbolData } from '@/lib/documents/ebol-generator';
 
 interface RouteContext {
   params: {
@@ -59,7 +59,8 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     if (format === 'pdf') {
       try {
         const pdfBuffer = await VicsEbolGenerator.generatePdfBuffer(ebolData);
-        const storage = (await import('../../../../../../lib/storage/document-storage')).getDocumentStorage();
+        const storage = (await import('@/lib/storage/document-storage')).getDocumentStorage();
+
         
         // Save to Supabase Storage in shipment-documents bucket
         storage.saveDocument(

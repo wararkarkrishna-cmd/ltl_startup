@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Mail,
   Key,
@@ -28,7 +29,10 @@ import {
 import { AppHeader } from '../../components/navigation/AppHeader';
 import { AppSidebar } from '../../components/navigation/AppSidebar';
 
-export default function IntegrationPage() {
+export const dynamic = 'force-dynamic';
+
+function IntegrationPageContent() {
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<'email' | 'byoc' | 'csv' | 'accounting' | 'extension'>('email');
   
@@ -128,7 +132,7 @@ export default function IntegrationPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      <AppHeader />
+      <AppHeader isSidebarCollapsed={isSidebarCollapsed} />
 
       <div className="flex-1 flex overflow-hidden">
         <AppSidebar
@@ -748,3 +752,12 @@ export default function IntegrationPage() {
     </div>
   );
 }
+
+export default function IntegrationPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950 text-white p-8">Loading Integration Hub...</div>}>
+      <IntegrationPageContent />
+    </Suspense>
+  );
+}
+

@@ -12,10 +12,16 @@ import {
   TrendingUp,
   Camera,
   CheckCircle2,
+  Search,
+  ChevronDown,
+  ChevronRight,
+  DollarSign,
+  ExternalLink,
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
 } from 'lucide-react';
+
 
 interface SubFeature {
   title: string;

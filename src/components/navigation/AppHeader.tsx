@@ -23,10 +23,11 @@ import {
 } from 'lucide-react';
 
 interface AppHeaderProps {
-  isSidebarCollapsed: boolean;
+  isSidebarCollapsed?: boolean;
 }
 
-export const AppHeader: React.FC<AppHeaderProps> = ({ isSidebarCollapsed }) => {
+export const AppHeader: React.FC<AppHeaderProps> = ({ isSidebarCollapsed = false }) => {
+
   const pathname = usePathname();
   const router = useRouter();
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);

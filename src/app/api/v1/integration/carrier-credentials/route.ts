@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbClient } from '../../../../../../db/client';
-import { CredentialVault } from '../../../../../../lib/security/credential-vault';
-import { CarrierCode } from '../../../../../../db/schema';
+import { dbClient } from '@/db/client';
+import { CredentialVault } from '@/lib/security/credential-vault';
+import { CarrierCode } from '@/db/schema';
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,11 +32,13 @@ export async function POST(req: NextRequest) {
       carrierName: carrierCode === 'XPO' ? 'XPO Logistics' : carrierCode === 'SAIA' ? 'SAIA LTL Freight' : carrierCode === 'ESTES' ? 'Estes Express Lines' : carrierCode === 'ABF' ? 'ArcBest / ABF Freight' : 'R+L Carriers',
       carrierScac: carrierCode === 'XPO' ? 'CNWY' : carrierCode === 'SAIA' ? 'SAIA' : carrierCode === 'ESTES' ? 'EXLA' : carrierCode === 'ABF' ? 'ABFS' : 'RLCA',
       accountNumber,
+      accountType: 'DIRECT_BYOC',
       encryptedApiKey: encrypted.encryptedData,
       iv: encrypted.iv,
       authTag: encrypted.authTag,
       isActive: true,
     });
+
 
     return NextResponse.json({
       success: true,
