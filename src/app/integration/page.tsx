@@ -23,7 +23,9 @@ import {
   Download,
   Info,
   Building2,
+  AlertCircle,
 } from 'lucide-react';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -41,12 +43,14 @@ function IntegrationPageContent() {
   const [emailTestSuccess, setEmailTestSuccess] = useState(false);
 
   // BYOC Vault Form State
-  const [carrierInputs, setCarrierInputs] = useState({
-    XPO: { account: 'XPO-884210', apiKey: 'xpo_live_sec_99481a', status: 'IDLE' },
-    SAIA: { account: 'SAIA-98412', apiKey: 'saia_live_sec_77412b', status: 'IDLE' },
-    ESTES: { account: 'EXLA-33291', apiKey: 'exla_live_sec_11092c', status: 'IDLE' },
-    ABF: { account: 'ABFS-71092', apiKey: 'abf_live_sec_44810d', status: 'IDLE' },
-    RL: { account: 'RLCA-44210', apiKey: 'rl_live_sec_88391e', status: 'IDLE' },
+  const [carrierInputs, setCarrierInputs] = useState<
+    Record<string, { account: string; apiKey: string; status: 'IDLE' | 'TESTING' | 'CONNECTED' | 'ERROR'; errorMessage?: string }>
+  >({
+    XPO: { account: 'XPO-884210', apiKey: 'xpo_live_sec_99481a88421', status: 'IDLE' },
+    SAIA: { account: 'SAIA-98412', apiKey: 'saia_live_sec_77412b99812', status: 'IDLE' },
+    ESTES: { account: 'EXLA-33291', apiKey: 'exla_live_sec_11092c44810', status: 'IDLE' },
+    ABF: { account: 'ABFS-71092', apiKey: 'abf_live_sec_44810d77109', status: 'IDLE' },
+    RL: { account: 'RLCA-44210', apiKey: 'rl_live_sec_88391e99421', status: 'IDLE' },
   });
 
   // CSV Importer State
@@ -82,20 +86,54 @@ function IntegrationPageContent() {
     }, 1000);
   };
 
-  const handleTestCarrierConn = (carrierCode: keyof typeof carrierInputs) => {
+  const handleTestCarrierConn = async (carrierCode: string) => {
+    const currentInput = carrierInputs[carrierCode];
     setCarrierInputs((prev) => ({
       ...prev,
-      [carrierCode]: { ...prev[carrierCode], status: 'TESTING' },
+      [carrierCode]: { ...prev[carrierCode], status: 'TESTING', errorMessage: undefined },
     }));
 
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/v1/integration/carrier-credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          carrierCode,
+          accountNumber: currentInput?.account || '',
+          apiKey: currentInput?.apiKey || '',
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setCarrierInputs((prev) => ({
+          ...prev,
+          [carrierCode]: {
+            ...prev[carrierCode],
+            status: 'ERROR',
+            errorMessage: data.error || 'Verification Failed: Invalid credentials rejected by Carrier API Gateway.',
+          },
+        }));
+      } else {
+        setCarrierInputs((prev) => ({
+          ...prev,
+          [carrierCode]: { ...prev[carrierCode], status: 'CONNECTED', errorMessage: undefined },
+        }));
+        markStepComplete(2);
+      }
+    } catch (err: any) {
       setCarrierInputs((prev) => ({
         ...prev,
-        [carrierCode]: { ...prev[carrierCode], status: 'CONNECTED' },
+        [carrierCode]: {
+          ...prev[carrierCode],
+          status: 'ERROR',
+          errorMessage: err.message || 'Connection Timeout: Carrier OAuth Gateway Unreachable.',
+        },
       }));
-      markStepComplete(2);
-    }, 900);
+    }
   };
+
 
   const handleSimulateCsvUpload = () => {
     setIsUploadingCsv(true);
@@ -379,14 +417,21 @@ function IntegrationPageContent() {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  setCarrierInputs({
-                    XPO: { account: 'XPO-884210', apiKey: 'xpo_live_sec_99481a', status: 'CONNECTED' },
-                    SAIA: { account: 'SAIA-98412', apiKey: 'saia_live_sec_77412b', status: 'CONNECTED' },
-                    ESTES: { account: 'EXLA-33291', apiKey: 'exla_live_sec_11092c', status: 'CONNECTED' },
-                    ABF: { account: 'ABFS-71092', apiKey: 'abf_live_sec_44810d', status: 'CONNECTED' },
-                    RL: { account: 'RLCA-44210', apiKey: 'rl_live_sec_88391e', status: 'CONNECTED' },
-                  });
+                onClick={async () => {
+                  const sandboxKeys = {
+                    XPO: { account: 'XPO-884210', apiKey: 'xpo_live_sec_99481a88421' },
+                    SAIA: { account: 'SAIA-98412', apiKey: 'saia_live_sec_77412b99812' },
+                    ESTES: { account: 'EXLA-33291', apiKey: 'exla_live_sec_11092c44810' },
+                    ABF: { account: 'ABFS-71092', apiKey: 'abf_live_sec_44810d77109' },
+                    RL: { account: 'RLCA-44210', apiKey: 'rl_live_sec_88391e99421' },
+                  };
+
+                  for (const [code, val] of Object.entries(sandboxKeys)) {
+                    setCarrierInputs((prev) => ({
+                      ...prev,
+                      [code]: { account: val.account, apiKey: val.apiKey, status: 'CONNECTED', errorMessage: undefined },
+                    }));
+                  }
                   markStepComplete(2);
                 }}
                 className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1.5 whitespace-nowrap shadow transition"
@@ -397,15 +442,14 @@ function IntegrationPageContent() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
               {[
-                { code: 'XPO' as const, name: 'XPO Logistics', scac: 'CNWY' },
-                { code: 'SAIA' as const, name: 'SAIA LTL Freight', scac: 'SAIA' },
-                { code: 'ESTES' as const, name: 'Estes Express Lines', scac: 'EXLA' },
-                { code: 'ABF' as const, name: 'ArcBest / ABF Freight', scac: 'ABFS' },
-                { code: 'RL' as const, name: 'R+L Carriers', scac: 'RLCA' },
+                { code: 'XPO', name: 'XPO Logistics', scac: 'CNWY' },
+                { code: 'SAIA', name: 'SAIA LTL Freight', scac: 'SAIA' },
+                { code: 'ESTES', name: 'Estes Express Lines', scac: 'EXLA' },
+                { code: 'ABF', name: 'ArcBest / ABF Freight', scac: 'ABFS' },
+                { code: 'RL', name: 'R+L Carriers', scac: 'RLCA' },
               ].map((c) => {
-                const state = carrierInputs[c.code];
+                const state = carrierInputs[c.code] || { account: '', apiKey: '', status: 'IDLE' };
                 return (
                   <div key={c.code} className="p-5 rounded-2xl bg-[#121215] border border-neutral-800 space-y-3">
                     <div className="flex items-center justify-between">
@@ -414,8 +458,12 @@ function IntegrationPageContent() {
                         <div className="text-[10px] font-mono text-neutral-500">SCAC: {c.scac}</div>
                       </div>
                       {state.status === 'CONNECTED' ? (
-                        <span className="px-2 py-0.5 rounded bg-neutral-900 text-white text-[10px] font-mono border border-neutral-700 flex items-center gap-1">
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-mono border border-emerald-500/30 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Connected
+                        </span>
+                      ) : state.status === 'ERROR' ? (
+                        <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-mono border border-red-500/30 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3 text-red-400" /> Failed
                         </span>
                       ) : (
                         <span className="px-2 py-0.5 rounded bg-neutral-900 text-neutral-500 text-[10px] font-mono">
@@ -433,9 +481,10 @@ function IntegrationPageContent() {
                           onChange={(e) =>
                             setCarrierInputs((prev) => ({
                               ...prev,
-                              [c.code]: { ...prev[c.code], account: e.target.value },
+                              [c.code]: { ...prev[c.code], account: e.target.value, status: 'IDLE', errorMessage: undefined },
                             }))
                           }
+                          placeholder="e.g. XPO-884210"
                           className="w-full bg-[#050507] border border-neutral-800 rounded-xl py-1.5 px-3 text-xs font-mono text-white focus:outline-none focus:border-white"
                         />
                       </div>
@@ -447,24 +496,35 @@ function IntegrationPageContent() {
                           onChange={(e) =>
                             setCarrierInputs((prev) => ({
                               ...prev,
-                              [c.code]: { ...prev[c.code], apiKey: e.target.value },
+                              [c.code]: { ...prev[c.code], apiKey: e.target.value, status: 'IDLE', errorMessage: undefined },
                             }))
                           }
+                          placeholder="••••••••••••••••"
                           className="w-full bg-[#050507] border border-neutral-800 rounded-xl py-1.5 px-3 text-xs font-mono text-white focus:outline-none focus:border-white"
                         />
                       </div>
                     </div>
 
+                    {state.status === 'ERROR' && state.errorMessage && (
+                      <div className="p-3 rounded-xl bg-red-950/60 border border-red-800 text-red-300 text-[11px] font-sans flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-red-200">Validation Rejected</div>
+                          <div className="text-[10.5px] leading-tight text-red-300/90">{state.errorMessage}</div>
+                        </div>
+                      </div>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => handleTestCarrierConn(c.code)}
                       disabled={state.status === 'TESTING'}
-                      className="w-full py-2 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-200 border border-neutral-800 text-xs font-sans font-bold flex items-center justify-center gap-1.5 transition"
+                      className="w-full py-2 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-200 border border-neutral-800 text-xs font-sans font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-50"
                     >
                       {state.status === 'TESTING' ? (
                         <>
                           <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
-                          <span>Testing Connection...</span>
+                          <span>Verifying Credentials...</span>
                         </>
                       ) : state.status === 'CONNECTED' ? (
                         <>
@@ -482,6 +542,7 @@ function IntegrationPageContent() {
                 );
               })}
             </div>
+
           </div>
         )}
 
