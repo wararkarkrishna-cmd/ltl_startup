@@ -1,14 +1,31 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
+import { usePathname } from 'next/navigation';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
 
 export const AppShell: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
+  const pathname = usePathname();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
+  const isAuthPage =
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/create-account';
+
+  // Standalone Auth Pages (Login / Create Account) without Dashboard Sidebar/Header
+  if (isAuthPage) {
+    return (
+      <div className="min-h-screen bg-[#050507] text-[#f4f4f5] font-sans selection:bg-white selection:text-black">
+        {children}
+      </div>
+    );
+  }
+
+  // Software Application Dashboard Shell (with Sidebar & Header)
   return (
     <div className="min-h-screen bg-[#050507] text-[#f4f4f5] flex flex-col font-sans selection:bg-white selection:text-black">
       {/* Left Sidebar */}
