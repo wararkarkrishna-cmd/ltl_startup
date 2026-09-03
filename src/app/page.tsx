@@ -56,12 +56,11 @@ function HomePageContent() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const loggedIn = localStorage.getItem('apex_logged_in');
-      const bypass = searchParams.get('guest') === 'true' || searchParams.get('demo') === 'true';
-      if (!loggedIn && !bypass) {
+      if (!loggedIn) {
         router.push('/login');
       }
     }
-  }, [router, searchParams]);
+  }, [router]);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');

@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import {
   Truck,
   ShieldCheck,
-  Zap,
   Lock,
   ArrowRight,
   CheckCircle2,
@@ -20,10 +19,10 @@ export const dynamic = 'force-dynamic';
 
 export default function CreateAccountPage() {
   const router = useRouter();
-  const [companyName, setCompanyName] = useState('Apex Freight Logistics LLC');
-  const [mcDotNumber, setMcDotNumber] = useState('MC-984210 / DOT-382910');
-  const [email, setEmail] = useState('broker@apex-freight.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const [companyName, setCompanyName] = useState('');
+  const [mcDotNumber, setMcDotNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -41,24 +40,6 @@ export default function CreateAccountPage() {
         router.push('/integration');
       }, 600);
     }, 800);
-  };
-
-  const handleDirectDemoSetup = () => {
-    setCompanyName('Apex Freight Logistics LLC');
-    setMcDotNumber('MC-984210 / DOT-382910');
-    setEmail('broker@apex-freight.com');
-    setPassword('••••••••••••');
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsSuccess(true);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('apex_logged_in', 'true');
-      }
-      setTimeout(() => {
-        router.push('/integration');
-      }, 400);
-    }, 500);
   };
 
   return (
@@ -193,26 +174,15 @@ export default function CreateAccountPage() {
             </button>
           </form>
 
-          {/* Quick Demo Setup & Switch to Sign In */}
-          <div className="pt-4 border-t border-neutral-800/80 space-y-3 text-center">
-            <button
-              type="button"
-              onClick={handleDirectDemoSetup}
-              className="w-full py-2.5 rounded-xl bg-[#121215] hover:bg-[#18181b] border border-neutral-800 text-white font-sans text-xs font-medium flex items-center justify-center gap-2 transition"
+          {/* Switch to Sign In */}
+          <div className="pt-4 border-t border-neutral-800/80 text-center">
+            <Link
+              href="/login"
+              className="text-xs text-neutral-400 hover:text-white font-sans font-semibold inline-flex items-center gap-1.5 transition"
             >
-              <Zap className="w-3.5 h-3.5 text-white" />
-              <span>Instant Demo Setup (1-Click)</span>
-            </button>
-
-            <div className="pt-1">
-              <Link
-                href="/login"
-                className="text-xs text-neutral-400 hover:text-white font-sans font-semibold inline-flex items-center gap-1.5 transition"
-              >
-                <LogIn className="w-3.5 h-3.5 text-neutral-400" />
-                <span>Already have an account? Sign In</span>
-              </Link>
-            </div>
+              <LogIn className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Already have an account? Sign In</span>
+            </Link>
           </div>
 
           {/* Security Micro Badge */}

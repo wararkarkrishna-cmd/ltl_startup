@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import {
   Truck,
   ShieldCheck,
-  Zap,
   Lock,
   ArrowRight,
   CheckCircle2,
@@ -18,8 +17,8 @@ export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('broker@apex-freight.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -37,22 +36,6 @@ export default function LoginPage() {
         router.push('/');
       }, 600);
     }, 800);
-  };
-
-  const handleDirectDemoLogin = () => {
-    setEmail('broker@apex-freight.com');
-    setPassword('••••••••••••');
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsSuccess(true);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('apex_logged_in', 'true');
-      }
-      setTimeout(() => {
-        router.push('/');
-      }, 400);
-    }, 500);
   };
 
   return (
@@ -158,26 +141,15 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Demo Login & Switch to Signup */}
-          <div className="pt-4 border-t border-neutral-800/80 space-y-3 text-center">
-            <button
-              type="button"
-              onClick={handleDirectDemoLogin}
-              className="w-full py-2.5 rounded-xl bg-[#121215] hover:bg-[#18181b] border border-neutral-800 text-white font-sans text-xs font-medium flex items-center justify-center gap-2 transition"
+          {/* Switch to Signup */}
+          <div className="pt-4 border-t border-neutral-800/80 text-center">
+            <Link
+              href="/signup"
+              className="text-xs text-neutral-400 hover:text-white font-sans font-semibold inline-flex items-center gap-1.5 transition"
             >
-              <Zap className="w-3.5 h-3.5 text-white" />
-              <span>Instant Demo Login (Skip Credentials)</span>
-            </button>
-
-            <div className="pt-1">
-              <Link
-                href="/signup"
-                className="text-xs text-neutral-400 hover:text-white font-sans font-semibold inline-flex items-center gap-1.5 transition"
-              >
-                <UserPlus className="w-3.5 h-3.5 text-neutral-400" />
-                <span>Don&apos;t have an account? Create Account</span>
-              </Link>
-            </div>
+              <UserPlus className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Don&apos;t have an account? Create Account</span>
+            </Link>
           </div>
 
           {/* Security Micro Badge */}
