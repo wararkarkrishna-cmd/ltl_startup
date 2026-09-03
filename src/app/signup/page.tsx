@@ -17,7 +17,7 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export default function CreateAccountPage() {
+export default function SignupPage() {
   const router = useRouter();
   const [companyName, setCompanyName] = useState('');
   const [mcDotNumber, setMcDotNumber] = useState('');
@@ -47,12 +47,12 @@ export default function CreateAccountPage() {
       {/* Dynamic Background Ambient Blur Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-white/[0.03] rounded-full blur-[150px] pointer-events-none" />
 
-      {/* CENTERED INTENSE GLASSMORPHISM CREATE ACCOUNT CONTAINER */}
-      <div className="max-w-md w-full relative z-10 my-8">
+      {/* CENTERED INTENSE GLASSMORPHISM SIGNUP CONTAINER */}
+      <div className="max-w-md w-full relative z-10">
         {/* Outer Intense Glass Backlight Glow */}
         <div className="absolute -inset-1.5 bg-gradient-to-tr from-white/10 via-neutral-700/20 to-white/15 rounded-[2.5rem] blur-2xl opacity-75 pointer-events-none" />
 
-        <div className="relative rounded-3xl bg-[#09090b]/80 border border-white/15 backdrop-blur-3xl p-8 sm:p-10 shadow-[0_25px_80px_rgba(0,0,0,0.95)] space-y-6">
+        <div className="relative rounded-3xl bg-[#09090b]/80 border border-white/15 backdrop-blur-3xl p-8 sm:p-10 shadow-[0_25px_80px_rgba(0,0,0,0.95)] space-y-7">
           {/* Brand Logo Header */}
           <div className="text-center space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white mx-auto shadow-lg">
@@ -72,17 +72,17 @@ export default function CreateAccountPage() {
           {/* Title & Subtitle */}
           <div className="text-center space-y-1 pt-1 border-t border-neutral-800/80">
             <h1 className="text-xl font-serif text-white font-normal pt-3">
-              Create Your Account
+              Create Your Brokerage Account
             </h1>
             <p className="text-xs text-neutral-400 font-sans">
-              Enter your brokerage details to register and open the software.
+              Get started in 60 seconds with zero IT support required.
             </p>
           </div>
 
-          {/* Create Account Form */}
-          <form onSubmit={handleSignupSubmit} className="space-y-4">
+          {/* Signup Form */}
+          <form onSubmit={handleSignupSubmit} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-mono text-neutral-400 uppercase mb-1.5">
+              <label className="block text-xs font-mono text-neutral-400 uppercase mb-1">
                 Company / Brokerage Name
               </label>
               <div className="relative">
@@ -99,7 +99,7 @@ export default function CreateAccountPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-neutral-400 uppercase mb-1.5">
+              <label className="block text-xs font-mono text-neutral-400 uppercase mb-1">
                 MC / DOT License Number
               </label>
               <div className="relative">
@@ -110,13 +110,13 @@ export default function CreateAccountPage() {
                   value={mcDotNumber}
                   onChange={(e) => setMcDotNumber(e.target.value)}
                   className="w-full bg-[#121215]/90 border border-neutral-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-white transition-all"
-                  placeholder="MC-984210 / DOT-382910"
+                  placeholder="MC-984210"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-neutral-400 uppercase mb-1.5">
+              <label className="block text-xs font-mono text-neutral-400 uppercase mb-1">
                 Work Email Address
               </label>
               <div className="relative">
@@ -133,7 +133,7 @@ export default function CreateAccountPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-neutral-400 uppercase mb-1.5">
+              <label className="block text-xs font-mono text-neutral-400 uppercase mb-1">
                 Password
               </label>
               <div className="relative">
@@ -158,24 +158,24 @@ export default function CreateAccountPage() {
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                  <span>Provisioning Broker Account...</span>
+                  <span>Provisioning Account & Vault...</span>
                 </>
               ) : isSuccess ? (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-black" />
-                  <span>Account Created! Opening Software...</span>
+                  <span>Account Created! Opening Data Integration...</span>
                 </>
               ) : (
                 <>
-                  <span>Create Account &amp; Open Software</span>
+                  <span>Create Account & Start Integration</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Switch to Sign In */}
-          <div className="pt-4 border-t border-neutral-800/80 text-center">
+          {/* Switch to Login */}
+          <div className="pt-3 border-t border-neutral-800/80 text-center">
             <Link
               href="/login"
               className="text-xs text-neutral-400 hover:text-white font-sans font-semibold inline-flex items-center gap-1.5 transition"
@@ -186,7 +186,7 @@ export default function CreateAccountPage() {
           </div>
 
           {/* Security Micro Badge */}
-          <div className="pt-2 text-center text-[10px] text-neutral-500 font-mono flex items-center justify-center gap-1.5">
+          <div className="pt-1 text-center text-[10px] text-neutral-500 font-mono flex items-center justify-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-neutral-400" />
             <span>256-BIT ENCRYPTED • SOC2 TYPE II COMPLIANT</span>
           </div>

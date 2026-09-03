@@ -33,10 +33,11 @@ export default function LoginPage() {
         localStorage.setItem('apex_logged_in', 'true');
       }
       setTimeout(() => {
-        router.push('/');
+        router.push('/integration');
       }, 600);
     }, 800);
   };
+
 
   return (
     <div className="min-h-screen bg-[#050507] text-[#f4f4f5] font-sans flex items-center justify-center p-4 sm:p-6 relative overflow-hidden selection:bg-white selection:text-black">

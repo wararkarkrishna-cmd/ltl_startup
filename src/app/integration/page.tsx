@@ -159,10 +159,21 @@ function IntegrationPageContent() {
                 <p className="text-xs lg:text-sm text-slate-300 max-w-3xl">
                   Connect your existing carrier accounts, forward shipper emails, import historical CSVs, and sync accounting in under 60 seconds.
                 </p>
+                <div className="flex items-center gap-3 pt-2">
+                  <Link
+                    href="/"
+                    className="px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-2 shadow-xl transition"
+                  >
+                    <span>Proceed to Operational Software</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
               </div>
+
 
               {/* Day-1 Broker Readiness Progress Card */}
               <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-lg min-w-[280px]">
+
                 <div className="flex items-center justify-between text-xs mb-2">
                   <span className="font-bold text-white">Day-1 Setup Progress</span>
                   <span className="font-mono font-extrabold text-indigo-400">{progressPercent}% Ready</span>
@@ -746,7 +757,18 @@ function IntegrationPageContent() {
                 <div className="text-slate-400">Use the Chrome/Outlook sidebar to quote and dispatch loads directly inside email.</div>
               </div>
             </div>
+
+            <div className="pt-2 flex justify-end">
+              <Link
+                href="/"
+                className="px-6 py-3 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-2 shadow-xl transition"
+              >
+                <span>Proceed to Operating Software Dashboard</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
+
         </main>
       </div>
     </div>
