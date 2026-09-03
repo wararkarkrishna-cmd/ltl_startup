@@ -20,6 +20,7 @@ import {
   FileCheck2,
   TrendingUp,
   ShieldCheck,
+  Lock,
 } from 'lucide-react';
 
 interface AppHeaderProps {
@@ -147,6 +148,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ isSidebarCollapsed = false
       href: '/quote/accept',
       icon: ArrowRight,
       desc: 'Instant quote acceptance with HMAC-SHA256 token verification',
+    },
+    {
+      id: 'login',
+      title: 'Broker Sign In & Setup Gateway',
+      category: 'Auth Gateway',
+      shortcut: '9',
+      href: '/login',
+      icon: Lock,
+      desc: 'Authentic intense glassmorphic login page and setup wizard',
     },
   ];
 

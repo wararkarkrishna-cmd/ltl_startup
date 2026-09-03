@@ -444,7 +444,13 @@ export const AppSidebar: React.FC<{
               </div>
               <span className="font-medium text-[11px] text-white">Apex Freight</span>
             </div>
-            <span className="text-[10px] text-neutral-500 font-mono">Enterprise</span>
+            <Link
+              href="/login"
+              className="text-[10px] text-neutral-400 hover:text-white font-mono underline transition"
+              title="Sign Out / Switch Account"
+            >
+              Sign Out
+            </Link>
           </div>
         </div>
       ) : (
