@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   FileCheck2,
@@ -46,7 +46,15 @@ export const AppSidebar: React.FC<{
 }> = ({ isCollapsed, onToggleCollapse }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSignOut = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('apex_logged_in');
+    }
+    router.push('/login');
+  };
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
     integration: true,
     overview: true,
@@ -444,13 +452,13 @@ export const AppSidebar: React.FC<{
               </div>
               <span className="font-medium text-[11px] text-white">Apex Freight</span>
             </div>
-            <Link
-              href="/login"
+            <button
+              onClick={handleSignOut}
               className="text-[10px] text-neutral-400 hover:text-white font-mono underline transition"
-              title="Sign Out / Switch Account"
+              title="Sign Out & Return to Login"
             >
               Sign Out
-            </Link>
+            </button>
           </div>
         </div>
       ) : (

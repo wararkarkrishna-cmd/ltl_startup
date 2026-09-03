@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -11,44 +11,38 @@ import {
   ArrowRight,
   Sparkles,
   CheckCircle2,
-  Key,
   Mail,
   Building2,
-  User,
   Globe,
-  Layers,
-  FileText,
   Eye,
   KanbanSquare,
   DollarSign,
   Camera,
   TrendingUp,
-  HelpCircle,
-  ChevronRight,
-  ShieldAlert,
   Server,
   FileCheck2,
+  UserPlus,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('broker@apex-freight.com');
   const [password, setPassword] = useState('••••••••••••');
-  const [companyName, setCompanyName] = useState('Apex Freight Logistics LLC');
-  const [mcDotNumber, setMcDotNumber] = useState('MC-984210 / DOT-382910');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     setTimeout(() => {
       setIsLoading(false);
       setIsSuccess(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('apex_logged_in', 'true');
+      }
       setTimeout(() => {
         router.push('/');
       }, 600);
@@ -62,6 +56,9 @@ export default function LoginPage() {
     setTimeout(() => {
       setIsLoading(false);
       setIsSuccess(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('apex_logged_in', 'true');
+      }
       setTimeout(() => {
         router.push('/');
       }, 400);
@@ -73,11 +70,10 @@ export default function LoginPage() {
       {/* Dynamic Background Ambient Glow Effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-white/5 via-neutral-900/10 to-transparent rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute top-[800px] right-0 w-[500px] h-[500px] bg-white/[0.02] rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-[1600px] left-0 w-[600px] h-[600px] bg-white/[0.02] rounded-full blur-[140px] pointer-events-none" />
 
       {/* Top Luxury Brand Navigation Bar */}
       <header className="sticky top-0 z-40 bg-[#050507]/80 backdrop-blur-xl border-b border-[#27272a]/60 px-6 lg:px-12 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
+        <Link href="/login" className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-2xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white group-hover:border-neutral-500 transition-all shadow-lg">
             <Truck className="w-5 h-5" />
           </div>
@@ -98,29 +94,30 @@ export default function LoginPage() {
             <span>SOC2 TYPE II CERTIFIED • 256-BIT ENCRYPTED</span>
           </div>
           <Link
-            href="/"
-            className="text-xs font-sans font-medium text-neutral-300 hover:text-white bg-[#121215] hover:bg-[#18181b] border border-neutral-800 px-4 py-2 rounded-xl transition-all shadow-sm"
+            href="/signup"
+            className="text-xs font-sans font-medium text-black bg-white hover:bg-neutral-200 px-4 py-2 rounded-xl transition-all shadow font-bold flex items-center gap-1.5"
           >
-            Open System Dashboard
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>Create Account</span>
           </Link>
         </div>
       </header>
 
-      {/* SECTION 1: HERO & INTENSE GLASSMORPHISM LOGIN CARD */}
+      {/* SECTION 1: HERO & INTENSE GLASSMORPHISM LOGIN CONTAINER */}
       <section className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 pt-12 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
         {/* Left Column: Brand Hero Title & Value Proposition */}
         <div className="lg:col-span-7 space-y-8">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#09090b] border border-[#27272a] text-neutral-300 text-xs font-mono">
             <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-            <span>ENTERPRISE BROKERAGE AUTHENTICATION GATEWAY</span>
+            <span>BROKER AUTHENTICATION PORTAL</span>
           </div>
 
           <div className="space-y-4">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif text-white tracking-tight leading-[1.15] font-normal">
-              Autonomous LTL Freight Operating System
+              Sign In to Your LTL Freight Operating System
             </h1>
             <p className="text-base sm:text-lg text-neutral-300 max-w-2xl font-sans leading-relaxed">
-              Sub-second multi-carrier rating, 28ms AI email parsing, 10-stage dispatch Kanban state machine, and sub-60 second geotagged POD customer settlement.
+              Access your real-time RFQ intake desk, multi-carrier BYOC rating matrix, 10-stage dispatch Kanban, and sub-60 second geotagged POD settlement.
             </p>
           </div>
 
@@ -168,84 +165,26 @@ export default function LoginPage() {
           <div className="absolute -inset-1.5 bg-gradient-to-tr from-white/10 via-neutral-700/20 to-white/15 rounded-[2.5rem] blur-2xl opacity-75 pointer-events-none" />
 
           <div className="relative rounded-3xl bg-[#09090b]/75 border border-white/15 backdrop-blur-3xl p-8 sm:p-10 shadow-[0_25px_70px_rgba(0,0,0,0.9)] space-y-6">
-            {/* Login / Signup Segmented Toggle */}
-            <div className="flex items-center p-1 bg-[#121215]/90 rounded-2xl border border-neutral-800">
-              <button
-                type="button"
-                onClick={() => setAuthMode('login')}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-sans font-bold transition-all ${
-                  authMode === 'login'
-                    ? 'bg-white text-black shadow-lg font-semibold'
-                    : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                Sign In to System
-              </button>
-              <button
-                type="button"
-                onClick={() => setAuthMode('signup')}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-sans font-bold transition-all ${
-                  authMode === 'signup'
-                    ? 'bg-white text-black shadow-lg font-semibold'
-                    : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                Create Account (60s)
-              </button>
-            </div>
-
             {/* Header Text */}
             <div className="space-y-1">
-              <h2 className="text-2xl font-serif text-white font-normal">
-                {authMode === 'login' ? 'Sign In to Apex OS' : 'Create Brokerage Account'}
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-700 text-white font-mono text-[10px] font-bold">
+                  STEP 1 OF 2
+                </span>
+                <Link href="/signup" className="text-xs text-neutral-400 hover:text-white underline font-mono transition">
+                  Need an account?
+                </Link>
+              </div>
+              <h2 className="text-2xl font-serif text-white font-normal pt-1">
+                Sign In to Operating System
               </h2>
               <p className="text-xs text-neutral-400 font-sans">
-                {authMode === 'login'
-                  ? 'Enter your credentials to access your executive dispatch dashboard.'
-                  : 'Instantly provision your encrypted LTL operating system in 60 seconds.'}
+                Enter your authorized work email & password to open the software dashboard.
               </p>
             </div>
 
-            {/* Core Form Fields */}
-            <form onSubmit={handleAuthSubmit} className="space-y-4">
-              {authMode === 'signup' && (
-                <>
-                  <div>
-                    <label className="block text-xs font-mono text-neutral-400 uppercase mb-1.5">
-                      Company / Brokerage Name
-                    </label>
-                    <div className="relative">
-                      <Building2 className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3" />
-                      <input
-                        type="text"
-                        required
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        className="w-full bg-[#121215]/90 border border-neutral-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-white transition-all"
-                        placeholder="Apex Freight Logistics LLC"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono text-neutral-400 uppercase mb-1.5">
-                      MC / DOT License Number
-                    </label>
-                    <div className="relative">
-                      <Globe className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3" />
-                      <input
-                        type="text"
-                        required
-                        value={mcDotNumber}
-                        onChange={(e) => setMcDotNumber(e.target.value)}
-                        className="w-full bg-[#121215]/90 border border-neutral-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-white transition-all"
-                        placeholder="MC-984210 / DOT-382910"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
+            {/* Login Form */}
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono text-neutral-400 uppercase mb-1.5">
                   Work Email Address
@@ -268,11 +207,9 @@ export default function LoginPage() {
                   <label className="block text-xs font-mono text-neutral-400 uppercase">
                     Password
                   </label>
-                  {authMode === 'login' && (
-                    <span className="text-[11px] text-neutral-500 hover:text-white cursor-pointer transition">
-                      Forgot password?
-                    </span>
-                  )}
+                  <span className="text-[11px] text-neutral-500 hover:text-white cursor-pointer transition">
+                    Forgot password?
+                  </span>
                 </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3" />
@@ -301,11 +238,11 @@ export default function LoginPage() {
                 ) : isSuccess ? (
                   <>
                     <CheckCircle2 className="w-4 h-4 text-black" />
-                    <span>Success! Entering Command Dashboard...</span>
+                    <span>Success! Opening Software Dashboard...</span>
                   </>
                 ) : (
                   <>
-                    <span>{authMode === 'login' ? 'Sign In Directly to System' : 'Launch 60-Second Setup Wizard'}</span>
+                    <span>Sign In &amp; Open Software</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -313,7 +250,7 @@ export default function LoginPage() {
             </form>
 
             {/* Quick Instant Demo Login Button */}
-            <div className="pt-4 border-t border-neutral-800/80 text-center space-y-2">
+            <div className="pt-4 border-t border-neutral-800/80 text-center space-y-3">
               <button
                 type="button"
                 onClick={handleDirectDemoLogin}
@@ -322,13 +259,22 @@ export default function LoginPage() {
                 <Zap className="w-3.5 h-3.5 text-white" />
                 <span>Instant Demo Login (Skip Credentials)</span>
               </button>
-              <p className="text-[11px] text-neutral-500 font-mono">Pre-loaded with 24 active shipments & 5 BYOC tariffs</p>
+
+              <div className="text-center pt-1">
+                <Link
+                  href="/signup"
+                  className="text-xs text-neutral-400 hover:text-white font-sans font-semibold inline-flex items-center gap-1 transition"
+                >
+                  <span>First time here? Create an Account</span>
+                  <ArrowRight className="w-3 h-3 text-neutral-400" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 2: LONG PAGE CONTENT — 5 PROCUREMENT LIFECYCLE MODULES */}
+      {/* SECTION 2: LONG PAGE CONTENT — 6 PROCUREMENT LIFECYCLE MODULES */}
       <section className="border-t border-[#27272a] bg-[#09090b] py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 space-y-12">
           <div className="text-center max-w-3xl mx-auto space-y-3">
@@ -502,7 +448,7 @@ export default function LoginPage() {
               </div>
 
               <div className="bg-[#121215] border border-neutral-800 p-5 rounded-2xl space-y-2">
-                <ShieldAlert className="w-5 h-5 text-neutral-300" />
+                <ShieldCheck className="w-5 h-5 text-neutral-300" />
                 <h4 className="font-serif text-white text-base">FMCSA Gatekeeper</h4>
                 <p className="text-xs text-neutral-400 font-sans">
                   Real-time QCMobile background checks verifying $1M auto liability insurance before tender.
@@ -517,7 +463,7 @@ export default function LoginPage() {
                   onClick={handleDirectDemoLogin}
                   className="px-6 py-3 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs shadow-lg transition"
                 >
-                  Enter Executive Operating System Directly
+                  Sign In &amp; Open Software Dashboard
                 </button>
               </div>
             </div>
@@ -530,13 +476,11 @@ export default function LoginPage() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>© 2026 Apex Freight Operating System • Built for Enterprise LTL Freight Brokers</div>
           <div className="flex items-center gap-4 text-[11px] text-neutral-400">
+            <Link href="/login" className="hover:text-white transition">Sign In</Link>
+            <span>•</span>
+            <Link href="/signup" className="hover:text-white transition">Create Account</Link>
+            <span>•</span>
             <Link href="/" className="hover:text-white transition">Dashboard</Link>
-            <span>•</span>
-            <Link href="/dispatch" className="hover:text-white transition">Dispatch</Link>
-            <span>•</span>
-            <Link href="/invoices" className="hover:text-white transition">Invoicing</Link>
-            <span>•</span>
-            <Link href="/quickpay" className="hover:text-white transition">QuickPay</Link>
           </div>
         </div>
       </footer>

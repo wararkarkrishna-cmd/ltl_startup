@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Truck,
   Zap,
@@ -46,11 +46,22 @@ interface UseCaseDetails {
 
 function HomePageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     'integration' | 'overview' | 'ingestion' | 'quoting' | 'dispatch' | 'vetting' | 'pod-invoicing' | 'quickpay'
   >('overview');
 
   const [activeUseCase, setActiveUseCase] = useState<UseCaseDetails | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const loggedIn = localStorage.getItem('apex_logged_in');
+      const bypass = searchParams.get('guest') === 'true' || searchParams.get('demo') === 'true';
+      if (!loggedIn && !bypass) {
+        router.push('/login');
+      }
+    }
+  }, [router, searchParams]);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
