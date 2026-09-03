@@ -71,23 +71,9 @@ export const AppSidebar: React.FC<{
 
   const navModules: NavModule[] = [
     {
-      id: 'integration',
-      title: 'Integration & Setup',
-      href: '/integration',
-      icon: Sparkles,
-      badge: '1-Min Setup',
-      subFeatures: [
-        { title: '1-Minute Onboarding Hub', href: '/integration', description: '5 Integration modes setup wizard' },
-        { title: 'Email Shadow Ingestion', href: '/integration?tab=email', description: 'Outlook & Gmail auto-forward setup' },
-        { title: 'BYOC Carrier Vault', href: '/integration?tab=byoc', description: 'XPO, Saia, Estes, ABF, R+L credentials' },
-        { title: 'Magic AI CSV Importer', href: '/integration?tab=csv', description: 'Drag-and-drop customer CSV auto-matching' },
-        { title: '1-Click Accounting Sync', href: '/integration?tab=accounting', description: 'QuickBooks Online & Xero OAuth link' },
-        { title: 'Outlook & Chrome Sidecar', href: '/integration?tab=extension', description: 'Quote loads directly inside email' },
-      ],
-    },
-    {
       id: 'overview',
       title: 'Executive Command',
+
       href: '/',
       icon: LayoutDashboard,
       badge: 'v3.8',

@@ -2,46 +2,37 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
+  Truck,
   Mail,
   Key,
   FileText,
   Layers,
   Puzzle,
   CheckCircle2,
-  AlertCircle,
   Copy,
   Check,
   Upload,
   RefreshCw,
   Zap,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
-  Building2,
-  Database,
-  ExternalLink,
-  HelpCircle,
   Sparkles,
   Download,
   Info,
+  Building2,
 } from 'lucide-react';
-import { AppHeader } from '../../components/navigation/AppHeader';
-import { AppSidebar } from '../../components/navigation/AppSidebar';
 
 export const dynamic = 'force-dynamic';
 
 function IntegrationPageContent() {
-
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState<'email' | 'byoc' | 'csv' | 'accounting' | 'extension'>('email');
+  const router = useRouter();
+  const [currentStep, setCurrentStep] = useState<number>(1);
   
   // Progress State
-  const [emailConfigured, setEmailConfigured] = useState(false);
-  const [byocConfigured, setByocConfigured] = useState(false);
-  const [csvConfigured, setCsvConfigured] = useState(false);
-  const [accountingConfigured, setAccountingConfigured] = useState(false);
-  const [extensionConfigured, setExtensionConfigured] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState<Record<number, boolean>>({});
 
   // Email Ingestion State
   const shadowEmail = 'rfq-apex-7080@inbound.freight.ai';
@@ -59,7 +50,6 @@ function IntegrationPageContent() {
   });
 
   // CSV Importer State
-  const [csvFile, setCsvFile] = useState<File | null>(null);
   const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [csvPreviewData, setCsvPreviewData] = useState<any | null>(null);
   const [csvImportSuccess, setCsvImportSuccess] = useState(false);
@@ -69,17 +59,17 @@ function IntegrationPageContent() {
   const [xeroConnected, setXeroConnected] = useState(false);
 
   // Sidecar API Key
-  const [sidecarApiKey, setSidecarApiKey] = useState('apex_ext_live_9948102941829014');
+  const sidecarApiKey = 'apex_ext_live_9948102941829014';
   const [copiedSidecarKey, setCopiedSidecarKey] = useState(false);
 
-  // Calculate Overall Completion
-  const completedSteps = [emailConfigured, byocConfigured, csvConfigured, accountingConfigured, extensionConfigured].filter(Boolean).length;
-  const progressPercent = Math.round((completedSteps / 5) * 100);
+  const markStepComplete = (stepNum: number) => {
+    setCompletedSteps((prev) => ({ ...prev, [stepNum]: true }));
+  };
 
   const handleCopyEmail = () => {
     navigator.clipboard.writeText(shadowEmail);
     setCopiedEmail(true);
-    setEmailConfigured(true);
+    markStepComplete(1);
     setTimeout(() => setCopiedEmail(false), 2000);
   };
 
@@ -88,8 +78,8 @@ function IntegrationPageContent() {
     setTimeout(() => {
       setSimulatingEmailTest(false);
       setEmailTestSuccess(true);
-      setEmailConfigured(true);
-    }, 1200);
+      markStepComplete(1);
+    }, 1000);
   };
 
   const handleTestCarrierConn = (carrierCode: keyof typeof carrierInputs) => {
@@ -103,8 +93,8 @@ function IntegrationPageContent() {
         ...prev,
         [carrierCode]: { ...prev[carrierCode], status: 'CONNECTED' },
       }));
-      setByocConfigured(true);
-    }, 1000);
+      markStepComplete(2);
+    }, 900);
   };
 
   const handleSimulateCsvUpload = () => {
@@ -122,664 +112,641 @@ function IntegrationPageContent() {
           { header: 'Monthly_Pallet_Vol', mappedTo: 'volumeMonthly', confidence: '95.0% Match' },
         ],
       });
-    }, 1200);
+    }, 1000);
   };
 
   const handleFinalizeCsvImport = () => {
     setCsvImportSuccess(true);
-    setCsvConfigured(true);
+    markStepComplete(3);
   };
 
+  const handleFinishOnboarding = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('apex_onboarding_completed', 'true');
+    }
+    router.push('/');
+  };
+
+  const stepsList = [
+    { num: 1, title: 'Email Shadowing', icon: Mail, subtitle: 'Forward RFQs from Outlook/Gmail' },
+    { num: 2, title: 'BYOC Carrier Vault', icon: Key, subtitle: 'XPO, Saia, Estes, ABF, R+L' },
+    { num: 3, title: 'Magic AI CSV Import', icon: FileText, subtitle: 'Drag & drop legacy data' },
+    { num: 4, title: '1-Click Accounting', icon: Layers, subtitle: 'QuickBooks Online & Xero' },
+    { num: 5, title: 'Outlook Extension', icon: Puzzle, subtitle: 'Quote directly inside email' },
+  ];
+
+  const activeStepProgress = Math.round((Object.keys(completedSteps).length / 5) * 100);
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      <AppHeader isSidebarCollapsed={isSidebarCollapsed} />
+    <div className="min-h-screen bg-[#050507] text-[#f4f4f5] font-sans flex flex-col justify-between relative overflow-hidden selection:bg-white selection:text-black">
+      {/* Background Ambient Blur Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-white/[0.02] rounded-full blur-[160px] pointer-events-none" />
 
-      <div className="flex-1 flex overflow-hidden">
-        <AppSidebar
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        />
-
-        <main className="flex-1 overflow-y-auto p-6 space-y-8 bg-slate-950">
-          {/* Header Banner & Guided Day-1 Assistant */}
-          <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-blue-950/80 border border-indigo-500/30 relative overflow-hidden shadow-xl">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> 1-Minute Zero-Friction Setup
-                  </span>
-                  <span className="text-xs text-slate-400 font-mono">Tenant ID: 01916362-7901</span>
-                </div>
-                <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
-                  Broker Integration & Data Onboarding Hub
-                </h1>
-                <p className="text-xs lg:text-sm text-slate-300 max-w-3xl">
-                  Connect your existing carrier accounts, forward shipper emails, import historical CSVs, and sync accounting in under 60 seconds.
-                </p>
-                <div className="flex items-center gap-3 pt-2">
-                  <Link
-                    href="/"
-                    className="px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-2 shadow-xl transition"
-                  >
-                    <span>Proceed to Operational Software</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
-
-
-              {/* Day-1 Broker Readiness Progress Card */}
-              <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-lg min-w-[280px]">
-
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="font-bold text-white">Day-1 Setup Progress</span>
-                  <span className="font-mono font-extrabold text-indigo-400">{progressPercent}% Ready</span>
-                </div>
-                <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800 mb-3">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 via-blue-500 to-emerald-400 transition-all duration-500"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-slate-400">
-                  <span>{completedSteps} of 5 Integrations Active</span>
-                  {progressPercent === 100 ? (
-                    <span className="text-emerald-400 font-bold flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Fully Active
-                    </span>
-                  ) : (
-                    <span className="text-indigo-400 font-semibold">Complete Below ↓</span>
-                  )}
-                </div>
-              </div>
-            </div>
+      {/* STANDALONE TOP HEADER (NO DASHBOARD SIDEBAR) */}
+      <header className="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between z-10 border-b border-neutral-900">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white shadow-md">
+            <Truck className="w-5 h-5" />
           </div>
-
-          {/* 5 Integration Method Navigation Tabs */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <button
-              type="button"
-              onClick={() => setActiveTab('email')}
-              className={`p-3.5 rounded-xl border text-left transition-all relative ${
-                activeTab === 'email'
-                  ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-600/10'
-                  : 'bg-slate-900/50 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <Mail className={`w-4 h-4 ${activeTab === 'email' ? 'text-indigo-400' : 'text-slate-500'}`} />
-                {emailConfigured && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-              </div>
-              <div className="text-xs font-bold">1. Email Shadowing</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">0 IT Setup (Outlook/Gmail)</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('byoc')}
-              className={`p-3.5 rounded-xl border text-left transition-all relative ${
-                activeTab === 'byoc'
-                  ? 'bg-blue-600/20 border-blue-500 text-white shadow-lg shadow-blue-600/10'
-                  : 'bg-slate-900/50 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <Key className={`w-4 h-4 ${activeTab === 'byoc' ? 'text-blue-400' : 'text-slate-500'}`} />
-                {byocConfigured && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-              </div>
-              <div className="text-xs font-bold">2. BYOC Carrier Vault</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">XPO, Saia, Estes, ABF, R+L</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('csv')}
-              className={`p-3.5 rounded-xl border text-left transition-all relative ${
-                activeTab === 'csv'
-                  ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-lg shadow-emerald-600/10'
-                  : 'bg-slate-900/50 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <FileText className={`w-4 h-4 ${activeTab === 'csv' ? 'text-emerald-400' : 'text-slate-500'}`} />
-                {csvConfigured && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-              </div>
-              <div className="text-xs font-bold">3. Magic AI CSV Import</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">Auto-header matching</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('accounting')}
-              className={`p-3.5 rounded-xl border text-left transition-all relative ${
-                activeTab === 'accounting'
-                  ? 'bg-purple-600/20 border-purple-500 text-white shadow-lg shadow-purple-600/10'
-                  : 'bg-slate-900/50 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <Layers className={`w-4 h-4 ${activeTab === 'accounting' ? 'text-purple-400' : 'text-slate-500'}`} />
-                {accountingConfigured && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-              </div>
-              <div className="text-xs font-bold">4. 1-Click Accounting</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">QuickBooks Online & Xero</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('extension')}
-              className={`p-3.5 rounded-xl border text-left transition-all relative ${
-                activeTab === 'extension'
-                  ? 'bg-amber-600/20 border-amber-500 text-white shadow-lg shadow-amber-600/10'
-                  : 'bg-slate-900/50 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <Puzzle className={`w-4 h-4 ${activeTab === 'extension' ? 'text-amber-400' : 'text-slate-500'}`} />
-                {extensionConfigured && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-              </div>
-              <div className="text-xs font-bold">5. Extension & Sidecar</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">Outlook & Chrome Add-in</div>
-            </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-serif text-xl text-white tracking-tight font-normal">APEX</span>
+              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800">
+                LTL OS v3.8
+              </span>
+            </div>
+            <p className="text-[10px] text-neutral-500 font-mono tracking-wider">STANDALONE BROKER DATA ONBOARDING</p>
           </div>
+        </div>
 
-          {/* TAB 1: EMAIL SHADOW INGESTION */}
-          {activeTab === 'email' && (
-            <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-bold text-white">Method 1: Email Shadow Ingestion Setup</h2>
-                    <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-mono font-bold">
-                      Zero IT Setup
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Auto-forward incoming RFQ emails or PDFs from shippers. Our AI extracts load details and generates rate options in 15s.
-                  </p>
-                </div>
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-neutral-400 font-mono bg-[#0c0c0e] border border-neutral-800 px-3 py-1.5 rounded-full">
+            <ShieldCheck className="w-3.5 h-3.5 text-neutral-300" />
+            <span>Tenant: 01916362-7901</span>
+          </div>
+          <button
+            onClick={handleFinishOnboarding}
+            className="text-xs font-sans text-neutral-400 hover:text-white transition bg-[#121215] hover:bg-neutral-800 border border-neutral-800 px-4 py-2 rounded-xl flex items-center gap-1.5"
+          >
+            <span>Skip to Dashboard</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </header>
+
+      {/* MAIN DEDICATED ONBOARDING CONTAINER */}
+      <main className="w-full max-w-6xl mx-auto px-6 py-8 flex-1 z-10 space-y-8 my-auto">
+        {/* Onboarding Header Banner & Progress */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 shadow-2xl relative overflow-hidden space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800/80 pb-6">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 text-[11px] font-mono">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+                <span>5-Step Zero-Friction Brokerage Setup</span>
               </div>
-
-              {/* Unique Shadow Email Provisioning Card */}
-              <div className="p-5 rounded-xl bg-slate-950 border border-indigo-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Your Dedicated Inbound RFQ Email</div>
-                  <div className="text-base font-mono font-bold text-indigo-400 bg-indigo-950/40 px-3 py-1.5 rounded-lg border border-indigo-500/30 inline-block">
-                    {shadowEmail}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleCopyEmail}
-                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-indigo-600/20"
-                  >
-                    {copiedEmail ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    <span>{copiedEmail ? 'Copied to Clipboard!' : 'Copy Address'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleTestEmailInbound}
-                    disabled={simulatingEmailTest}
-                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-2 transition-all border border-slate-700"
-                  >
-                    {simulatingEmailTest ? (
-                      <RefreshCw className="w-4 h-4 animate-spin text-indigo-400" />
-                    ) : (
-                      <Zap className="w-4 h-4 text-amber-400" />
-                    )}
-                    <span>Simulate Inbound RFQ Test</span>
-                  </button>
-                </div>
-              </div>
-
-              {emailTestSuccess && (
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>Inbound email simulation successful! RFQ parsed (4 Pallets HVAC, LA to Chicago) and queued in Fast Review.</span>
-                  </div>
-                  <Link href="/review/01916362-7901-7080-867c-9b8895092s01" className="font-bold underline text-emerald-200">
-                    View Extracted RFQ →
-                  </Link>
-                </div>
-              )}
-
-              {/* Step-by-Step Guide for Outlook & Gmail */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-2">
-                  <div className="text-xs font-bold text-white flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] font-bold flex items-center justify-center">
-                      1
-                    </span>
-                    <span>Microsoft Outlook Auto-Forward Rule (30s)</span>
-                  </div>
-                  <ol className="text-xs text-slate-400 space-y-1.5 pl-7 list-decimal">
-                    <li>Open Outlook $\rightarrow$ Settings $\rightarrow$ Rules $\rightarrow$ Add New Rule.</li>
-                    <li>Set condition: <i>Subject contains "RFQ", "Rate Quote", or "Freight Inquiry"</i>.</li>
-                    <li>Set action: <i>Forward to {shadowEmail}</i>.</li>
-                  </ol>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-2">
-                  <div className="text-xs font-bold text-white flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-bold flex items-center justify-center">
-                      2
-                    </span>
-                    <span>Google Workspace / Gmail Rule (30s)</span>
-                  </div>
-                  <ol className="text-xs text-slate-400 space-y-1.5 pl-7 list-decimal">
-                    <li>Go to Gmail Settings $\rightarrow$ Forwarding and POP/IMAP.</li>
-                    <li>Click <i>Add a forwarding address</i> and paste <code className="text-indigo-300">{shadowEmail}</code>.</li>
-                    <li>Create filter for subject terms: <i>quote, RFQ, shipment</i>.</li>
-                  </ol>
-                </div>
-              </div>
+              <h1 className="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight">
+                Data Integration &amp; Onboarding Wizard
+              </h1>
+              <p className="text-xs sm:text-sm text-neutral-400 max-w-2xl font-sans">
+                Follow these 5 steps to import customer lists, connect carrier contracts, forward RFQ emails, and link accounting.
+              </p>
             </div>
-          )}
 
-          {/* TAB 2: BYOC CARRIER VAULT */}
-          {activeTab === 'byoc' && (
-            <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-6">
-              <div className="border-b border-slate-800/80 pb-4">
-                <h2 className="text-lg font-bold text-white">Method 2: BYOC Carrier Vault (Bring Your Own Carrier)</h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  Connect your direct carrier accounts. Our engine rates your contracted tariffs alongside our Platform Master Wholesale tiers.
-                </p>
+            {/* Overall Progress Widget */}
+            <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800/80 min-w-[240px]">
+              <div className="flex items-center justify-between text-xs font-mono mb-2">
+                <span className="text-neutral-400">Onboarding Completion</span>
+                <span className="text-white font-bold">{activeStepProgress}%</span>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { code: 'XPO' as const, name: 'XPO Logistics', scac: 'CNWY', logo: 'XPO' },
-                  { code: 'SAIA' as const, name: 'SAIA LTL Freight', scac: 'SAIA', logo: 'SAIA' },
-                  { code: 'ESTES' as const, name: 'Estes Express Lines', scac: 'EXLA', logo: 'ESTES' },
-                  { code: 'ABF' as const, name: 'ArcBest / ABF Freight', scac: 'ABFS', logo: 'ABF' },
-                  { code: 'RL' as const, name: 'R+L Carriers', scac: 'RLCA', logo: 'R+L' },
-                ].map((c) => {
-                  const state = carrierInputs[c.code];
-                  return (
-                    <div key={c.code} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3 relative">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-extrabold text-xs flex items-center justify-center font-mono">
-                            {c.logo}
-                          </div>
-                          <div>
-                            <div className="text-xs font-bold text-white">{c.name}</div>
-                            <div className="text-[10px] text-slate-500 font-mono">SCAC: {c.scac}</div>
-                          </div>
-                        </div>
-
-                        {state.status === 'CONNECTED' ? (
-                          <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> Verified
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-mono">
-                            Ready
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 mb-0.5">Account Number</label>
-                          <input
-                            type="text"
-                            value={state.account}
-                            onChange={(e) =>
-                              setCarrierInputs((prev) => ({
-                                ...prev,
-                                [c.code]: { ...prev[c.code], account: e.target.value },
-                              }))
-                            }
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white font-mono focus:border-indigo-500 focus:outline-none"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 mb-0.5">API Auth Secret / Key</label>
-                          <input
-                            type="password"
-                            value={state.apiKey}
-                            onChange={(e) =>
-                              setCarrierInputs((prev) => ({
-                                ...prev,
-                                [c.code]: { ...prev[c.code], apiKey: e.target.value },
-                              }))
-                            }
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white font-mono focus:border-indigo-500 focus:outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleTestCarrierConn(c.code)}
-                        disabled={state.status === 'TESTING'}
-                        className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
-                      >
-                        {state.status === 'TESTING' ? (
-                          <>
-                            <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-400" />
-                            <span>Pinging API Endpoint...</span>
-                          </>
-                        ) : state.status === 'CONNECTED' ? (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Re-Test Credentials</span>
-                          </>
-                        ) : (
-                          <>
-                            <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-                            <span>Save & Verify API Connection</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: MAGIC AI CSV IMPORTER */}
-          {activeTab === 'csv' && (
-            <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-6">
-              <div className="border-b border-slate-800/80 pb-4">
-                <h2 className="text-lg font-bold text-white">Method 3: Magic AI CSV & Legacy Data Importer</h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  Drag and drop any customer list or historical lane CSV from McLeod, Tai Software, Rose Rocket, or Excel.
-                </p>
-              </div>
-
-              {!csvPreviewData ? (
+              <div className="w-full h-2 bg-[#050507] rounded-full overflow-hidden border border-neutral-800 mb-2">
                 <div
-                  onClick={handleSimulateCsvUpload}
-                  className="p-8 rounded-2xl border-2 border-dashed border-slate-800 hover:border-emerald-500/50 bg-slate-950/60 hover:bg-slate-950 cursor-pointer text-center space-y-3 transition-all group"
+                  className="h-full bg-white transition-all duration-500"
+                  style={{ width: `${activeStepProgress}%` }}
+                />
+              </div>
+              <div className="text-[10px] font-mono text-neutral-500 text-right">
+                {Object.keys(completedSteps).length} of 5 Completed
+              </div>
+            </div>
+          </div>
+
+          {/* 5-Step Horizontal Navigation Bar */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {stepsList.map((step) => {
+              const Icon = step.icon;
+              const isCurrent = currentStep === step.num;
+              const isDone = completedSteps[step.num];
+
+              return (
+                <button
+                  key={step.num}
+                  type="button"
+                  onClick={() => setCurrentStep(step.num)}
+                  className={`p-4 rounded-2xl border text-left transition-all relative ${
+                    isCurrent
+                      ? 'bg-white text-black border-white shadow-xl'
+                      : 'bg-[#121215]/80 border-neutral-800/80 text-neutral-400 hover:text-white hover:bg-[#121215]'
+                  }`}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-                    <Upload className="w-6 h-6" />
+                  <div className="flex items-center justify-between mb-2">
+                    <span
+                      className={`w-6 h-6 rounded-full text-xs font-mono font-bold flex items-center justify-center ${
+                        isCurrent
+                          ? 'bg-black text-white'
+                          : isDone
+                          ? 'bg-neutral-800 text-white'
+                          : 'bg-neutral-900 text-neutral-400'
+                      }`}
+                    >
+                      {isDone ? <Check className="w-3.5 h-3.5" /> : step.num}
+                    </span>
+                    <Icon className={`w-4 h-4 ${isCurrent ? 'text-black' : 'text-neutral-500'}`} />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-white">Drag & Drop Customer / Lane CSV File Here</h3>
-                    <p className="text-xs text-slate-400 mt-1">Supports McLeod, Tai, Rose Rocket, CSV, or Excel (.xlsx)</p>
+                  <div className={`text-xs font-sans font-bold ${isCurrent ? 'text-black' : 'text-white'}`}>
+                    {step.title}
                   </div>
-                  <button
-                    type="button"
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors inline-block shadow-lg shadow-emerald-600/20"
-                  >
-                    Select File to AI Auto-Map
-                  </button>
-                </div>
-              ) : (
-                <div className="p-5 rounded-xl bg-slate-950 border border-emerald-500/30 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-emerald-400" />
-                      <div>
-                        <div className="text-xs font-bold text-white">{csvPreviewData.fileName}</div>
-                        <div className="text-[10px] text-slate-400">{csvPreviewData.totalRows} Records Detected</div>
-                      </div>
-                    </div>
+                  <div className={`text-[10px] font-mono mt-0.5 truncate ${isCurrent ? 'text-neutral-700' : 'text-neutral-500'}`}>
+                    {step.subtitle}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-                    {!csvImportSuccess ? (
-                      <button
-                        type="button"
-                        onClick={handleFinalizeCsvImport}
-                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-lg shadow-emerald-600/20"
-                      >
-                        <Check className="w-4 h-4" />
-                        <span>Confirm AI Import (142 Records)</span>
-                      </button>
-                    ) : (
-                      <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5">
-                        <CheckCircle2 className="w-4 h-4" /> 142 Records Seeded to Database
-                      </span>
-                    )}
-                  </div>
-
-                  {/* AI Header Auto-Match Mapping Table */}
-                  <div className="border border-slate-800 rounded-lg overflow-hidden">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-900 text-slate-400 font-mono text-[10px] uppercase">
-                        <tr>
-                          <th className="p-2.5">CSV File Column Header</th>
-                          <th className="p-2.5">Auto-Mapped System Field</th>
-                          <th className="p-2.5">AI Matching Confidence</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800 text-slate-300">
-                        {csvPreviewData.mappedFields.map((f: any, idx: number) => (
-                          <tr key={idx} className="hover:bg-slate-900/50">
-                            <td className="p-2.5 font-mono text-indigo-300">{f.header}</td>
-                            <td className="p-2.5 font-mono text-emerald-400 font-bold">➔ {f.mappedTo}</td>
-                            <td className="p-2.5 font-mono text-slate-400">{f.confidence}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
+        {/* STEP 1: EMAIL SHADOW INGESTION */}
+        {currentStep === 1 && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+              <div>
+                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Step 1 of 5</span>
+                <h2 className="text-lg font-serif text-white font-normal">Email Shadow Ingestion Setup</h2>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
+                0 IT Setup Required
+              </span>
             </div>
-          )}
 
-          {/* TAB 4: 1-CLICK ACCOUNTING SYNC */}
-          {activeTab === 'accounting' && (
-            <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-6">
-              <div className="border-b border-slate-800/80 pb-4">
-                <h2 className="text-lg font-bold text-white">Method 4: 1-Click Accounting & ERP OAuth Sync</h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  Connect your accounting software so customer invoices and carrier payouts automatically sync without double data entry.
-                </p>
+            <p className="text-xs text-neutral-400 leading-relaxed">
+              Auto-forward incoming shipper quote requests or attached PDFs from Outlook or Gmail. Our AI extracts load details and drafts rates in 15 seconds.
+            </p>
+
+            {/* Inbound Email Provision Card */}
+            <div className="p-5 rounded-2xl bg-[#121215] border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="text-[10px] font-mono text-neutral-500 uppercase">Your Inbound Forwarding Address</div>
+                <div className="text-sm sm:text-base font-mono font-bold text-white bg-[#050507] px-3.5 py-2 rounded-xl border border-neutral-800 inline-block">
+                  {shadowEmail}
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-5 rounded-xl bg-slate-950 border border-slate-800 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-sm flex items-center justify-center font-mono">
-                        QBO
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-white">QuickBooks Online</div>
-                        <div className="text-xs text-slate-400">Intuit Accounting Engine</div>
-                      </div>
-                    </div>
-                    {qboConnected ? (
-                      <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Connected
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-400 text-xs font-mono">Disconnected</span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400">Syncs Chart of Accounts, open AR invoices, and AP carrier vouchers in real time.</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQboConnected(true);
-                      setAccountingConfigured(true);
-                    }}
-                    className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-lg shadow-emerald-600/20"
-                  >
-                    {qboConnected ? 'Re-Sync QuickBooks Online' : 'Connect to QuickBooks Online (1-Click OAuth)'}
-                  </button>
-                </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleCopyEmail}
+                  className="px-4 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-2 transition shadow-md"
+                >
+                  {copiedEmail ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedEmail ? 'Copied!' : 'Copy Address'}</span>
+                </button>
 
-                <div className="p-5 rounded-xl bg-slate-950 border border-slate-800 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold text-sm flex items-center justify-center font-mono">
-                        XERO
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-white">Xero Cloud Accounting</div>
-                        <div className="text-xs text-slate-400">Global Financial Ledger</div>
-                      </div>
-                    </div>
-                    {xeroConnected ? (
-                      <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Connected
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-400 text-xs font-mono">Disconnected</span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400">Automatic reconciliation for multi-currency freight invoices and QuickPay disbursements.</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setXeroConnected(true);
-                      setAccountingConfigured(true);
-                    }}
-                    className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-colors shadow-lg shadow-blue-600/20"
-                  >
-                    {xeroConnected ? 'Re-Sync Xero Ledger' : 'Connect to Xero Accounting (1-Click OAuth)'}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleTestEmailInbound}
+                  disabled={simulatingEmailTest}
+                  className="px-4 py-2.5 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-300 font-sans font-bold text-xs flex items-center gap-2 border border-neutral-800 transition"
+                >
+                  {simulatingEmailTest ? (
+                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                  ) : (
+                    <Zap className="w-4 h-4 text-white" />
+                  )}
+                  <span>Simulate Test Email</span>
+                </button>
               </div>
             </div>
-          )}
 
-          {/* TAB 5: BROWSER EXTENSION & OUTLOOK SIDECAR */}
-          {activeTab === 'extension' && (
-            <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-6">
-              <div className="border-b border-slate-800/80 pb-4">
-                <h2 className="text-lg font-bold text-white">Method 5: Outlook Add-in & Chrome Extension Sidecar</h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  Quote and dispatch freight directly inside Outlook or Chrome without ever changing tabs.
-                </p>
+            {emailTestSuccess && (
+              <div className="p-4 rounded-2xl bg-neutral-900/90 border border-neutral-700 text-white text-xs flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-white" />
+                  <span>Inbound simulation verified! RFQ parsed (4 Pallets HVAC, LA to Chicago).</span>
+                </div>
+                <span className="font-mono text-[11px] text-neutral-400">Step 1 Verified</span>
+              </div>
+            )}
+
+            {/* Email Setup Guides */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div className="p-5 rounded-2xl bg-[#121215]/60 border border-neutral-800 space-y-2">
+                <div className="text-xs font-bold text-white flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-neutral-800 text-white text-[10px] font-mono flex items-center justify-center">
+                    A
+                  </span>
+                  <span>Microsoft Outlook Forwarding Rule (30s)</span>
+                </div>
+                <ol className="text-xs text-neutral-400 space-y-1.5 pl-7 list-decimal font-sans">
+                  <li>Open Outlook $\rightarrow$ Settings $\rightarrow$ Rules $\rightarrow$ Add New Rule.</li>
+                  <li>Set condition: <i>Subject contains "RFQ", "Quote", or "Freight"</i>.</li>
+                  <li>Set action: <i>Forward to {shadowEmail}</i>.</li>
+                </ol>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-5 rounded-xl bg-slate-950 border border-slate-800 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Puzzle className="w-8 h-8 text-amber-400" />
-                    <div>
-                      <div className="text-sm font-bold text-white">Chrome & Outlook Sidecar Extension</div>
-                      <div className="text-xs text-slate-400">Version 2.4 • Freight Broker Co-Pilot</div>
-                    </div>
-                  </div>
+              <div className="p-5 rounded-2xl bg-[#121215]/60 border border-neutral-800 space-y-2">
+                <div className="text-xs font-bold text-white flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-neutral-800 text-white text-[10px] font-mono flex items-center justify-center">
+                    B
+                  </span>
+                  <span>Gmail / Google Workspace Rule (30s)</span>
+                </div>
+                <ol className="text-xs text-neutral-400 space-y-1.5 pl-7 list-decimal font-sans">
+                  <li>Go to Gmail Settings $\rightarrow$ Forwarding and POP/IMAP.</li>
+                  <li>Click <i>Add forwarding address</i> and enter <code className="text-neutral-200">{shadowEmail}</code>.</li>
+                  <li>Create filter for quote emails.</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        )}
 
-                  <div className="space-y-2">
-                    <label className="block text-xs font-semibold text-slate-300">Your Sidecar API Authentication Token</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value={sidecarApiKey}
-                        className="flex-1 bg-slate-900 border border-slate-800 rounded-xl py-2 px-3 text-xs text-indigo-300 font-mono"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(sidecarApiKey);
-                          setCopiedSidecarKey(true);
-                          setExtensionConfigured(true);
-                          setTimeout(() => setCopiedSidecarKey(false), 2000);
-                        }}
-                        className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center gap-1 transition-colors"
-                      >
-                        {copiedSidecarKey ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        <span>{copiedSidecarKey ? 'Copied' : 'Copy'}</span>
-                      </button>
-                    </div>
-                  </div>
+        {/* STEP 2: BYOC CARRIER VAULT */}
+        {currentStep === 2 && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+              <div>
+                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Step 2 of 5</span>
+                <h2 className="text-lg font-serif text-white font-normal">BYOC Carrier Credentials Vault</h2>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
+                AES-256 Encrypted
+              </span>
+            </div>
 
-                  <div className="flex items-center gap-3 pt-2">
+            <p className="text-xs text-neutral-400 leading-relaxed">
+              Enter your direct carrier account numbers and API credentials. Our engine rates your contracted tariffs alongside wholesale platform rates.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { code: 'XPO' as const, name: 'XPO Logistics', scac: 'CNWY' },
+                { code: 'SAIA' as const, name: 'SAIA LTL Freight', scac: 'SAIA' },
+                { code: 'ESTES' as const, name: 'Estes Express Lines', scac: 'EXLA' },
+                { code: 'ABF' as const, name: 'ArcBest / ABF Freight', scac: 'ABFS' },
+                { code: 'RL' as const, name: 'R+L Carriers', scac: 'RLCA' },
+              ].map((c) => {
+                const state = carrierInputs[c.code];
+                return (
+                  <div key={c.code} className="p-5 rounded-2xl bg-[#121215] border border-neutral-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-bold text-white">{c.name}</div>
+                        <div className="text-[10px] font-mono text-neutral-500">SCAC: {c.scac}</div>
+                      </div>
+                      {state.status === 'CONNECTED' ? (
+                        <span className="px-2 py-0.5 rounded bg-neutral-900 text-white text-[10px] font-mono border border-neutral-700 flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Connected
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded bg-neutral-900 text-neutral-500 text-[10px] font-mono">
+                          Ready
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-[10px] font-mono text-neutral-400 uppercase mb-0.5">Account Number</label>
+                        <input
+                          type="text"
+                          value={state.account}
+                          onChange={(e) =>
+                            setCarrierInputs((prev) => ({
+                              ...prev,
+                              [c.code]: { ...prev[c.code], account: e.target.value },
+                            }))
+                          }
+                          className="w-full bg-[#050507] border border-neutral-800 rounded-xl py-1.5 px-3 text-xs font-mono text-white focus:outline-none focus:border-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-mono text-neutral-400 uppercase mb-0.5">API Auth Secret / Key</label>
+                        <input
+                          type="password"
+                          value={state.apiKey}
+                          onChange={(e) =>
+                            setCarrierInputs((prev) => ({
+                              ...prev,
+                              [c.code]: { ...prev[c.code], apiKey: e.target.value },
+                            }))
+                          }
+                          className="w-full bg-[#050507] border border-neutral-800 rounded-xl py-1.5 px-3 text-xs font-mono text-white focus:outline-none focus:border-white"
+                        />
+                      </div>
+                    </div>
+
                     <button
                       type="button"
-                      onClick={() => setExtensionConfigured(true)}
-                      className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-600/20 transition-all"
+                      onClick={() => handleTestCarrierConn(c.code)}
+                      disabled={state.status === 'TESTING'}
+                      className="w-full py-2 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-200 border border-neutral-800 text-xs font-sans font-bold flex items-center justify-center gap-1.5 transition"
                     >
-                      <Download className="w-4 h-4" />
-                      <span>Download Chrome Extension</span>
+                      {state.status === 'TESTING' ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                          <span>Testing Connection...</span>
+                        </>
+                      ) : state.status === 'CONNECTED' ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-white" />
+                          <span>Re-Verify Credentials</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                          <span>Save &amp; Verify Connection</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: MAGIC AI CSV IMPORTER */}
+        {currentStep === 3 && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+              <div>
+                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Step 3 of 5</span>
+                <h2 className="text-lg font-serif text-white font-normal">Magic AI CSV &amp; Legacy Data Importer</h2>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
+                Auto-Header Mapping
+              </span>
+            </div>
+
+            <p className="text-xs text-neutral-400 leading-relaxed">
+              Drag and drop any exported CSV file from McLeod, Tai Software, Rose Rocket, or Excel. The AI automatically matches headers to seed your database.
+            </p>
+
+            {!csvPreviewData ? (
+              <div
+                onClick={handleSimulateCsvUpload}
+                className="p-10 rounded-3xl border border-dashed border-neutral-800 hover:border-neutral-600 bg-[#121215]/50 hover:bg-[#121215] cursor-pointer text-center space-y-3 transition group"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-neutral-900 border border-neutral-800 text-white flex items-center justify-center mx-auto group-hover:scale-105 transition">
+                  <Upload className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-sans font-bold text-sm text-white">Click or Drag Customer / Lane CSV File Here</h3>
+                  <p className="text-xs text-neutral-500 mt-1">Supports McLeod, Tai, Rose Rocket, CSV, or Excel (.xlsx)</p>
+                </div>
+                <button
+                  type="button"
+                  className="px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs shadow transition inline-block"
+                >
+                  Select File to AI Auto-Map
+                </button>
+              </div>
+            ) : (
+              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-6 h-6 text-white" />
+                    <div>
+                      <div className="text-xs font-bold text-white">{csvPreviewData.fileName}</div>
+                      <div className="text-[10px] font-mono text-neutral-400">{csvPreviewData.totalRows} Records Detected</div>
+                    </div>
+                  </div>
+
+                  {!csvImportSuccess ? (
+                    <button
+                      type="button"
+                      onClick={handleFinalizeCsvImport}
+                      className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1.5 transition shadow"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Confirm AI Import (142 Records)</span>
+                    </button>
+                  ) : (
+                    <span className="px-3 py-1 rounded-full bg-neutral-900 text-white border border-neutral-700 text-xs font-mono font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-white" /> 142 Records Seeded to Database
+                    </span>
+                  )}
+                </div>
+
+                <div className="border border-neutral-800 rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-xs font-sans">
+                    <thead className="bg-[#050507] text-neutral-400 font-mono text-[10px] uppercase">
+                      <tr>
+                        <th className="p-3">CSV Column Header</th>
+                        <th className="p-3">Auto-Mapped System Field</th>
+                        <th className="p-3">AI Matching Confidence</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-800 text-neutral-300">
+                      {csvPreviewData.mappedFields.map((f: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-neutral-900/50">
+                          <td className="p-3 font-mono text-neutral-300">{f.header}</td>
+                          <td className="p-3 font-mono text-white font-bold">➔ {f.mappedTo}</td>
+                          <td className="p-3 font-mono text-neutral-400">{f.confidence}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* STEP 4: 1-CLICK ACCOUNTING SYNC */}
+        {currentStep === 4 && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+              <div>
+                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Step 4 of 5</span>
+                <h2 className="text-lg font-serif text-white font-normal">1-Click Accounting &amp; ERP Sync</h2>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
+                OAuth 2.0 Integration
+              </span>
+            </div>
+
+            <p className="text-xs text-neutral-400 leading-relaxed">
+              Connect your accounting platform. Delivered shipments auto-issue customer freight invoices and carrier payables without double data entry.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-bold text-white">QuickBooks Online</div>
+                    <div className="text-xs font-mono text-neutral-400">Intuit Accounting Engine</div>
+                  </div>
+                  {qboConnected ? (
+                    <span className="px-2.5 py-1 rounded bg-neutral-900 text-white border border-neutral-700 text-xs font-mono font-bold flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5 text-white" /> Connected
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-1 rounded bg-[#050507] text-neutral-500 text-xs font-mono">Disconnected</span>
+                  )}
+                </div>
+                <p className="text-xs text-neutral-400">Syncs Chart of Accounts, open AR invoices, and AP carrier vouchers in real time.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQboConnected(true);
+                    markStepComplete(4);
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs transition shadow"
+                >
+                  {qboConnected ? 'Re-Sync QuickBooks Online' : 'Connect to QuickBooks Online (1-Click OAuth)'}
+                </button>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-bold text-white">Xero Cloud Accounting</div>
+                    <div className="text-xs font-mono text-neutral-400">Global Financial Ledger</div>
+                  </div>
+                  {xeroConnected ? (
+                    <span className="px-2.5 py-1 rounded bg-neutral-900 text-white border border-neutral-700 text-xs font-mono font-bold flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5 text-white" /> Connected
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-1 rounded bg-[#050507] text-neutral-500 text-xs font-mono">Disconnected</span>
+                  )}
+                </div>
+                <p className="text-xs text-neutral-400">Automatic reconciliation for multi-currency freight invoices and QuickPay disbursements.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setXeroConnected(true);
+                    markStepComplete(4);
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-200 border border-neutral-800 font-sans font-bold text-xs transition"
+                >
+                  {xeroConnected ? 'Re-Sync Xero Ledger' : 'Connect to Xero Accounting (1-Click OAuth)'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 5: OUTLOOK ADD-IN & CHROME EXTENSION SIDECAR */}
+        {currentStep === 5 && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+              <div>
+                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Step 5 of 5</span>
+                <h2 className="text-lg font-serif text-white font-normal">Outlook Add-in &amp; Chrome Extension Sidecar</h2>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
+                Email Co-Pilot
+              </span>
+            </div>
+
+            <p className="text-xs text-neutral-400 leading-relaxed">
+              Quote and dispatch freight directly inside Outlook or Chrome without ever changing tabs or leaving your email client.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Puzzle className="w-7 h-7 text-white" />
+                  <div>
+                    <div className="text-sm font-bold text-white">Sidecar Co-Pilot Token</div>
+                    <div className="text-xs font-mono text-neutral-400">Version 2.4 • Extension Secret</div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-mono text-neutral-400 uppercase">Your API Authentication Token</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={sidecarApiKey}
+                      className="flex-1 bg-[#050507] border border-neutral-800 rounded-xl py-2 px-3 text-xs text-neutral-300 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(sidecarApiKey);
+                        setCopiedSidecarKey(true);
+                        markStepComplete(5);
+                        setTimeout(() => setCopiedSidecarKey(false), 2000);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1 transition shadow"
+                    >
+                      {copiedSidecarKey ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      <span>{copiedSidecarKey ? 'Copied' : 'Copy'}</span>
                     </button>
                   </div>
                 </div>
 
-                <div className="p-5 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-                  <div className="text-xs font-bold text-white flex items-center gap-2">
-                    <Info className="w-4 h-4 text-amber-400" />
-                    <span>How to Use Sidecar in Outlook</span>
-                  </div>
-                  <ol className="text-xs text-slate-400 space-y-2 pl-5 list-decimal">
-                    <li>Install the extension in Chrome or Outlook.</li>
-                    <li>Paste your sidecar API token generated on the left.</li>
-                    <li>When opening an email from a shipper, click <b>"Apex Co-Pilot Quote"</b>.</li>
-                    <li>The sidebar automatically shows rates from XPO, Saia, Estes, and 1-click replies to the shipper.</li>
-                  </ol>
+                <button
+                  type="button"
+                  onClick={() => markStepComplete(5)}
+                  className="w-full py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center justify-center gap-2 shadow transition"
+                >
+                  <Download className="w-4 h-4 text-black" />
+                  <span>Download Extension Package</span>
+                </button>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-3">
+                <div className="text-xs font-bold text-white flex items-center gap-2">
+                  <Info className="w-4 h-4 text-neutral-300" />
+                  <span>Outlook Quoting Instructions</span>
                 </div>
+                <ol className="text-xs text-neutral-400 space-y-2 pl-5 list-decimal font-sans">
+                  <li>Install the extension in Chrome or Outlook.</li>
+                  <li>Paste your Sidecar API token generated on the left.</li>
+                  <li>Open any shipper email and click <b>"Apex Co-Pilot Quote"</b>.</li>
+                  <li>View live rates from XPO/Saia/Estes and reply in 1 click.</li>
+                </ol>
               </div>
-            </div>
-          )}
-
-          {/* GUIDED BROKER HOW-TO WALKTHROUGH CARD */}
-          <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 to-indigo-950/60 border border-indigo-500/20 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-indigo-400" />
-                <h3 className="font-bold text-sm text-white">How to Use All 5 Integration Methods in Your Daily Workflow</h3>
-              </div>
-              <span className="text-xs text-indigo-300 font-semibold">Broker Quick-Reference Guide</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-xs">
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-                <div className="font-bold text-indigo-400">1. Email Shadowing</div>
-                <div className="text-slate-400">Forward RFQ emails to your custom inbox. AI extracts load details and drafts quotes in 15 seconds.</div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-                <div className="font-bold text-blue-400">2. BYOC Vault</div>
-                <div className="text-slate-400">Enter carrier account numbers. Rating matrix automatically pulls your direct discount tariffs.</div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-                <div className="font-bold text-emerald-400">3. Magic AI CSV</div>
-                <div className="text-slate-400">Upload customer lists. AI maps headers automatically to seed your database in 5 seconds.</div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-                <div className="font-bold text-purple-400">4. Accounting Sync</div>
-                <div className="text-slate-400">1-click QuickBooks/Xero link. Delivered loads auto-issue customer invoices with zero manual data entry.</div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-                <div className="font-bold text-amber-400">5. Outlook Sidecar</div>
-                <div className="text-slate-400">Use the Chrome/Outlook sidebar to quote and dispatch loads directly inside email.</div>
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <Link
-                href="/"
-                className="px-6 py-3 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-2 shadow-xl transition"
-              >
-                <span>Proceed to Operating Software Dashboard</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
           </div>
+        )}
 
-        </main>
-      </div>
+        {/* BOTTOM ACTION BAR FOR ONBOARDING STEP NAVIGATION */}
+        <div className="p-6 rounded-3xl bg-[#09090b] border border-neutral-800 flex items-center justify-between gap-4 shadow-2xl">
+          <button
+            type="button"
+            disabled={currentStep === 1}
+            onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
+            className="px-5 py-2.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-white font-sans font-bold text-xs border border-neutral-800 flex items-center gap-2 transition disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Previous Step</span>
+          </button>
+
+          <div className="text-xs font-mono text-neutral-400 hidden sm:block">
+            Step {currentStep} of 5
+          </div>
+
+          {currentStep < 5 ? (
+            <button
+              type="button"
+              onClick={() => {
+                markStepComplete(currentStep);
+                setCurrentStep((prev) => Math.min(5, prev + 1));
+              }}
+              className="px-6 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-2 shadow-xl transition"
+            >
+              <span>Next Step →</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleFinishOnboarding}
+              className="px-6 py-3 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-2 shadow-xl transition"
+            >
+              <span>Complete Onboarding &amp; Open Software Dashboard</span>
+              <ArrowRight className="w-4 h-4 text-black" />
+            </button>
+          )}
+        </div>
+      </main>
+
+      {/* STANDALONE FOOTER */}
+      <footer className="w-full max-w-6xl mx-auto px-6 py-6 text-center text-xs text-neutral-500 z-10 border-t border-neutral-900">
+        © 2026 Apex Freight Operating System • Standalone Data Integration Wizard
+      </footer>
     </div>
   );
 }
 
 export default function IntegrationPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950 text-white p-8">Loading Integration Hub...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#050507] text-white p-8">Loading Integration Wizard...</div>}>
       <IntegrationPageContent />
     </Suspense>
   );
 }
-
