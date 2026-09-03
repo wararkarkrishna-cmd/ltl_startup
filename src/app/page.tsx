@@ -47,17 +47,18 @@ interface UseCaseDetails {
 function HomePageContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'ingestion' | 'quoting' | 'dispatch' | 'vetting' | 'pod-invoicing' | 'quickpay'
+    'integration' | 'overview' | 'ingestion' | 'quoting' | 'dispatch' | 'vetting' | 'pod-invoicing' | 'quickpay'
   >('overview');
 
   const [activeUseCase, setActiveUseCase] = useState<UseCaseDetails | null>(null);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['overview', 'ingestion', 'quoting', 'dispatch', 'vetting', 'pod-invoicing', 'quickpay'].includes(tabParam)) {
+    if (tabParam && ['integration', 'overview', 'ingestion', 'quoting', 'dispatch', 'vetting', 'pod-invoicing', 'quickpay'].includes(tabParam)) {
       setActiveTab(tabParam as any);
     }
   }, [searchParams]);
+
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId as any);
@@ -266,6 +267,13 @@ function HomePageContent() {
 
           <div className="flex flex-wrap lg:flex-col gap-2.5 flex-shrink-0 w-full lg:w-auto">
             <Link
+              href="/integration"
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 hover:from-indigo-500 hover:to-blue-500 text-white font-sans font-bold text-xs shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+              <span>1-Minute Broker Data Integration</span>
+            </Link>
+            <Link
               href="/invoices"
               className="px-5 py-3 rounded-xl bg-white text-black hover:bg-neutral-200 font-sans font-bold text-xs shadow transition flex items-center justify-center gap-2"
             >
@@ -287,6 +295,7 @@ function HomePageContent() {
               <span>Review Active RFQs</span>
             </Link>
           </div>
+
         </div>
 
         {/* Executive KPI Bento Row with Space Grotesk Numbers */}
@@ -345,9 +354,35 @@ function HomePageContent() {
         </div>
       </section>
 
+      {/* Prominent Day-1 Broker Integration Callout Banner */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-blue-950/80 border border-indigo-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 flex-shrink-0">
+            <Sparkles className="w-5 h-5 text-indigo-300 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-white">First Time Here? Import &amp; Onboard Your Brokerage Data in 60s</h3>
+              <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">Zero IT Setup</span>
+            </div>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Connect XPO/Saia/Estes BYOC carrier keys, forward RFQ emails, drag-and-drop customer CSVs, and link QuickBooks.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/integration"
+          className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-2 whitespace-nowrap shadow-lg shadow-indigo-600/30 transition"
+        >
+          <span>Launch 1-Min Integration Hub</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+
       {/* Interactive Tabs Bar */}
       <div id="sandbox" className="flex border-b border-[#27272a] gap-2 overflow-x-auto pb-1 custom-scrollbar">
         {[
+          { id: 'integration', label: '⚡ 1-Minute Broker Integration', icon: Sparkles },
           { id: 'overview', label: 'All Systems Overview', icon: Layers },
           { id: 'ingestion', label: 'Phase 1: AI Ingestion & Density', icon: FileCheck2 },
           { id: 'quoting', label: 'Phase 2: Rating & Split Optimizer', icon: Zap },
@@ -356,6 +391,7 @@ function HomePageContent() {
           { id: 'pod-invoicing', label: 'Phase 4: Geotagged POD & Billing', icon: Camera },
           { id: 'quickpay', label: 'Phase 6: Embedded QuickPay', icon: DollarSign },
         ].map((tab) => {
+
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
@@ -374,6 +410,83 @@ function HomePageContent() {
           );
         })}
       </div>
+
+      {/* TAB CONTENT 0: 1-MINUTE BROKER INTEGRATION HUB */}
+      {activeTab === 'integration' && (
+        <div className="p-8 rounded-3xl bg-[#09090b] border border-indigo-500/30 space-y-6 shadow-2xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-800 pb-6">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold uppercase tracking-wider">
+                  0 IT Setup • 60 Seconds
+                </span>
+                <span className="text-xs text-neutral-400 font-mono">Tenant ID: 01916362-7901</span>
+              </div>
+              <h2 className="text-2xl font-bold text-white tracking-tight">1-Minute Freight Brokerage Data Integration Hub</h2>
+              <p className="text-xs text-neutral-400">
+                Connect your existing carrier contracts, forward RFQ emails, drag-and-drop customer CSVs, and sync QuickBooks in 1 click.
+              </p>
+            </div>
+            <Link
+              href="/integration"
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2"
+            >
+              <span>Open Dedicated Integration Hub</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-5 rounded-2xl bg-[#121215] border border-neutral-800 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
+                  1
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-white">Email Shadow Ingestion</h3>
+                  <p className="text-[11px] text-neutral-400">Outlook &amp; Gmail auto-forwarding</p>
+                </div>
+              </div>
+              <p className="text-xs text-neutral-300">Auto-forward RFQ emails to <code className="text-indigo-300 bg-indigo-950/50 px-1.5 py-0.5 rounded font-mono">rfq-apex-7080@inbound.freight.ai</code>. AI extracts load data in 15s.</p>
+              <Link href="/integration?tab=email" className="text-xs text-indigo-400 font-bold hover:underline inline-flex items-center gap-1">
+                Configure Forwarding Address →
+              </Link>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-[#121215] border border-neutral-800 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
+                  2
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-white">BYOC Carrier Vault</h3>
+                  <p className="text-[11px] text-neutral-400">XPO, Saia, Estes, ABF, R+L</p>
+                </div>
+              </div>
+              <p className="text-xs text-neutral-300">Enter carrier account numbers. Rating matrix automatically pulls your direct contracted tariffs alongside wholesale rates.</p>
+              <Link href="/integration?tab=byoc" className="text-xs text-blue-400 font-bold hover:underline inline-flex items-center gap-1">
+                Connect Carrier Keys →
+              </Link>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-[#121215] border border-neutral-800 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                  3
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-white">Magic AI CSV Importer</h3>
+                  <p className="text-[11px] text-neutral-400">Drag &amp; drop legacy data</p>
+                </div>
+              </div>
+              <p className="text-xs text-neutral-300">Drag and drop customer lists or lane history from McLeod, Tai, or Excel. AI auto-matches headers in 5s.</p>
+              <Link href="/integration?tab=csv" className="text-xs text-emerald-400 font-bold hover:underline inline-flex items-center gap-1">
+                Upload Data CSV File →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* TAB CONTENT 1: ALL SYSTEMS OVERVIEW (CLEAN, SPACIOUS CARDS WITH EYE BUTTONS) */}
       {activeTab === 'overview' && (
