@@ -34,6 +34,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ isSidebarCollapsed }) => {
 
   const getBreadcrumbTitle = () => {
     if (pathname === '/') return 'Executive Command';
+    if (pathname.startsWith('/integration')) return '1-Minute Integration & Onboarding Hub';
+    if (pathname.startsWith('/login')) return 'Broker Sign In & Authentication';
     if (pathname.startsWith('/review')) return 'RFQ Fast Review Desk';
     if (pathname.startsWith('/quote') && !pathname.includes('/accept')) return 'Multi-Carrier Rating & Split Optimizer';
     if (pathname.startsWith('/quote/accept')) return '1-Click Shipper Booking';
