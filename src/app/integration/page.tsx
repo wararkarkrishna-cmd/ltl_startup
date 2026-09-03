@@ -366,7 +366,38 @@ function IntegrationPageContent() {
               Enter your direct carrier account numbers and API credentials. Our engine rates your contracted tariffs alongside wholesale platform rates.
             </p>
 
+            {/* Instant Sandbox Keys Banner */}
+            <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white font-bold">
+                  <Zap className="w-4 h-4 text-white animate-pulse" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-white">Don&apos;t have real carrier API keys yet? Use Instant Free Sandbox Keys</div>
+                  <p className="text-[11px] text-neutral-400">Pre-loaded with Instant Developer Test Keys so you can try all carrier connections in 1 click without paying or waiting.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setCarrierInputs({
+                    XPO: { account: 'XPO-884210', apiKey: 'xpo_live_sec_99481a', status: 'CONNECTED' },
+                    SAIA: { account: 'SAIA-98412', apiKey: 'saia_live_sec_77412b', status: 'CONNECTED' },
+                    ESTES: { account: 'EXLA-33291', apiKey: 'exla_live_sec_11092c', status: 'CONNECTED' },
+                    ABF: { account: 'ABFS-71092', apiKey: 'abf_live_sec_44810d', status: 'CONNECTED' },
+                    RL: { account: 'RLCA-44210', apiKey: 'rl_live_sec_88391e', status: 'CONNECTED' },
+                  });
+                  markStepComplete(2);
+                }}
+                className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1.5 whitespace-nowrap shadow transition"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-black" />
+                <span>Fill Instant Free Sandbox Keys (1-Click)</span>
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
               {[
                 { code: 'XPO' as const, name: 'XPO Logistics', scac: 'CNWY' },
                 { code: 'SAIA' as const, name: 'SAIA LTL Freight', scac: 'SAIA' },
