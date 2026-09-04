@@ -53,6 +53,31 @@ function HomePageContent() {
 
   const [activeUseCase, setActiveUseCase] = useState<UseCaseDetails | null>(null);
 
+  const [liveMetrics, setLiveMetrics] = useState<{
+    activeLoads: number;
+    totalShipments: number;
+    connectedCarriers: number;
+    availableTrucks: number;
+    totalTrucks: number;
+    totalInvoicedCents: number;
+    totalInvoicedFormatted: string;
+  } | null>(null);
+
+  useEffect(() => {
+    async function fetchMetrics() {
+      try {
+        const res = await fetch('/api/v1/dashboard/metrics');
+        const data = await res.json();
+        if (data.success && data.metrics) {
+          setLiveMetrics(data.metrics);
+        }
+      } catch (err) {
+        console.error('Failed to fetch dashboard metrics:', err);
+      }
+    }
+    fetchMetrics();
+  }, []);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const loggedIn = localStorage.getItem('apex_logged_in');

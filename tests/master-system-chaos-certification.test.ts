@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { LtlDensityCalculator } from '../src/lib/classification/density-calculator';
 import { AccessorialDetector } from '../src/lib/classification/accessorial-detector';
-import { VolumeLtlSplitOptimizer } from '../src/lib/classification/volume-ltl-engine';
+import { VolumeLtlEngine } from '../src/lib/classification/volume-ltl-engine';
 import { MarginRulesEngine } from '../src/lib/pricing/margin-engine';
 import { VicsEbolGenerator } from '../src/lib/documents/ebol-generator';
 import { GeofenceValidator } from '../src/lib/pod/geofence-validator';
@@ -56,15 +56,20 @@ describe('Phase 6.9: Master End-to-End System Chaos Testing & Production Certifi
 
     const customerQuote = MarginRulesEngine.calculatePricing(
       {
+        carrierCode: 'SAIA',
         carrierScac: 'SAIA',
         carrierName: 'SAIA LTL Freight',
-        linehaulCents: 65000,
+        accountType: 'DIRECT_BYOC',
+        sourceTag: '[DIRECT: SAIA]',
+        quoteNumber: 'Q-100',
+        linehaulCostCents: 65000,
         fuelSurchargeCents: 8500,
-        accessorialsCents: 6500,
+        accessorialCostCents: 6500,
+        accessorialBreakdown: { LG_DEL: 6500 },
         totalCostCents: 80000,
         transitDays: 3,
-        accountType: 'DIRECT_BYOC',
-        appliedClass: '70',
+        isGuaranteed: true,
+        timestamp: new Date().toISOString(),
       },
       {
         tenantId,
@@ -130,21 +135,22 @@ describe('Phase 6.9: Master End-to-End System Chaos Testing & Production Certifi
     await dbClient.insertShipment({
       id: shipmentId,
       tenantId,
-      customerId: generateUuidV7(),
+      shipperAccountId: generateUuidV7(),
+      referenceNumber: 'REF-TEST-991',
       status: 'DELIVERED',
-      originAddress: '100 Main St',
+      originAddress1: '100 Main St',
       originCity: 'Los Angeles',
       originState: 'CA',
       originZip: '90001',
-      destAddress: '500 Logistics Way',
+      originCountry: 'US',
+      destAddress1: '500 Logistics Way',
       destCity: 'Chicago',
       destState: 'IL',
       destZip: '60601',
+      destCountry: 'US',
       totalWeightLbs: 3200,
-      totalVolumeCuFt: 213,
-      handlingUnits: 4,
-      quotedCustomerPriceCents: customerQuote.quotedCustomerPriceCents,
-      carrierDirectBuyCostCents: customerQuote.carrierCostCents,
+      totalPallets: 4,
+      pickupDateReady: '2026-09-01',
     });
 
     const customerInvoiceResult = await CustomerInvoiceEngine.generateAndIssueInvoice({
@@ -160,6 +166,7 @@ describe('Phase 6.9: Master End-to-End System Chaos Testing & Production Certifi
     await dbClient.insertRateConfirmation({
       tenantId,
       shipmentId,
+      carrierCode: 'SAIA',
       carrierScac: 'SAIA',
       carrierName: 'SAIA LTL Freight',
       rateConfirmationNumber: 'RC-2026-SAIA-991',
@@ -167,10 +174,9 @@ describe('Phase 6.9: Master End-to-End System Chaos Testing & Production Certifi
       agreedFuelCents: 8500,
       agreedAccessorialCents: 6500,
       totalAgreedRateCents: 80000, // $800.00 contracted
-      originSummary: 'Los Angeles, CA',
-      destinationSummary: 'Chicago, IL',
-      pickupDate: new Date('2026-09-01'),
-      status: 'ACCEPTED',
+      pickupNumber: 'PU-991',
+      pickupDate: '2026-09-01',
+      deliveryDateEst: '2026-09-04',
     });
 
     const carrierInvoice = await dbClient.insertCarrierInvoice({
@@ -190,7 +196,6 @@ describe('Phase 6.9: Master End-to-End System Chaos Testing & Production Certifi
       invoicedWeightLbs: 3200,
       invoicedClass: '70',
       status: 'PENDING_AUDIT',
-      discrepancyAmountCents: 0,
     });
 
     const auditResult = await ReBillAuditEngine.auditCarrierInvoice(tenantId, carrierInvoice.id);

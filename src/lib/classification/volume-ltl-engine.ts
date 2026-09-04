@@ -1,4 +1,4 @@
-﻿import { RateItem } from '../rating/carrier-adapter.interface';
+import { RateItem } from '../rating/carrier-adapter.interface';
 
 export interface VolumeLtlEvaluation {
   isVolumeLtl: boolean;
@@ -119,3 +119,5 @@ export class VolumeLtlEngine {
     };
   }
 }
+
+export const VolumeLtlSplitOptimizer = VolumeLtlEngine;

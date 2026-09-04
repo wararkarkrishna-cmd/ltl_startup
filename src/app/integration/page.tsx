@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Truck,
   Mail,
@@ -24,6 +24,7 @@ import {
   Info,
   Building2,
   AlertCircle,
+  ExternalLink,
 } from 'lucide-react';
 
 
@@ -31,7 +32,18 @@ export const dynamic = 'force-dynamic';
 
 function IntegrationPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState<number>(1);
+
+  useEffect(() => {
+    const stepParam = searchParams.get('step');
+    if (stepParam) {
+      const parsedStep = parseInt(stepParam, 10);
+      if (!isNaN(parsedStep) && parsedStep >= 1 && parsedStep <= 5) {
+        setCurrentStep(parsedStep);
+      }
+    }
+  }, [searchParams]);
   
   // Progress State
   const [completedSteps, setCompletedSteps] = useState<Record<number, boolean>>({});
@@ -54,9 +66,95 @@ function IntegrationPageContent() {
   });
 
   // CSV Importer State
+  const [csvImportType, setCsvImportType] = useState<'fleet' | 'accounts'>('fleet');
+  const [rawCsvText, setRawCsvText] = useState<string>('');
   const [isUploadingCsv, setIsUploadingCsv] = useState(false);
-  const [csvPreviewData, setCsvPreviewData] = useState<any | null>(null);
-  const [csvImportSuccess, setCsvImportSuccess] = useState(false);
+  const [csvUploadError, setCsvUploadError] = useState<string | null>(null);
+  const [csvImportResult, setCsvImportResult] = useState<any | null>(null);
+
+  const handleDownloadCustomerTemplate = () => {
+    const content = `company_name,email,phone,city,state,zip\nAcme Manufacturing,ap@acmemfg.com,(555) 102-9988,Chicago,IL,60601\nSummit Supply Co,billing@summitsupply.com,(555) 304-1122,Dallas,TX,75001\nPacific Freight Distributors,ap@pacificdist.com,(555) 408-7733,Los Angeles,CA,90001`;
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'apex_customer_accounts_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadFleetTemplate = () => {
+    const content = `unit_number,equipment_type,carrier_name,driver_name,driver_phone,city,state,zip,max_weight_lbs,max_pallets,has_liftgate\nTRK-101,DRY_VAN_53,Apex Dedicated Carrier,Marcus Vance,(312) 555-0144,Chicago,IL,60601,45000,26,false\nREF-204,REEFER_53,ColdChain Logistics,Elena Rostova,(404) 555-0188,Atlanta,GA,30301,43500,26,false\nBOX-308,BOX_TRUCK_26,Apex Freight Express,David Miller,(213) 555-0122,Los Angeles,CA,90001,10000,12,true\nFLT-402,FLATBED_48,Apex Dedicated Carrier,Robert Hayes,(214) 555-0166,Dallas,TX,75001,48000,24,false`;
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'apex_fleet_equipment_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePreloadFleetSample = () => {
+    setCsvImportType('fleet');
+    setRawCsvText(
+      `unit_number,equipment_type,carrier_name,driver_name,driver_phone,city,state,zip,max_weight_lbs,max_pallets,has_liftgate\nTRK-101,DRY_VAN_53,Apex Dedicated Carrier,Marcus Vance,(312) 555-0144,Chicago,IL,60601,45000,26,false\nREF-204,REEFER_53,ColdChain Logistics,Elena Rostova,(404) 555-0188,Atlanta,GA,30301,43500,26,false\nBOX-308,BOX_TRUCK_26,Apex Freight Express,David Miller,(213) 555-0122,Los Angeles,CA,90001,10000,12,true`
+    );
+  };
+
+  const handlePreloadCustomerSample = () => {
+    setCsvImportType('accounts');
+    setRawCsvText(
+      `company_name,email,phone,city,state,zip\nAcme Manufacturing,ap@acmemfg.com,(555) 102-9988,Chicago,IL,60601\nSummit Supply Co,billing@summitsupply.com,(555) 304-1122,Dallas,TX,75001\nPacific Freight Distributors,ap@pacificdist.com,(555) 408-7733,Los Angeles,CA,90001`
+    );
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target?.result as string;
+      if (text) {
+        setRawCsvText(text);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleExecuteCsvIngestion = async () => {
+    if (!rawCsvText.trim()) {
+      setCsvUploadError('Please select a file or enter CSV data before submitting.');
+      return;
+    }
+
+    setIsUploadingCsv(true);
+    setCsvUploadError(null);
+
+    try {
+      const res = await fetch('/api/v1/integration/upload-csv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          csvText: rawCsvText,
+          type: csvImportType,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setCsvUploadError(data.error || 'Failed to ingest CSV data into Supabase.');
+      } else {
+        setCsvImportResult(data);
+        markStepComplete(3);
+      }
+    } catch (err: any) {
+      setCsvUploadError(err.message || 'Network error during CSV upload.');
+    } finally {
+      setIsUploadingCsv(false);
+    }
+  };
 
   // Accounting OAuth State
   const [qboConnected, setQboConnected] = useState(false);
@@ -136,25 +234,10 @@ function IntegrationPageContent() {
 
 
   const handleSimulateCsvUpload = () => {
-    setIsUploadingCsv(true);
-    setTimeout(() => {
-      setIsUploadingCsv(false);
-      setCsvPreviewData({
-        fileName: 'Apex_Customer_Lanes_2026.csv',
-        totalRows: 142,
-        mappedFields: [
-          { header: 'Cust_Company_Name', mappedTo: 'customerName', confidence: '100% Exact' },
-          { header: 'Shipper_Zip', mappedTo: 'originZip', confidence: '100% Exact' },
-          { header: 'Consignee_Zip', mappedTo: 'destZip', confidence: '100% Exact' },
-          { header: 'Contract_Discount_%', mappedTo: 'marginMarkup', confidence: '98.5% AI Match' },
-          { header: 'Monthly_Pallet_Vol', mappedTo: 'volumeMonthly', confidence: '95.0% Match' },
-        ],
-      });
-    }, 1000);
+    handleExecuteCsvIngestion();
   };
 
   const handleFinalizeCsvImport = () => {
-    setCsvImportSuccess(true);
     markStepComplete(3);
   };
 
@@ -549,85 +632,249 @@ function IntegrationPageContent() {
         {/* STEP 3: MAGIC AI CSV IMPORTER */}
         {currentStep === 3 && (
           <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-6 shadow-xl">
-            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-neutral-800 pb-4 gap-3">
               <div>
                 <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Step 3 of 5</span>
                 <h2 className="text-lg font-serif text-white font-normal">Magic AI CSV &amp; Legacy Data Importer</h2>
               </div>
-              <span className="px-2.5 py-1 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
-                Auto-Header Mapping
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownloadCustomerTemplate}
+                  className="px-3 py-1.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 text-xs font-sans font-medium flex items-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Customer CSV Template</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadFleetTemplate}
+                  className="px-3 py-1.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 text-xs font-sans font-medium flex items-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Fleet CSV Template</span>
+                </button>
+              </div>
             </div>
 
             <p className="text-xs text-neutral-400 leading-relaxed">
-              Drag and drop any exported CSV file from McLeod, Tai Software, Rose Rocket, or Excel. The AI automatically matches headers to seed your database.
+              Upload customer account lists or carrier fleet equipment CSV files directly into Supabase. Download official templates above or pre-load sample test data below.
             </p>
 
-            {!csvPreviewData ? (
-              <div
-                onClick={handleSimulateCsvUpload}
-                className="p-10 rounded-3xl border border-dashed border-neutral-800 hover:border-neutral-600 bg-[#121215]/50 hover:bg-[#121215] cursor-pointer text-center space-y-3 transition group"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-neutral-900 border border-neutral-800 text-white flex items-center justify-center mx-auto group-hover:scale-105 transition">
-                  <Upload className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-sans font-bold text-sm text-white">Click or Drag Customer / Lane CSV File Here</h3>
-                  <p className="text-xs text-neutral-500 mt-1">Supports McLeod, Tai, Rose Rocket, CSV, or Excel (.xlsx)</p>
-                </div>
-                <button
-                  type="button"
-                  className="px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs shadow transition inline-block"
-                >
-                  Select File to AI Auto-Map
-                </button>
-              </div>
-            ) : (
-              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-6 h-6 text-white" />
-                    <div>
-                      <div className="text-xs font-bold text-white">{csvPreviewData.fileName}</div>
-                      <div className="text-[10px] font-mono text-neutral-400">{csvPreviewData.totalRows} Records Detected</div>
+            {!csvImportResult ? (
+              <div className="space-y-5">
+                {/* Data Category & Sample Quick Buttons */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#121215] border border-neutral-800">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-white font-sans">Target Database Entity</label>
+                    <div className="flex items-center gap-4 text-xs font-mono text-neutral-300">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="csvType"
+                          value="fleet"
+                          checked={csvImportType === 'fleet'}
+                          onChange={() => setCsvImportType('fleet')}
+                          className="accent-white"
+                        />
+                        <span>Carrier Fleet Equipment (Trucks &amp; Drivers)</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="csvType"
+                          value="accounts"
+                          checked={csvImportType === 'accounts'}
+                          onChange={() => setCsvImportType('accounts')}
+                          className="accent-white"
+                        />
+                        <span>Customer Shipper Accounts</span>
+                      </label>
                     </div>
                   </div>
 
-                  {!csvImportSuccess ? (
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      onClick={handleFinalizeCsvImport}
-                      className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1.5 transition shadow"
+                      onClick={handlePreloadFleetSample}
+                      className="px-3 py-1.5 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-300 border border-neutral-800 text-[11px] font-mono transition"
                     >
-                      <Check className="w-4 h-4" />
-                      <span>Confirm AI Import (142 Records)</span>
+                      Pre-load Fleet CSV Sample
                     </button>
-                  ) : (
-                    <span className="px-3 py-1 rounded-full bg-neutral-900 text-white border border-neutral-700 text-xs font-mono font-bold flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-white" /> 142 Records Seeded to Database
-                    </span>
-                  )}
+                    <button
+                      type="button"
+                      onClick={handlePreloadCustomerSample}
+                      className="px-3 py-1.5 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-300 border border-neutral-800 text-[11px] font-mono transition"
+                    >
+                      Pre-load Customer CSV Sample
+                    </button>
+                  </div>
                 </div>
 
-                <div className="border border-neutral-800 rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-xs font-sans">
-                    <thead className="bg-[#050507] text-neutral-400 font-mono text-[10px] uppercase">
-                      <tr>
-                        <th className="p-3">CSV Column Header</th>
-                        <th className="p-3">Auto-Mapped System Field</th>
-                        <th className="p-3">AI Matching Confidence</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-800 text-neutral-300">
-                      {csvPreviewData.mappedFields.map((f: any, idx: number) => (
-                        <tr key={idx} className="hover:bg-neutral-900/50">
-                          <td className="p-3 font-mono text-neutral-300">{f.header}</td>
-                          <td className="p-3 font-mono text-white font-bold">➔ {f.mappedTo}</td>
-                          <td className="p-3 font-mono text-neutral-400">{f.confidence}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                {/* Upload File or Paste CSV Box */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-white font-sans">CSV File or Raw Text Data</label>
+                    <label className="text-xs text-neutral-400 font-mono hover:text-white cursor-pointer flex items-center gap-1">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Browse local CSV file</span>
+                      <input type="file" accept=".csv,.txt" onChange={handleFileUpload} className="hidden" />
+                    </label>
+                  </div>
+
+                  <textarea
+                    rows={6}
+                    value={rawCsvText}
+                    onChange={(e) => setRawCsvText(e.target.value)}
+                    placeholder="Paste CSV text here or click 'Browse local CSV file' or use Pre-load buttons above..."
+                    className="w-full bg-[#050507] border border-neutral-800 rounded-2xl p-4 text-xs font-mono text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-neutral-500 custom-scrollbar"
+                  />
+                </div>
+
+                {csvUploadError && (
+                  <div className="p-4 rounded-2xl bg-red-950/60 border border-red-800 text-red-300 text-xs font-sans flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                    <span>{csvUploadError}</span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleExecuteCsvIngestion}
+                  disabled={isUploadingCsv}
+                  className="w-full py-3 rounded-2xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center justify-center gap-2 shadow-xl transition disabled:opacity-50"
+                >
+                  {isUploadingCsv ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-black" />
+                      <span>Ingesting CSV directly into Supabase...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 text-black" />
+                      <span>Upload &amp; Process CSV in Supabase</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-6">
+                {/* Result Notification Banner */}
+                <div className="p-4 rounded-xl bg-neutral-900/90 border border-neutral-700 text-white flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-white shrink-0" />
+                    <div>
+                      <h4 className="text-xs font-bold text-white font-sans">{csvImportResult.message}</h4>
+                      <p className="text-[11px] font-mono text-neutral-400">
+                        Import Type: {csvImportResult.importType} • {csvImportResult.totalRowsProcessed} Rows Processed
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-black text-white border border-neutral-700 text-xs font-mono font-bold">
+                    Supabase Live Sync
+                  </span>
+                </div>
+
+                {/* Preview Records Table */}
+                {csvImportResult.importType === 'FLEET' && csvImportResult.trucksPreview?.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-white font-sans uppercase tracking-wider">
+                      Seeded Truck Units Preview (Supabase Records)
+                    </h4>
+                    <div className="border border-neutral-800 rounded-xl overflow-hidden">
+                      <table className="w-full text-left text-xs font-sans">
+                        <thead className="bg-[#050507] text-neutral-400 font-mono text-[10px] uppercase">
+                          <tr>
+                            <th className="p-3">Unit #</th>
+                            <th className="p-3">Equipment Type</th>
+                            <th className="p-3">Assigned Driver</th>
+                            <th className="p-3">Capacity (Weight / Plts)</th>
+                            <th className="p-3">Location</th>
+                            <th className="p-3">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-800 text-neutral-300 font-mono">
+                          {csvImportResult.trucksPreview.map((trk: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-neutral-900/50">
+                              <td className="p-3 font-bold text-white">{trk.unit_number}</td>
+                              <td className="p-3 text-neutral-300">{trk.equipment_type}</td>
+                              <td className="p-3 text-neutral-300">{trk.assigned_driver_name || 'N/A'}</td>
+                              <td className="p-3 text-neutral-400">{trk.max_weight_lbs} lbs / {trk.max_pallets} plts</td>
+                              <td className="p-3 text-neutral-400">{trk.current_city}, {trk.current_state}</td>
+                              <td className="p-3">
+                                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] border border-emerald-500/30">
+                                  {trk.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {csvImportResult.importType === 'CUSTOMERS' && csvImportResult.accountsPreview?.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-white font-sans uppercase tracking-wider">
+                      Seeded Customer Accounts Preview (Supabase Records)
+                    </h4>
+                    <div className="border border-neutral-800 rounded-xl overflow-hidden">
+                      <table className="w-full text-left text-xs font-sans">
+                        <thead className="bg-[#050507] text-neutral-400 font-mono text-[10px] uppercase">
+                          <tr>
+                            <th className="p-3">Company Name</th>
+                            <th className="p-3">Account Type</th>
+                            <th className="p-3">Email</th>
+                            <th className="p-3">Phone</th>
+                            <th className="p-3">Location</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-800 text-neutral-300 font-mono">
+                          {csvImportResult.accountsPreview.map((acc: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-neutral-900/50">
+                              <td className="p-3 font-bold text-white">{acc.name}</td>
+                              <td className="p-3 text-neutral-300">{acc.account_type}</td>
+                              <td className="p-3 text-neutral-400">{acc.billing_email || 'N/A'}</td>
+                              <td className="p-3 text-neutral-400">{acc.phone || 'N/A'}</td>
+                              <td className="p-3 text-neutral-400">{acc.city}, {acc.state}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick Action Navigation Links */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-neutral-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCsvImportResult(null);
+                      setRawCsvText('');
+                    }}
+                    className="px-4 py-2 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-300 font-sans font-bold text-xs border border-neutral-800 transition"
+                  >
+                    Upload Another CSV File
+                  </button>
+
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href="/fleet"
+                      className="px-4 py-2 rounded-xl bg-[#121215] hover:bg-neutral-800 text-white font-sans font-bold text-xs border border-neutral-800 flex items-center gap-1.5 transition"
+                    >
+                      <Truck className="w-4 h-4 text-neutral-300" />
+                      <span>View Carrier Fleet Portal (/fleet)</span>
+                    </Link>
+                    <Link
+                      href="/"
+                      className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1.5 shadow transition"
+                    >
+                      <span>View Main Dashboard (/)</span>
+                      <ArrowRight className="w-4 h-4 text-black" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}

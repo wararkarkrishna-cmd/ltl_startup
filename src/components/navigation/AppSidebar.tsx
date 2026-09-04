@@ -20,6 +20,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
+  Truck,
 } from 'lucide-react';
 
 
@@ -61,6 +62,7 @@ export const AppSidebar: React.FC<{
     review: true,
     rating: false,
     dispatch: false,
+    fleet: false,
     invoices: false,
     quickpay: false,
     analytics: false,
@@ -124,6 +126,18 @@ export const AppSidebar: React.FC<{
         { title: 'Carrier Tender Desk', href: '/dispatch?view=tender', description: 'Electronic tender dispatch & EDI 204/990' },
         { title: 'Milestone Tracking & EDI 214', href: '/dispatch?view=milestones', description: 'Real-time tracking webhook receiver' },
         { title: 'Digital VICS eBOL PDF', href: `/api/v1/shipments/${sampleShipmentId}/ebol?format=pdf`, isExternal: true, description: 'Printable bill of lading with GS1-128 barcode' },
+      ],
+    },
+    {
+      id: 'fleet',
+      title: 'Fleet & Equipment',
+      href: '/fleet',
+      icon: Truck,
+      badge: 'Portal',
+      subFeatures: [
+        { title: 'Carrier Fleet Roster', href: '/fleet', description: 'Equipment roster & driver status' },
+        { title: 'Add Truck Unit', href: '/fleet?action=add', description: 'Register new truck equipment unit' },
+        { title: 'Import Fleet CSV', href: '/integration?step=3', description: 'Bulk CSV ingestion via Integration Hub' },
       ],
     },
     {

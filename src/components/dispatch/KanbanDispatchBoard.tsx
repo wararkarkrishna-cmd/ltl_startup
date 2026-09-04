@@ -35,6 +35,9 @@ function KanbanDispatchBoardContent() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [showUseCaseModal, setShowUseCaseModal] = useState(false);
 
+  const [availableTrucks, setAvailableTrucks] = useState<any[]>([]);
+  const [selectedTruckUnits, setSelectedTruckUnits] = useState<Record<string, string>>({});
+
   useEffect(() => {
     const v = searchParams.get('view');
     if (v === 'tender') setActiveView('tender');
@@ -63,8 +66,21 @@ function KanbanDispatchBoardContent() {
     }
   };
 
+  const fetchAvailableTrucks = async () => {
+    try {
+      const res = await fetch('/api/v1/fleet/trucks?status=AVAILABLE');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.trucks)) {
+        setAvailableTrucks(data.trucks);
+      }
+    } catch (err) {
+      console.error('Failed to fetch available fleet trucks:', err);
+    }
+  };
+
   useEffect(() => {
     fetchBoard();
+    fetchAvailableTrucks();
   }, []);
 
   const handleAdvanceStatus = async (shipmentId: string, currentColumn: DispatchBoardColumn) => {
@@ -219,6 +235,41 @@ function KanbanDispatchBoardContent() {
               <div className="text-neutral-300">Average carrier response time: <strong className="font-mono text-white">4.2 mins</strong></div>
             </div>
           </div>
+
+          {/* Active Fleet Equipment Roster for Tender Assignment */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-white font-sans uppercase tracking-wider">
+                Available Fleet Equipment Roster ({availableTrucks.length} Units Ready)
+              </h4>
+              <a href="/fleet" className="text-xs text-neutral-400 hover:text-white font-mono underline">
+                Manage Roster in /fleet →
+              </a>
+            </div>
+            {availableTrucks.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {availableTrucks.map((trk) => (
+                  <div key={trk.id} className="bg-[#121215] border border-neutral-800 rounded-xl p-3 space-y-1 font-mono text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-white">{trk.unit_number}</span>
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] border border-emerald-500/20">
+                        {trk.equipment_type}
+                      </span>
+                    </div>
+                    <div className="text-neutral-300 font-sans">{trk.assigned_driver_name || 'No Driver Assigned'}</div>
+                    <div className="text-neutral-500 text-[10px] flex items-center justify-between">
+                      <span>{trk.current_city}, {trk.current_state}</span>
+                      <span>{trk.max_weight_lbs}# max</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-[#121215] border border-neutral-800 text-center text-xs text-neutral-400 font-sans">
+                No active trucks currently marked as AVAILABLE. <a href="/fleet" className="text-white underline font-mono">Add equipment in Fleet Portal</a>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -328,6 +379,42 @@ function KanbanDispatchBoardContent() {
                         <div className="flex justify-between items-center text-[11px] text-neutral-400 font-mono pt-1 border-t border-neutral-800/80">
                           <span>{card.totalPallets} Plts ({card.totalWeightLbs.toLocaleString()}#)</span>
                           <span>Ready: {card.pickupDateReady}</span>
+                        </div>
+
+                        {/* Available Truck Unit Selection Dropdown */}
+                        <div className="pt-2 border-t border-neutral-800/80 space-y-1">
+                          <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400">
+                            <span>Assign Fleet Unit:</span>
+                            {selectedTruckUnits[card.shipmentId] && (
+                              <span className="text-emerald-400 font-bold">Assigned #{selectedTruckUnits[card.shipmentId]}</span>
+                            )}
+                          </div>
+                          {availableTrucks.length > 0 ? (
+                            <select
+                              value={selectedTruckUnits[card.shipmentId] || ''}
+                              onChange={(e) =>
+                                setSelectedTruckUnits((prev) => ({
+                                  ...prev,
+                                  [card.shipmentId]: e.target.value,
+                                }))
+                              }
+                              className="w-full bg-[#050507] border border-neutral-800 rounded-lg py-1 px-2 text-[10px] font-mono text-white focus:outline-none focus:border-white"
+                            >
+                              <option value="">Select Available Truck Unit...</option>
+                              {availableTrucks.map((trk) => (
+                                <option key={trk.id} value={trk.unit_number}>
+                                  {trk.unit_number} ({trk.equipment_type}) — {trk.assigned_driver_name || 'No Driver'} ({trk.current_city || 'City'}, {trk.current_state || 'US'})
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <div className="text-[10px] text-neutral-500 font-sans flex items-center justify-between">
+                              <span>No active trucks available.</span>
+                              <a href="/fleet" className="text-white hover:underline font-mono">
+                                + Add in /fleet
+                              </a>
+                            </div>
+                          )}
                         </div>
 
                         {/* Action Bar with direct eBOL download */}

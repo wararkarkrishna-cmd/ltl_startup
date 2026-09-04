@@ -187,6 +187,30 @@ export const MARGIN_RULE_TYPES = [
 ] as const;
 export type MarginRuleType = (typeof MARGIN_RULE_TYPES)[number];
 
+export const EQUIPMENT_TYPES = [
+  'DRY_VAN_53',
+  'REEFER_53',
+  'FLATBED_48',
+  'BOX_TRUCK_26',
+  'POWER_ONLY',
+] as const;
+export type EquipmentType = (typeof EQUIPMENT_TYPES)[number];
+
+export const TRUCK_STATUSES = [
+  'AVAILABLE',
+  'ASSIGNED',
+  'IN_TRANSIT',
+  'OUT_OF_SERVICE',
+] as const;
+export type TruckStatus = (typeof TRUCK_STATUSES)[number];
+
+export const DRIVER_STATUSES = [
+  'ACTIVE',
+  'ON_LOAD',
+  'OFF_DUTY',
+] as const;
+export type DriverStatus = (typeof DRIVER_STATUSES)[number];
+
 // ============================================================================
 // ZOD SCHEMAS & TYPES FOR DATABASE ENTITIES
 // ============================================================================
@@ -1436,6 +1460,45 @@ export const RBAC_ACTIONS = [
   'VIEW_SOC2_REPORT',
 ] as const;
 export type RbacAction = (typeof RBAC_ACTIONS)[number];
+
+// ============================================================================
+// FLEET MANAGEMENT SCHEMAS & TYPES
+// ============================================================================
+
+export const TruckSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  carrierAccountId: z.string().uuid().optional().nullable(),
+  unitNumber: z.string().min(1).max(50),
+  equipmentType: z.enum(EQUIPMENT_TYPES),
+  maxWeightLbs: z.number().int().default(45000),
+  maxPallets: z.number().int().default(26),
+  hasLiftgate: z.boolean().default(false),
+  status: z.enum(TRUCK_STATUSES).default('AVAILABLE'),
+  currentLocationZip: z.string().max(10).optional().nullable(),
+  currentCity: z.string().max(100).optional().nullable(),
+  currentState: z.string().max(2).optional().nullable(),
+  assignedDriverName: z.string().max(100).optional().nullable(),
+  assignedDriverPhone: z.string().max(30).optional().nullable(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type Truck = z.infer<typeof TruckSchema>;
+
+export const DriverSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  carrierAccountId: z.string().uuid().optional().nullable(),
+  truckId: z.string().uuid().optional().nullable(),
+  fullName: z.string().min(1).max(100),
+  phoneNumber: z.string().min(1).max(30),
+  cdlNumber: z.string().max(50).optional().nullable(),
+  cdlState: z.string().max(2).optional().nullable(),
+  status: z.enum(DRIVER_STATUSES).default('ACTIVE'),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+export type Driver = z.infer<typeof DriverSchema>;
 
 
 

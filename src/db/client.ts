@@ -58,7 +58,260 @@ import {
   FactoringWaiverSchema,
   Soc2AuditRecord,
   Soc2AuditRecordSchema,
+  Truck,
+  TruckSchema,
+  TruckStatus,
+  Driver,
+  DriverSchema,
+  DriverStatus,
 } from './schema';
+import { supabaseAdmin } from '../lib/supabase/admin';
+
+// ============================================================================
+// HELPER MAPPING FUNCTIONS (SUPABASE DB <-> TS DOMAIN)
+// ============================================================================
+
+function mapDbAccountToAccount(row: any): Account {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    name: row.name,
+    accountType: row.account_type,
+    mcNumber: row.mc_number,
+    dotNumber: row.dot_number,
+    contactName: row.contact_name,
+    contactEmail: row.contact_email,
+    contactPhone: row.contact_phone,
+    billingAddressLine1: row.billing_address_line1,
+    billingCity: row.billing_city,
+    billingState: row.billing_state,
+    billingZip: row.billing_zip,
+    creditLimitCents: typeof row.credit_limit_cents === 'string' ? parseInt(row.credit_limit_cents, 10) : (row.credit_limit_cents ?? 1000000),
+    paymentTermsDays: row.payment_terms_days ?? 30,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+function mapAccountToDb(account: Account) {
+  return {
+    id: account.id,
+    tenant_id: account.tenantId,
+    name: account.name,
+    account_type: account.accountType,
+    mc_number: account.mcNumber || null,
+    dot_number: account.dotNumber || null,
+    contact_name: account.contactName || null,
+    contact_email: account.contactEmail || null,
+    contact_phone: account.contactPhone || null,
+    billing_address_line1: account.billingAddressLine1 || null,
+    billing_city: account.billingCity || null,
+    billing_state: account.billingState || null,
+    billing_zip: account.billingZip || null,
+    credit_limit_cents: account.creditLimitCents,
+    payment_terms_days: account.paymentTermsDays,
+    created_at: account.createdAt instanceof Date ? account.createdAt.toISOString() : account.createdAt,
+    updated_at: account.updatedAt instanceof Date ? account.updatedAt.toISOString() : account.updatedAt,
+  };
+}
+
+function mapDbShipmentToShipment(row: any): Shipment {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    shipperAccountId: row.shipper_account_id,
+    referenceNumber: row.reference_number,
+    status: row.status,
+    originName: row.origin_name,
+    originAddress1: row.origin_address1,
+    originAddress2: row.origin_address2,
+    originCity: row.origin_city,
+    originState: row.origin_state,
+    originZip: row.origin_zip,
+    originCountry: row.origin_country || 'US',
+    originContactName: row.origin_contact_name,
+    originContactPhone: row.origin_contact_phone,
+    destName: row.dest_name,
+    destAddress1: row.dest_address1,
+    destAddress2: row.dest_address2,
+    destCity: row.dest_city,
+    destState: row.dest_state,
+    destZip: row.dest_zip,
+    destCountry: row.dest_country || 'US',
+    destContactName: row.dest_contact_name,
+    destContactPhone: row.dest_contact_phone,
+    totalPallets: row.total_pallets ?? 1,
+    totalWeightLbs: typeof row.total_weight_lbs === 'string' ? parseFloat(row.total_weight_lbs) : row.total_weight_lbs,
+    totalLinearFeet: row.total_linear_feet ? Number(row.total_linear_feet) : null,
+    totalCubeCuft: row.total_cube_cuft ? Number(row.total_cube_cuft) : null,
+    pickupDateReady: row.pickup_date_ready,
+    pickupTimeStart: row.pickup_time_start,
+    pickupTimeEnd: row.pickup_time_end,
+    deliveryDateTarget: row.delivery_date_target,
+    deliveryTimeStart: row.delivery_time_start,
+    deliveryTimeEnd: row.delivery_time_end,
+    specialInstructions: row.special_instructions,
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+function mapShipmentToDb(shipment: Shipment) {
+  return {
+    id: shipment.id,
+    tenant_id: shipment.tenantId,
+    shipper_account_id: shipment.shipperAccountId || null,
+    reference_number: shipment.referenceNumber,
+    status: shipment.status,
+    origin_name: shipment.originName || null,
+    origin_address1: shipment.originAddress1,
+    origin_address2: shipment.originAddress2 || null,
+    origin_city: shipment.originCity,
+    origin_state: shipment.originState,
+    origin_zip: shipment.originZip,
+    origin_country: shipment.originCountry || 'US',
+    origin_contact_name: shipment.originContactName || null,
+    origin_contact_phone: shipment.originContactPhone || null,
+    dest_name: shipment.destName || null,
+    dest_address1: shipment.destAddress1,
+    dest_address2: shipment.destAddress2 || null,
+    dest_city: shipment.destCity,
+    dest_state: shipment.destState,
+    dest_zip: shipment.destZip,
+    dest_country: shipment.destCountry || 'US',
+    dest_contact_name: shipment.destContactName || null,
+    dest_contact_phone: shipment.destContactPhone || null,
+    total_pallets: shipment.totalPallets,
+    total_weight_lbs: shipment.totalWeightLbs,
+    total_linear_feet: shipment.totalLinearFeet || null,
+    total_cube_cuft: shipment.totalCubeCuft || null,
+    pickup_date_ready: shipment.pickupDateReady,
+    pickup_time_start: shipment.pickupTimeStart || null,
+    pickup_time_end: shipment.pickupTimeEnd || null,
+    delivery_date_target: shipment.deliveryDateTarget || null,
+    delivery_time_start: shipment.deliveryTimeStart || null,
+    delivery_time_end: shipment.deliveryTimeEnd || null,
+    special_instructions: shipment.specialInstructions || null,
+    created_by: shipment.createdBy || null,
+    created_at: shipment.createdAt instanceof Date ? shipment.createdAt.toISOString() : shipment.createdAt,
+    updated_at: shipment.updatedAt instanceof Date ? shipment.updatedAt.toISOString() : shipment.updatedAt,
+  };
+}
+
+function mapDbCredentialToCredential(row: any): CarrierCredential {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    carrierCode: row.carrier_code,
+    carrierName: row.carrier_name || row.carrier_code,
+    carrierScac: row.carrier_scac || row.carrier_code,
+    accountNumber: row.account_number || '',
+    accountType: row.account_type || 'DIRECT_BYOC',
+    encryptedApiKey: row.encrypted_api_key || row.api_key || 'placeholder',
+    encryptedPassword: row.encrypted_password || null,
+    encryptedClientSecret: row.encrypted_client_secret || null,
+    authTag: row.auth_tag || '00000000000000000000000000000000',
+    iv: row.iv || '00000000000000000000000000000000',
+    isActive: row.is_active ?? true,
+    createdAt: new Date(row.created_at || Date.now()),
+    updatedAt: new Date(row.updated_at || Date.now()),
+  };
+}
+
+function mapCredentialToDb(cred: CarrierCredential) {
+  return {
+    id: cred.id,
+    tenant_id: cred.tenantId,
+    carrier_code: cred.carrierCode,
+    carrier_name: cred.carrierName,
+    carrier_scac: cred.carrierScac,
+    account_number: cred.accountNumber,
+    account_type: cred.accountType,
+    encrypted_api_key: cred.encryptedApiKey,
+    encrypted_password: cred.encryptedPassword || null,
+    encrypted_client_secret: cred.encryptedClientSecret || null,
+    auth_tag: cred.authTag,
+    iv: cred.iv,
+    is_active: cred.isActive,
+    created_at: cred.createdAt instanceof Date ? cred.createdAt.toISOString() : cred.createdAt,
+    updated_at: cred.updatedAt instanceof Date ? cred.updatedAt.toISOString() : cred.updatedAt,
+  };
+}
+
+function mapDbTruckToTruck(row: any): Truck {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    carrierAccountId: row.carrier_account_id,
+    unitNumber: row.unit_number,
+    equipmentType: row.equipment_type,
+    maxWeightLbs: typeof row.max_weight_lbs === 'string' ? parseInt(row.max_weight_lbs, 10) : row.max_weight_lbs,
+    maxPallets: typeof row.max_pallets === 'string' ? parseInt(row.max_pallets, 10) : row.max_pallets,
+    hasLiftgate: row.has_liftgate ?? false,
+    status: row.status,
+    currentLocationZip: row.current_location_zip,
+    currentCity: row.current_city,
+    currentState: row.current_state,
+    assignedDriverName: row.assigned_driver_name,
+    assignedDriverPhone: row.assigned_driver_phone,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+function mapTruckToDb(truck: Truck) {
+  return {
+    id: truck.id,
+    tenant_id: truck.tenantId,
+    carrier_account_id: truck.carrierAccountId || null,
+    unit_number: truck.unitNumber,
+    equipment_type: truck.equipmentType,
+    max_weight_lbs: truck.maxWeightLbs,
+    max_pallets: truck.maxPallets,
+    has_liftgate: truck.hasLiftgate,
+    status: truck.status,
+    current_location_zip: truck.currentLocationZip || null,
+    current_city: truck.currentCity || null,
+    current_state: truck.currentState || null,
+    assigned_driver_name: truck.assignedDriverName || null,
+    assigned_driver_phone: truck.assignedDriverPhone || null,
+    created_at: truck.createdAt instanceof Date ? truck.createdAt.toISOString() : truck.createdAt,
+    updated_at: truck.updatedAt instanceof Date ? truck.updatedAt.toISOString() : truck.updatedAt,
+  };
+}
+
+function mapDbDriverToDriver(row: any): Driver {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    carrierAccountId: row.carrier_account_id,
+    truckId: row.truck_id,
+    fullName: row.full_name,
+    phoneNumber: row.phone_number,
+    cdlNumber: row.cdl_number,
+    cdlState: row.cdl_state,
+    status: row.status,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+function mapDriverToDb(driver: Driver) {
+  return {
+    id: driver.id,
+    tenant_id: driver.tenantId,
+    carrier_account_id: driver.carrierAccountId || null,
+    truck_id: driver.truckId || null,
+    full_name: driver.fullName,
+    phone_number: driver.phoneNumber,
+    cdl_number: driver.cdlNumber || null,
+    cdl_state: driver.cdlState || null,
+    status: driver.status,
+    created_at: driver.createdAt instanceof Date ? driver.createdAt.toISOString() : driver.createdAt,
+    updated_at: driver.updatedAt instanceof Date ? driver.updatedAt.toISOString() : driver.updatedAt,
+  };
+}
 
 /**
  * In-Memory & Connection Client for Tenant-Isolated Freight Operations
@@ -106,6 +359,8 @@ export class FreightDatabaseClient {
   public carrierNoaRecords: Map<string, CarrierNoaRecord> = new Map();
   public factoringWaivers: Map<string, FactoringWaiver> = new Map();
   public soc2AuditLogs: Map<string, Soc2AuditRecord> = new Map();
+  public trucks: Map<string, Truck> = new Map();
+  public drivers: Map<string, Driver> = new Map();
   public auditEvents: Map<string, any> = new Map();
 
   constructor(tenantId?: string) {
@@ -137,10 +392,10 @@ export class FreightDatabaseClient {
 
   // Accounts Operations
   public async insertAccount(
-    account: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>
+    account: Omit<Account, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
   ): Promise<Account> {
     this.enforceTenantCheck(account.tenantId);
-    const id = generateUuidV7();
+    const id = account.id || generateUuidV7();
     const now = new Date();
     const record: Account = {
       ...account,
@@ -149,23 +404,68 @@ export class FreightDatabaseClient {
       updatedAt: now,
     };
     this.accounts.set(id, record);
+
+    try {
+      await supabaseAdmin.from('accounts').upsert(mapAccountToDb(record));
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase insert account warning:', err.message);
+    }
+
     return record;
   }
 
   public async getAccountById(id: string): Promise<Account | null> {
     const record = this.accounts.get(id);
-    if (!record) return null;
-    if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
-      return null;
+    if (record) {
+      if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
+        return null;
+      }
+      return record;
     }
-    return record;
+
+    try {
+      const { data, error } = await supabaseAdmin.from('accounts').select('*').eq('id', id).maybeSingle();
+      if (!error && data) {
+        const acc = mapDbAccountToAccount(data);
+        if (this.currentTenantId && acc.tenantId !== this.currentTenantId) {
+          return null;
+        }
+        this.accounts.set(acc.id, acc);
+        return acc;
+      }
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase fetch account by ID warning:', err.message);
+    }
+
+    return null;
   }
 
-  public async getAccounts(tenantId: string): Promise<Account[]> {
-    this.enforceTenantCheck(tenantId);
+  public async getAccounts(tenantId?: string): Promise<Account[]> {
+    const effectiveTenantId = tenantId || this.currentTenantId || undefined;
+    if (effectiveTenantId) {
+      this.enforceTenantCheck(effectiveTenantId);
+    }
+
+    try {
+      let query = supabaseAdmin.from('accounts').select('*');
+      if (effectiveTenantId) {
+        query = query.eq('tenant_id', effectiveTenantId);
+      }
+      const { data, error } = await query;
+      if (!error && data) {
+        const accountsFromDb = data.map(mapDbAccountToAccount);
+        for (const acc of accountsFromDb) {
+          this.accounts.set(acc.id, acc);
+        }
+        return accountsFromDb;
+      }
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase fetch accounts warning:', err.message);
+    }
+
     const results: Account[] = [];
     for (const acc of this.accounts.values()) {
-      if (acc.tenantId === tenantId) {
+      if (!effectiveTenantId || acc.tenantId === effectiveTenantId) {
         results.push(acc);
       }
     }
@@ -199,27 +499,76 @@ export class FreightDatabaseClient {
     };
 
     this.shipments.set(id, record);
+
+    try {
+      await supabaseAdmin.from('shipments').upsert(mapShipmentToDb(record));
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase insert shipment warning:', err.message);
+    }
+
     return record;
   }
 
   public async getShipmentById(id: string): Promise<Shipment | null> {
     const record = this.shipments.get(id);
-    if (!record) return null;
-    if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
-      return null; // Enforce RLS isolation
+    if (record) {
+      if (this.currentTenantId && record.tenantId !== this.currentTenantId) {
+        return null;
+      }
+      return record;
     }
-    return record;
+
+    try {
+      const { data, error } = await supabaseAdmin.from('shipments').select('*').eq('id', id).maybeSingle();
+      if (!error && data) {
+        const shp = mapDbShipmentToShipment(data);
+        if (this.currentTenantId && shp.tenantId !== this.currentTenantId) {
+          return null;
+        }
+        this.shipments.set(shp.id, shp);
+        return shp;
+      }
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase fetch shipment by ID warning:', err.message);
+    }
+
+    return null;
   }
 
-  public async getShipmentsByTenant(tenantId: string): Promise<Shipment[]> {
-    this.enforceTenantCheck(tenantId);
+  public async getShipments(tenantId?: string): Promise<Shipment[]> {
+    const effectiveTenantId = tenantId || this.currentTenantId || undefined;
+    if (effectiveTenantId) {
+      this.enforceTenantCheck(effectiveTenantId);
+    }
+
+    try {
+      let query = supabaseAdmin.from('shipments').select('*');
+      if (effectiveTenantId) {
+        query = query.eq('tenant_id', effectiveTenantId);
+      }
+      const { data, error } = await query;
+      if (!error && data) {
+        const shipmentsFromDb = data.map(mapDbShipmentToShipment);
+        for (const s of shipmentsFromDb) {
+          this.shipments.set(s.id, s);
+        }
+        return shipmentsFromDb.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      }
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase fetch shipments warning:', err.message);
+    }
+
     const results: Shipment[] = [];
     for (const s of this.shipments.values()) {
-      if (s.tenantId === tenantId) {
+      if (!effectiveTenantId || s.tenantId === effectiveTenantId) {
         results.push(s);
       }
     }
     return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  public async getShipmentsByTenant(tenantId: string): Promise<Shipment[]> {
+    return this.getShipments(tenantId);
   }
 
   // Ingestion Documents Operations
@@ -251,10 +600,10 @@ export class FreightDatabaseClient {
 
   // Carrier Credentials Operations
   public async insertCarrierCredential(
-    cred: Omit<CarrierCredential, 'id' | 'createdAt' | 'updatedAt'>
+    cred: Omit<CarrierCredential, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
   ): Promise<CarrierCredential> {
     this.enforceTenantCheck(cred.tenantId);
-    const id = generateUuidV7();
+    const id = cred.id || generateUuidV7();
     const now = new Date();
     const record: CarrierCredential = {
       ...cred,
@@ -263,15 +612,210 @@ export class FreightDatabaseClient {
       updatedAt: now,
     };
     this.carrierCredentials.set(id, record);
+
+    try {
+      await supabaseAdmin.from('carrier_credentials').upsert(mapCredentialToDb(record));
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase insert carrier_credentials warning:', err.message);
+    }
+
     return record;
   }
 
-  public async getActiveCarrierCredentials(tenantId: string): Promise<CarrierCredential[]> {
-    this.enforceTenantCheck(tenantId);
+  public async getCarrierCredentials(tenantId?: string): Promise<CarrierCredential[]> {
+    const effectiveTenantId = tenantId || this.currentTenantId || undefined;
+    if (effectiveTenantId) {
+      this.enforceTenantCheck(effectiveTenantId);
+    }
+
+    try {
+      let query = supabaseAdmin.from('carrier_credentials').select('*');
+      if (effectiveTenantId) {
+        query = query.eq('tenant_id', effectiveTenantId);
+      }
+      const { data, error } = await query;
+      if (!error && data) {
+        const credsFromDb = data.map(mapDbCredentialToCredential);
+        for (const c of credsFromDb) {
+          this.carrierCredentials.set(c.id, c);
+        }
+        return credsFromDb;
+      }
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase fetch carrier credentials warning:', err.message);
+    }
+
     const results: CarrierCredential[] = [];
     for (const cred of this.carrierCredentials.values()) {
-      if (cred.tenantId === tenantId && cred.isActive) {
+      if (!effectiveTenantId || cred.tenantId === effectiveTenantId) {
         results.push(cred);
+      }
+    }
+    return results;
+  }
+
+  public async getActiveCarrierCredentials(tenantId: string): Promise<CarrierCredential[]> {
+    const creds = await this.getCarrierCredentials(tenantId);
+    return creds.filter((c) => c.isActive);
+  }
+
+  // Fleet Trucks Operations
+  public async insertTruck(
+    truck: Omit<Truck, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+  ): Promise<Truck> {
+    this.enforceTenantCheck(truck.tenantId);
+    const id = truck.id || generateUuidV7();
+    const now = new Date();
+    const record: Truck = {
+      ...truck,
+      maxWeightLbs: truck.maxWeightLbs ?? 45000,
+      maxPallets: truck.maxPallets ?? 26,
+      hasLiftgate: truck.hasLiftgate ?? false,
+      status: truck.status ?? 'AVAILABLE',
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.trucks.set(id, record);
+
+    try {
+      await supabaseAdmin.from('trucks').upsert(mapTruckToDb(record));
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase insert truck warning:', err.message);
+    }
+
+    return record;
+  }
+
+  public async getTrucks(tenantId?: string): Promise<Truck[]> {
+    const effectiveTenantId = tenantId || this.currentTenantId || undefined;
+    if (effectiveTenantId) {
+      this.enforceTenantCheck(effectiveTenantId);
+    }
+
+    try {
+      let query = supabaseAdmin.from('trucks').select('*');
+      if (effectiveTenantId) {
+        query = query.eq('tenant_id', effectiveTenantId);
+      }
+      const { data, error } = await query;
+      if (!error && data) {
+        const trucksFromDb = data.map(mapDbTruckToTruck);
+        for (const t of trucksFromDb) {
+          this.trucks.set(t.id, t);
+        }
+        return trucksFromDb;
+      }
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase fetch trucks warning:', err.message);
+    }
+
+    const results: Truck[] = [];
+    for (const t of this.trucks.values()) {
+      if (!effectiveTenantId || t.tenantId === effectiveTenantId) {
+        results.push(t);
+      }
+    }
+    return results;
+  }
+
+  public async updateTruckStatus(
+    truckId: string,
+    status: TruckStatus,
+    location?: { city?: string; state?: string; zip?: string }
+  ): Promise<Truck | null> {
+    const truck = this.trucks.get(truckId);
+    if (truck) {
+      truck.status = status;
+      if (location?.city) truck.currentCity = location.city;
+      if (location?.state) truck.currentState = location.state;
+      if (location?.zip) truck.currentLocationZip = location.zip;
+      truck.updatedAt = new Date();
+      this.trucks.set(truckId, truck);
+    }
+
+    try {
+      const updatePayload: any = {
+        status,
+        updated_at: new Date().toISOString(),
+      };
+      if (location?.city) updatePayload.current_city = location.city;
+      if (location?.state) updatePayload.current_state = location.state;
+      if (location?.zip) updatePayload.current_location_zip = location.zip;
+
+      const { data, error } = await supabaseAdmin
+        .from('trucks')
+        .update(updatePayload)
+        .eq('id', truckId)
+        .select('*')
+        .maybeSingle();
+
+      if (!error && data) {
+        const updatedTruck = mapDbTruckToTruck(data);
+        this.trucks.set(truckId, updatedTruck);
+        return updatedTruck;
+      }
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase update truck status warning:', err.message);
+    }
+
+    return truck || null;
+  }
+
+  // Fleet Drivers Operations
+  public async insertDriver(
+    driver: Omit<Driver, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+  ): Promise<Driver> {
+    this.enforceTenantCheck(driver.tenantId);
+    const id = driver.id || generateUuidV7();
+    const now = new Date();
+    const record: Driver = {
+      ...driver,
+      status: driver.status ?? 'ACTIVE',
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.drivers.set(id, record);
+
+    try {
+      await supabaseAdmin.from('drivers').upsert(mapDriverToDb(record));
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase insert driver warning:', err.message);
+    }
+
+    return record;
+  }
+
+  public async getDrivers(tenantId?: string): Promise<Driver[]> {
+    const effectiveTenantId = tenantId || this.currentTenantId || undefined;
+    if (effectiveTenantId) {
+      this.enforceTenantCheck(effectiveTenantId);
+    }
+
+    try {
+      let query = supabaseAdmin.from('drivers').select('*');
+      if (effectiveTenantId) {
+        query = query.eq('tenant_id', effectiveTenantId);
+      }
+      const { data, error } = await query;
+      if (!error && data) {
+        const driversFromDb = data.map(mapDbDriverToDriver);
+        for (const d of driversFromDb) {
+          this.drivers.set(d.id, d);
+        }
+        return driversFromDb;
+      }
+    } catch (err: any) {
+      console.warn('[FreightDatabaseClient] Supabase fetch drivers warning:', err.message);
+    }
+
+    const results: Driver[] = [];
+    for (const d of this.drivers.values()) {
+      if (!effectiveTenantId || d.tenantId === effectiveTenantId) {
+        results.push(d);
       }
     }
     return results;
