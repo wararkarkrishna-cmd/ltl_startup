@@ -21,12 +21,9 @@ import {
   ShieldCheck,
   Sparkles,
   Download,
-  Info,
   Building2,
   AlertCircle,
-  ExternalLink,
 } from 'lucide-react';
-
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +41,7 @@ function IntegrationPageContent() {
       }
     }
   }, [searchParams]);
-  
+
   // Progress State
   const [completedSteps, setCompletedSteps] = useState<Record<number, boolean>>({});
 
@@ -181,7 +178,7 @@ function IntegrationPageContent() {
       setSimulatingEmailTest(false);
       setEmailTestSuccess(true);
       markStepComplete(1);
-    }, 1000);
+    }, 800);
   };
 
   const handleTestCarrierConn = async (carrierCode: string) => {
@@ -210,7 +207,7 @@ function IntegrationPageContent() {
           [carrierCode]: {
             ...prev[carrierCode],
             status: 'ERROR',
-            errorMessage: data.error || 'Verification Failed: Invalid credentials rejected by Carrier API Gateway.',
+            errorMessage: data.error || 'Verification Failed: Invalid credentials.',
           },
         }));
       } else {
@@ -226,19 +223,10 @@ function IntegrationPageContent() {
         [carrierCode]: {
           ...prev[carrierCode],
           status: 'ERROR',
-          errorMessage: err.message || 'Connection Timeout: Carrier OAuth Gateway Unreachable.',
+          errorMessage: err.message || 'Connection Timeout.',
         },
       }));
     }
-  };
-
-
-  const handleSimulateCsvUpload = () => {
-    handleExecuteCsvIngestion();
-  };
-
-  const handleFinalizeCsvImport = () => {
-    markStepComplete(3);
   };
 
   const handleFinishOnboarding = () => {
@@ -249,22 +237,19 @@ function IntegrationPageContent() {
   };
 
   const stepsList = [
-    { num: 1, title: 'Email Shadowing', icon: Mail, subtitle: 'Forward RFQs from Outlook/Gmail' },
+    { num: 1, title: 'Email Shadowing', icon: Mail, subtitle: 'Forward RFQs' },
     { num: 2, title: 'BYOC Carrier Vault', icon: Key, subtitle: 'XPO, Saia, Estes, ABF, R+L' },
-    { num: 3, title: 'Magic AI CSV Import', icon: FileText, subtitle: 'Drag & drop legacy data' },
+    { num: 3, title: 'Magic AI CSV Import', icon: FileText, subtitle: 'Import Fleet & Accounts' },
     { num: 4, title: '1-Click Accounting', icon: Layers, subtitle: 'QuickBooks Online & Xero' },
-    { num: 5, title: 'Outlook Extension', icon: Puzzle, subtitle: 'Quote directly inside email' },
+    { num: 5, title: 'Outlook Extension', icon: Puzzle, subtitle: 'Sidecar API Token' },
   ];
 
   const activeStepProgress = Math.round((Object.keys(completedSteps).length / 5) * 100);
 
   return (
-    <div className="min-h-screen bg-[#050507] text-[#f4f4f5] font-sans flex flex-col justify-between relative overflow-hidden selection:bg-white selection:text-black">
-      {/* Background Ambient Blur Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-white/[0.02] rounded-full blur-[160px] pointer-events-none" />
-
-      {/* STANDALONE TOP HEADER (NO DASHBOARD SIDEBAR) */}
-      <header className="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between z-10 border-b border-neutral-900">
+    <div className="min-h-screen bg-[#050507] text-[#f4f4f5] font-sans flex flex-col justify-between relative selection:bg-white selection:text-black">
+      {/* Top Header */}
+      <header className="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between border-b border-neutral-900">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#121215] border border-neutral-800 flex items-center justify-center text-white shadow-md">
             <Truck className="w-5 h-5" />
@@ -273,60 +258,44 @@ function IntegrationPageContent() {
             <div className="flex items-center gap-2">
               <span className="font-serif text-xl text-white tracking-tight font-normal">APEX</span>
               <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800">
-                LTL OS v3.8
+                Integration Hub
               </span>
             </div>
-            <p className="text-[10px] text-neutral-500 font-mono tracking-wider">STANDALONE BROKER DATA ONBOARDING</p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-2 text-xs text-neutral-400 font-mono bg-[#0c0c0e] border border-neutral-800 px-3 py-1.5 rounded-full">
-            <ShieldCheck className="w-3.5 h-3.5 text-neutral-300" />
-            <span>Tenant: 01916362-7901</span>
-          </div>
           <button
             onClick={handleFinishOnboarding}
             className="text-xs font-sans text-neutral-400 hover:text-white transition bg-[#121215] hover:bg-neutral-800 border border-neutral-800 px-4 py-2 rounded-xl flex items-center gap-1.5"
           >
-            <span>Skip to Dashboard</span>
+            <span>Dashboard</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>
 
-      {/* MAIN DEDICATED ONBOARDING CONTAINER */}
-      <main className="w-full max-w-6xl mx-auto px-6 py-8 flex-1 z-10 space-y-8 my-auto">
+      {/* Main Integration Container */}
+      <main className="w-full max-w-6xl mx-auto px-6 py-8 flex-1 space-y-6 my-auto">
         {/* Onboarding Header Banner & Progress */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 shadow-2xl relative overflow-hidden space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800/80 pb-6">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 text-[11px] font-mono">
-                <Sparkles className="w-3.5 h-3.5 text-white" />
-                <span>5-Step Zero-Friction Brokerage Setup</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight">
-                Data Integration &amp; Onboarding Wizard
+        <div className="p-6 rounded-3xl bg-[#09090b] border border-neutral-800 shadow-2xl space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800 pb-4">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-serif font-normal text-white tracking-tight">
+                System Integration Hub
               </h1>
-              <p className="text-xs sm:text-sm text-neutral-400 max-w-2xl font-sans">
-                Follow these 5 steps to import customer lists, connect carrier contracts, forward RFQ emails, and link accounting.
-              </p>
             </div>
 
-            {/* Overall Progress Widget */}
-            <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800/80 min-w-[240px]">
-              <div className="flex items-center justify-between text-xs font-mono mb-2">
-                <span className="text-neutral-400">Onboarding Completion</span>
+            <div className="p-3 rounded-2xl bg-[#121215] border border-neutral-800/80 min-w-[200px]">
+              <div className="flex items-center justify-between text-xs font-mono mb-1.5">
+                <span className="text-neutral-400">Setup Progress</span>
                 <span className="text-white font-bold">{activeStepProgress}%</span>
               </div>
-              <div className="w-full h-2 bg-[#050507] rounded-full overflow-hidden border border-neutral-800 mb-2">
+              <div className="w-full h-1.5 bg-[#050507] rounded-full overflow-hidden border border-neutral-800">
                 <div
                   className="h-full bg-white transition-all duration-500"
                   style={{ width: `${activeStepProgress}%` }}
                 />
-              </div>
-              <div className="text-[10px] font-mono text-neutral-500 text-right">
-                {Object.keys(completedSteps).length} of 5 Completed
               </div>
             </div>
           </div>
@@ -343,15 +312,15 @@ function IntegrationPageContent() {
                   key={step.num}
                   type="button"
                   onClick={() => setCurrentStep(step.num)}
-                  className={`p-4 rounded-2xl border text-left transition-all relative ${
+                  className={`p-3.5 rounded-2xl border text-left transition-all relative ${
                     isCurrent
                       ? 'bg-white text-black border-white shadow-xl'
-                      : 'bg-[#121215]/80 border-neutral-800/80 text-neutral-400 hover:text-white hover:bg-[#121215]'
+                      : 'bg-[#121215]/80 border-neutral-800 text-neutral-400 hover:text-white hover:bg-[#121215]'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-1.5">
                     <span
-                      className={`w-6 h-6 rounded-full text-xs font-mono font-bold flex items-center justify-center ${
+                      className={`w-5 h-5 rounded-full text-[10px] font-mono font-bold flex items-center justify-center ${
                         isCurrent
                           ? 'bg-black text-white'
                           : isDone
@@ -359,15 +328,12 @@ function IntegrationPageContent() {
                           : 'bg-neutral-900 text-neutral-400'
                       }`}
                     >
-                      {isDone ? <Check className="w-3.5 h-3.5" /> : step.num}
+                      {isDone ? <Check className="w-3 h-3" /> : step.num}
                     </span>
                     <Icon className={`w-4 h-4 ${isCurrent ? 'text-black' : 'text-neutral-500'}`} />
                   </div>
                   <div className={`text-xs font-sans font-bold ${isCurrent ? 'text-black' : 'text-white'}`}>
                     {step.title}
-                  </div>
-                  <div className={`text-[10px] font-mono mt-0.5 truncate ${isCurrent ? 'text-neutral-700' : 'text-neutral-500'}`}>
-                    {step.subtitle}
                   </div>
                 </button>
               );
@@ -377,35 +343,27 @@ function IntegrationPageContent() {
 
         {/* STEP 1: EMAIL SHADOW INGESTION */}
         {currentStep === 1 && (
-          <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-6 shadow-xl">
-            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
-              <div>
-                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Step 1 of 5</span>
-                <h2 className="text-lg font-serif text-white font-normal">Email Shadow Ingestion Setup</h2>
-              </div>
-              <span className="px-2.5 py-1 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
-                0 IT Setup Required
+          <div className="p-6 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-5 shadow-xl">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+              <h2 className="text-base font-serif text-white font-normal">Step 1: Email Shadow Ingestion</h2>
+              <span className="px-2.5 py-0.5 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
+                Forwarding Address
               </span>
             </div>
 
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Auto-forward incoming shipper quote requests or attached PDFs from Outlook or Gmail. Our AI extracts load details and drafts rates in 15 seconds.
-            </p>
-
-            {/* Inbound Email Provision Card */}
-            <div className="p-5 rounded-2xl bg-[#121215] border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
-                <div className="text-[10px] font-mono text-neutral-500 uppercase">Your Inbound Forwarding Address</div>
-                <div className="text-sm sm:text-base font-mono font-bold text-white bg-[#050507] px-3.5 py-2 rounded-xl border border-neutral-800 inline-block">
+                <div className="text-[10px] font-mono text-neutral-500 uppercase">Inbound Forwarding Address</div>
+                <div className="text-sm font-mono font-bold text-white bg-[#050507] px-3 py-1.5 rounded-xl border border-neutral-800 inline-block">
                   {shadowEmail}
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="px-4 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-2 transition shadow-md"
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1.5 transition shadow"
                 >
                   {copiedEmail ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   <span>{copiedEmail ? 'Copied!' : 'Copy Address'}</span>
@@ -415,7 +373,7 @@ function IntegrationPageContent() {
                   type="button"
                   onClick={handleTestEmailInbound}
                   disabled={simulatingEmailTest}
-                  className="px-4 py-2.5 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-300 font-sans font-bold text-xs flex items-center gap-2 border border-neutral-800 transition"
+                  className="px-4 py-2 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-300 font-sans font-bold text-xs flex items-center gap-1.5 border border-neutral-800 transition"
                 >
                   {simulatingEmailTest ? (
                     <RefreshCw className="w-4 h-4 animate-spin text-white" />
@@ -428,79 +386,24 @@ function IntegrationPageContent() {
             </div>
 
             {emailTestSuccess && (
-              <div className="p-4 rounded-2xl bg-neutral-900/90 border border-neutral-700 text-white text-xs flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-neutral-900 border border-neutral-700 text-white text-xs flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-white" />
                   <span>Inbound simulation verified! RFQ parsed (4 Pallets HVAC, LA to Chicago).</span>
                 </div>
-                <span className="font-mono text-[11px] text-neutral-400">Step 1 Verified</span>
               </div>
             )}
-
-            {/* Email Setup Guides */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              <div className="p-5 rounded-2xl bg-[#121215]/60 border border-neutral-800 space-y-2">
-                <div className="text-xs font-bold text-white flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-neutral-800 text-white text-[10px] font-mono flex items-center justify-center">
-                    A
-                  </span>
-                  <span>Microsoft Outlook Forwarding Rule (30s)</span>
-                </div>
-                <ol className="text-xs text-neutral-400 space-y-1.5 pl-7 list-decimal font-sans">
-                  <li>Open Outlook $\rightarrow$ Settings $\rightarrow$ Rules $\rightarrow$ Add New Rule.</li>
-                  <li>Set condition: <i>Subject contains "RFQ", "Quote", or "Freight"</i>.</li>
-                  <li>Set action: <i>Forward to {shadowEmail}</i>.</li>
-                </ol>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-[#121215]/60 border border-neutral-800 space-y-2">
-                <div className="text-xs font-bold text-white flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-neutral-800 text-white text-[10px] font-mono flex items-center justify-center">
-                    B
-                  </span>
-                  <span>Gmail / Google Workspace Rule (30s)</span>
-                </div>
-                <ol className="text-xs text-neutral-400 space-y-1.5 pl-7 list-decimal font-sans">
-                  <li>Go to Gmail Settings $\rightarrow$ Forwarding and POP/IMAP.</li>
-                  <li>Click <i>Add forwarding address</i> and enter <code className="text-neutral-200">{shadowEmail}</code>.</li>
-                  <li>Create filter for quote emails.</li>
-                </ol>
-              </div>
-            </div>
           </div>
         )}
 
         {/* STEP 2: BYOC CARRIER VAULT */}
         {currentStep === 2 && (
-          <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-6 shadow-xl">
-            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
-              <div>
-                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Step 2 of 5</span>
-                <h2 className="text-lg font-serif text-white font-normal">BYOC Carrier Credentials Vault</h2>
-              </div>
-              <span className="px-2.5 py-1 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
-                AES-256 Encrypted
-              </span>
-            </div>
-
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Enter your direct carrier account numbers and API credentials. Our engine rates your contracted tariffs alongside wholesale platform rates.
-            </p>
-
-            {/* Instant Sandbox Keys Banner */}
-            <div className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white font-bold">
-                  <Zap className="w-4 h-4 text-white animate-pulse" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-white">Don&apos;t have real carrier API keys yet? Use Instant Free Sandbox Keys</div>
-                  <p className="text-[11px] text-neutral-400">Pre-loaded with Instant Developer Test Keys so you can try all carrier connections in 1 click without paying or waiting.</p>
-                </div>
-              </div>
+          <div className="p-6 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-5 shadow-xl">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+              <h2 className="text-base font-serif text-white font-normal">Step 2: BYOC Carrier Credentials Vault</h2>
               <button
                 type="button"
-                onClick={async () => {
+                onClick={() => {
                   const sandboxKeys = {
                     XPO: { account: 'XPO-884210', apiKey: 'xpo_live_sec_99481a88421' },
                     SAIA: { account: 'SAIA-98412', apiKey: 'saia_live_sec_77412b99812' },
@@ -508,7 +411,6 @@ function IntegrationPageContent() {
                     ABF: { account: 'ABFS-71092', apiKey: 'abf_live_sec_44810d77109' },
                     RL: { account: 'RLCA-44210', apiKey: 'rl_live_sec_88391e99421' },
                   };
-
                   for (const [code, val] of Object.entries(sandboxKeys)) {
                     setCarrierInputs((prev) => ({
                       ...prev,
@@ -517,10 +419,10 @@ function IntegrationPageContent() {
                   }
                   markStepComplete(2);
                 }}
-                className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1.5 whitespace-nowrap shadow transition"
+                className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1.5 shadow transition"
               >
                 <Sparkles className="w-3.5 h-3.5 text-black" />
-                <span>Fill Instant Free Sandbox Keys (1-Click)</span>
+                <span>Fill Instant Developer Keys</span>
               </button>
             </div>
 
@@ -534,19 +436,12 @@ function IntegrationPageContent() {
               ].map((c) => {
                 const state = carrierInputs[c.code] || { account: '', apiKey: '', status: 'IDLE' };
                 return (
-                  <div key={c.code} className="p-5 rounded-2xl bg-[#121215] border border-neutral-800 space-y-3">
+                  <div key={c.code} className="p-4 rounded-2xl bg-[#121215] border border-neutral-800 space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-xs font-bold text-white">{c.name}</div>
-                        <div className="text-[10px] font-mono text-neutral-500">SCAC: {c.scac}</div>
-                      </div>
+                      <div className="text-xs font-bold text-white">{c.name} ({c.scac})</div>
                       {state.status === 'CONNECTED' ? (
                         <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-mono border border-emerald-500/30 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Connected
-                        </span>
-                      ) : state.status === 'ERROR' ? (
-                        <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-mono border border-red-500/30 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3 text-red-400" /> Failed
                         </span>
                       ) : (
                         <span className="px-2 py-0.5 rounded bg-neutral-900 text-neutral-500 text-[10px] font-mono">
@@ -555,327 +450,172 @@ function IntegrationPageContent() {
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <div>
-                        <label className="block text-[10px] font-mono text-neutral-400 uppercase mb-0.5">Account Number</label>
-                        <input
-                          type="text"
-                          value={state.account}
-                          onChange={(e) =>
-                            setCarrierInputs((prev) => ({
-                              ...prev,
-                              [c.code]: { ...prev[c.code], account: e.target.value, status: 'IDLE', errorMessage: undefined },
-                            }))
-                          }
-                          placeholder="e.g. XPO-884210"
-                          className="w-full bg-[#050507] border border-neutral-800 rounded-xl py-1.5 px-3 text-xs font-mono text-white focus:outline-none focus:border-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-mono text-neutral-400 uppercase mb-0.5">API Auth Secret / Key</label>
-                        <input
-                          type="password"
-                          value={state.apiKey}
-                          onChange={(e) =>
-                            setCarrierInputs((prev) => ({
-                              ...prev,
-                              [c.code]: { ...prev[c.code], apiKey: e.target.value, status: 'IDLE', errorMessage: undefined },
-                            }))
-                          }
-                          placeholder="••••••••••••••••"
-                          className="w-full bg-[#050507] border border-neutral-800 rounded-xl py-1.5 px-3 text-xs font-mono text-white focus:outline-none focus:border-white"
-                        />
-                      </div>
+                    <div className="space-y-1.5">
+                      <input
+                        type="text"
+                        value={state.account}
+                        onChange={(e) =>
+                          setCarrierInputs((prev) => ({
+                            ...prev,
+                            [c.code]: { ...prev[c.code], account: e.target.value, status: 'IDLE' },
+                          }))
+                        }
+                        placeholder="Account Number"
+                        className="w-full bg-[#050507] border border-neutral-800 rounded-lg py-1 px-2.5 text-xs font-mono text-white focus:outline-none"
+                      />
+                      <input
+                        type="password"
+                        value={state.apiKey}
+                        onChange={(e) =>
+                          setCarrierInputs((prev) => ({
+                            ...prev,
+                            [c.code]: { ...prev[c.code], apiKey: e.target.value, status: 'IDLE' },
+                          }))
+                        }
+                        placeholder="API Key"
+                        className="w-full bg-[#050507] border border-neutral-800 rounded-lg py-1 px-2.5 text-xs font-mono text-white focus:outline-none"
+                      />
                     </div>
-
-                    {state.status === 'ERROR' && state.errorMessage && (
-                      <div className="p-3 rounded-xl bg-red-950/60 border border-red-800 text-red-300 text-[11px] font-sans flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                        <div className="space-y-0.5">
-                          <div className="font-bold text-red-200">Validation Rejected</div>
-                          <div className="text-[10.5px] leading-tight text-red-300/90">{state.errorMessage}</div>
-                        </div>
-                      </div>
-                    )}
 
                     <button
                       type="button"
                       onClick={() => handleTestCarrierConn(c.code)}
                       disabled={state.status === 'TESTING'}
-                      className="w-full py-2 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-200 border border-neutral-800 text-xs font-sans font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                      className="w-full py-1.5 rounded-lg bg-[#050507] hover:bg-neutral-900 text-neutral-200 border border-neutral-800 text-xs font-sans font-bold flex items-center justify-center gap-1 transition"
                     >
                       {state.status === 'TESTING' ? (
-                        <>
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
-                          <span>Verifying Credentials...</span>
-                        </>
-                      ) : state.status === 'CONNECTED' ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-white" />
-                          <span>Re-Verify Credentials</span>
-                        </>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
                       ) : (
-                        <>
-                          <ShieldCheck className="w-3.5 h-3.5 text-white" />
-                          <span>Save &amp; Verify Connection</span>
-                        </>
+                        <span>Save &amp; Verify</span>
                       )}
                     </button>
                   </div>
                 );
               })}
             </div>
-
           </div>
         )}
 
         {/* STEP 3: MAGIC AI CSV IMPORTER */}
         {currentStep === 3 && (
-          <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-6 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-neutral-800 pb-4 gap-3">
-              <div>
-                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Step 3 of 5</span>
-                <h2 className="text-lg font-serif text-white font-normal">Magic AI CSV &amp; Legacy Data Importer</h2>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
+          <div className="p-6 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-5 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-neutral-800 pb-3 gap-2">
+              <h2 className="text-base font-serif text-white font-normal">Step 3: Magic AI CSV &amp; Legacy Data Importer</h2>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleDownloadCustomerTemplate}
-                  className="px-3 py-1.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 text-xs font-sans font-medium flex items-center gap-1.5 transition"
+                  className="px-3 py-1 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 text-xs font-sans font-medium flex items-center gap-1 transition"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Customer CSV Template</span>
+                  <span>Download Customer Template</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleDownloadFleetTemplate}
-                  className="px-3 py-1.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 text-xs font-sans font-medium flex items-center gap-1.5 transition"
+                  className="px-3 py-1 rounded-xl bg-[#121215] hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 text-xs font-sans font-medium flex items-center gap-1 transition"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Fleet CSV Template</span>
+                  <span>Download Fleet Template</span>
                 </button>
               </div>
             </div>
 
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Upload customer account lists or carrier fleet equipment CSV files directly into Supabase. Download official templates above or pre-load sample test data below.
-            </p>
-
             {!csvImportResult ? (
-              <div className="space-y-5">
-                {/* Data Category & Sample Quick Buttons */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#121215] border border-neutral-800">
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-white font-sans">Target Database Entity</label>
-                    <div className="flex items-center gap-4 text-xs font-mono text-neutral-300">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="csvType"
-                          value="fleet"
-                          checked={csvImportType === 'fleet'}
-                          onChange={() => setCsvImportType('fleet')}
-                          className="accent-white"
-                        />
-                        <span>Carrier Fleet Equipment (Trucks &amp; Drivers)</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="csvType"
-                          value="accounts"
-                          checked={csvImportType === 'accounts'}
-                          onChange={() => setCsvImportType('accounts')}
-                          className="accent-white"
-                        />
-                        <span>Customer Shipper Accounts</span>
-                      </label>
-                    </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[#121215] border border-neutral-800 text-xs">
+                  <div className="flex items-center gap-4 font-mono text-neutral-300">
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="csvType"
+                        value="fleet"
+                        checked={csvImportType === 'fleet'}
+                        onChange={() => setCsvImportType('fleet')}
+                        className="accent-white"
+                      />
+                      <span>Fleet Equipment</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="csvType"
+                        value="accounts"
+                        checked={csvImportType === 'accounts'}
+                        onChange={() => setCsvImportType('accounts')}
+                        className="accent-white"
+                      />
+                      <span>Customer Accounts</span>
+                    </label>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={handlePreloadFleetSample}
-                      className="px-3 py-1.5 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-300 border border-neutral-800 text-[11px] font-mono transition"
+                      className="px-2.5 py-1 rounded-lg bg-[#050507] hover:bg-neutral-900 text-neutral-300 border border-neutral-800 text-[11px] font-mono transition"
                     >
-                      Pre-load Fleet CSV Sample
+                      Pre-load Fleet CSV
                     </button>
                     <button
                       type="button"
                       onClick={handlePreloadCustomerSample}
-                      className="px-3 py-1.5 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-300 border border-neutral-800 text-[11px] font-mono transition"
+                      className="px-2.5 py-1 rounded-lg bg-[#050507] hover:bg-neutral-900 text-neutral-300 border border-neutral-800 text-[11px] font-mono transition"
                     >
-                      Pre-load Customer CSV Sample
+                      Pre-load Customer CSV
                     </button>
                   </div>
                 </div>
 
-                {/* Upload File or Paste CSV Box */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-white font-sans">CSV File or Raw Text Data</label>
-                    <label className="text-xs text-neutral-400 font-mono hover:text-white cursor-pointer flex items-center gap-1">
+                  <textarea
+                    rows={5}
+                    value={rawCsvText}
+                    onChange={(e) => setRawCsvText(e.target.value)}
+                    placeholder="Paste CSV text here or click Browse CSV file..."
+                    className="w-full bg-[#050507] border border-neutral-800 rounded-xl p-3 text-xs font-mono text-neutral-200 focus:outline-none"
+                  />
+                  <div className="flex justify-between items-center text-xs">
+                    <label className="text-neutral-400 font-mono hover:text-white cursor-pointer flex items-center gap-1">
                       <Upload className="w-3.5 h-3.5" />
-                      <span>Browse local CSV file</span>
+                      <span>Browse CSV File</span>
                       <input type="file" accept=".csv,.txt" onChange={handleFileUpload} className="hidden" />
                     </label>
                   </div>
-
-                  <textarea
-                    rows={6}
-                    value={rawCsvText}
-                    onChange={(e) => setRawCsvText(e.target.value)}
-                    placeholder="Paste CSV text here or click 'Browse local CSV file' or use Pre-load buttons above..."
-                    className="w-full bg-[#050507] border border-neutral-800 rounded-2xl p-4 text-xs font-mono text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-neutral-500 custom-scrollbar"
-                  />
                 </div>
-
-                {csvUploadError && (
-                  <div className="p-4 rounded-2xl bg-red-950/60 border border-red-800 text-red-300 text-xs font-sans flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                    <span>{csvUploadError}</span>
-                  </div>
-                )}
 
                 <button
                   type="button"
                   onClick={handleExecuteCsvIngestion}
                   disabled={isUploadingCsv}
-                  className="w-full py-3 rounded-2xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center justify-center gap-2 shadow-xl transition disabled:opacity-50"
+                  className="w-full py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center justify-center gap-2 shadow transition disabled:opacity-50"
                 >
                   {isUploadingCsv ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin text-black" />
-                      <span>Ingesting CSV directly into Supabase...</span>
-                    </>
+                    <RefreshCw className="w-4 h-4 animate-spin text-black" />
                   ) : (
                     <>
                       <Upload className="w-4 h-4 text-black" />
-                      <span>Upload &amp; Process CSV in Supabase</span>
+                      <span>Upload CSV</span>
                     </>
                   )}
                 </button>
               </div>
             ) : (
-              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-6">
-                {/* Result Notification Banner */}
-                <div className="p-4 rounded-xl bg-neutral-900/90 border border-neutral-700 text-white flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-white shrink-0" />
-                    <div>
-                      <h4 className="text-xs font-bold text-white font-sans">{csvImportResult.message}</h4>
-                      <p className="text-[11px] font-mono text-neutral-400">
-                        Import Type: {csvImportResult.importType} • {csvImportResult.totalRowsProcessed} Rows Processed
-                      </p>
-                    </div>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-black text-white border border-neutral-700 text-xs font-mono font-bold">
-                    Supabase Live Sync
-                  </span>
+              <div className="p-4 rounded-xl bg-[#121215] border border-neutral-800 space-y-4">
+                <div className="flex items-center gap-2 text-xs text-white">
+                  <CheckCircle2 className="w-4 h-4 text-white" />
+                  <span>{csvImportResult.message} ({csvImportResult.totalRowsProcessed} rows processed)</span>
                 </div>
-
-                {/* Preview Records Table */}
-                {csvImportResult.importType === 'FLEET' && csvImportResult.trucksPreview?.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-white font-sans uppercase tracking-wider">
-                      Seeded Truck Units Preview (Supabase Records)
-                    </h4>
-                    <div className="border border-neutral-800 rounded-xl overflow-hidden">
-                      <table className="w-full text-left text-xs font-sans">
-                        <thead className="bg-[#050507] text-neutral-400 font-mono text-[10px] uppercase">
-                          <tr>
-                            <th className="p-3">Unit #</th>
-                            <th className="p-3">Equipment Type</th>
-                            <th className="p-3">Assigned Driver</th>
-                            <th className="p-3">Capacity (Weight / Plts)</th>
-                            <th className="p-3">Location</th>
-                            <th className="p-3">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-neutral-800 text-neutral-300 font-mono">
-                          {csvImportResult.trucksPreview.map((trk: any, idx: number) => (
-                            <tr key={idx} className="hover:bg-neutral-900/50">
-                              <td className="p-3 font-bold text-white">{trk.unit_number}</td>
-                              <td className="p-3 text-neutral-300">{trk.equipment_type}</td>
-                              <td className="p-3 text-neutral-300">{trk.assigned_driver_name || 'N/A'}</td>
-                              <td className="p-3 text-neutral-400">{trk.max_weight_lbs} lbs / {trk.max_pallets} plts</td>
-                              <td className="p-3 text-neutral-400">{trk.current_city}, {trk.current_state}</td>
-                              <td className="p-3">
-                                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] border border-emerald-500/30">
-                                  {trk.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {csvImportResult.importType === 'CUSTOMERS' && csvImportResult.accountsPreview?.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-white font-sans uppercase tracking-wider">
-                      Seeded Customer Accounts Preview (Supabase Records)
-                    </h4>
-                    <div className="border border-neutral-800 rounded-xl overflow-hidden">
-                      <table className="w-full text-left text-xs font-sans">
-                        <thead className="bg-[#050507] text-neutral-400 font-mono text-[10px] uppercase">
-                          <tr>
-                            <th className="p-3">Company Name</th>
-                            <th className="p-3">Account Type</th>
-                            <th className="p-3">Email</th>
-                            <th className="p-3">Phone</th>
-                            <th className="p-3">Location</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-neutral-800 text-neutral-300 font-mono">
-                          {csvImportResult.accountsPreview.map((acc: any, idx: number) => (
-                            <tr key={idx} className="hover:bg-neutral-900/50">
-                              <td className="p-3 font-bold text-white">{acc.name}</td>
-                              <td className="p-3 text-neutral-300">{acc.account_type}</td>
-                              <td className="p-3 text-neutral-400">{acc.billing_email || 'N/A'}</td>
-                              <td className="p-3 text-neutral-400">{acc.phone || 'N/A'}</td>
-                              <td className="p-3 text-neutral-400">{acc.city}, {acc.state}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* Quick Action Navigation Links */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-neutral-800">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCsvImportResult(null);
-                      setRawCsvText('');
-                    }}
-                    className="px-4 py-2 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-300 font-sans font-bold text-xs border border-neutral-800 transition"
-                  >
-                    Upload Another CSV File
-                  </button>
-
-                  <div className="flex items-center gap-3">
-                    <Link
-                      href="/fleet"
-                      className="px-4 py-2 rounded-xl bg-[#121215] hover:bg-neutral-800 text-white font-sans font-bold text-xs border border-neutral-800 flex items-center gap-1.5 transition"
-                    >
-                      <Truck className="w-4 h-4 text-neutral-300" />
-                      <span>View Carrier Fleet Portal (/fleet)</span>
-                    </Link>
-                    <Link
-                      href="/"
-                      className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1.5 shadow transition"
-                    >
-                      <span>View Main Dashboard (/)</span>
-                      <ArrowRight className="w-4 h-4 text-black" />
-                    </Link>
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCsvImportResult(null);
+                    setRawCsvText('');
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#050507] hover:bg-neutral-900 text-neutral-300 border border-neutral-800 text-xs font-mono transition"
+                >
+                  Upload Another File
+                </button>
               </div>
             )}
           </div>
@@ -883,73 +623,43 @@ function IntegrationPageContent() {
 
         {/* STEP 4: 1-CLICK ACCOUNTING SYNC */}
         {currentStep === 4 && (
-          <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-6 shadow-xl">
-            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
-              <div>
-                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Step 4 of 5</span>
-                <h2 className="text-lg font-serif text-white font-normal">1-Click Accounting &amp; ERP Sync</h2>
-              </div>
-              <span className="px-2.5 py-1 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
-                OAuth 2.0 Integration
-              </span>
+          <div className="p-6 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-5 shadow-xl">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+              <h2 className="text-base font-serif text-white font-normal">Step 4: 1-Click Accounting &amp; ERP Sync</h2>
             </div>
 
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Connect your accounting platform. Delivered shipments auto-issue customer freight invoices and carrier payables without double data entry.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-5 rounded-2xl bg-[#121215] border border-neutral-800 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-bold text-white">QuickBooks Online</div>
-                    <div className="text-xs font-mono text-neutral-400">Intuit Accounting Engine</div>
-                  </div>
-                  {qboConnected ? (
-                    <span className="px-2.5 py-1 rounded bg-neutral-900 text-white border border-neutral-700 text-xs font-mono font-bold flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5 text-white" /> Connected
-                    </span>
-                  ) : (
-                    <span className="px-2.5 py-1 rounded bg-[#050507] text-neutral-500 text-xs font-mono">Disconnected</span>
-                  )}
+                  <div className="text-xs font-bold text-white">QuickBooks Online</div>
+                  {qboConnected && <span className="text-[10px] font-mono text-emerald-400">Connected</span>}
                 </div>
-                <p className="text-xs text-neutral-400">Syncs Chart of Accounts, open AR invoices, and AP carrier vouchers in real time.</p>
                 <button
                   type="button"
                   onClick={() => {
                     setQboConnected(true);
                     markStepComplete(4);
                   }}
-                  className="w-full py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs transition shadow"
+                  className="w-full py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs transition shadow"
                 >
-                  {qboConnected ? 'Re-Sync QuickBooks Online' : 'Connect to QuickBooks Online (1-Click OAuth)'}
+                  {qboConnected ? 'Re-Sync QuickBooks' : 'Connect QuickBooks Online'}
                 </button>
               </div>
 
-              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-4">
+              <div className="p-5 rounded-2xl bg-[#121215] border border-neutral-800 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-bold text-white">Xero Cloud Accounting</div>
-                    <div className="text-xs font-mono text-neutral-400">Global Financial Ledger</div>
-                  </div>
-                  {xeroConnected ? (
-                    <span className="px-2.5 py-1 rounded bg-neutral-900 text-white border border-neutral-700 text-xs font-mono font-bold flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5 text-white" /> Connected
-                    </span>
-                  ) : (
-                    <span className="px-2.5 py-1 rounded bg-[#050507] text-neutral-500 text-xs font-mono">Disconnected</span>
-                  )}
+                  <div className="text-xs font-bold text-white">Xero Cloud Accounting</div>
+                  {xeroConnected && <span className="text-[10px] font-mono text-emerald-400">Connected</span>}
                 </div>
-                <p className="text-xs text-neutral-400">Automatic reconciliation for multi-currency freight invoices and QuickPay disbursements.</p>
                 <button
                   type="button"
                   onClick={() => {
                     setXeroConnected(true);
                     markStepComplete(4);
                   }}
-                  className="w-full py-2.5 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-200 border border-neutral-800 font-sans font-bold text-xs transition"
+                  className="w-full py-2 rounded-xl bg-[#050507] hover:bg-neutral-900 text-neutral-200 border border-neutral-800 font-sans font-bold text-xs transition"
                 >
-                  {xeroConnected ? 'Re-Sync Xero Ledger' : 'Connect to Xero Accounting (1-Click OAuth)'}
+                  {xeroConnected ? 'Re-Sync Xero' : 'Connect Xero Accounting'}
                 </button>
               </div>
             </div>
@@ -958,97 +668,49 @@ function IntegrationPageContent() {
 
         {/* STEP 5: OUTLOOK ADD-IN & CHROME EXTENSION SIDECAR */}
         {currentStep === 5 && (
-          <div className="p-6 sm:p-8 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-6 shadow-xl">
-            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
-              <div>
-                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Step 5 of 5</span>
-                <h2 className="text-lg font-serif text-white font-normal">Outlook Add-in &amp; Chrome Extension Sidecar</h2>
-              </div>
-              <span className="px-2.5 py-1 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
-                Email Co-Pilot
-              </span>
+          <div className="p-6 rounded-3xl bg-[#09090b] border border-neutral-800 space-y-5 shadow-xl">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+              <h2 className="text-base font-serif text-white font-normal">Step 5: Outlook Add-in &amp; Chrome Extension Sidecar</h2>
             </div>
 
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Quote and dispatch freight directly inside Outlook or Chrome without ever changing tabs or leaving your email client.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Puzzle className="w-7 h-7 text-white" />
-                  <div>
-                    <div className="text-sm font-bold text-white">Sidecar Co-Pilot Token</div>
-                    <div className="text-xs font-mono text-neutral-400">Version 2.4 • Extension Secret</div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-xs font-mono text-neutral-400 uppercase">Your API Authentication Token</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={sidecarApiKey}
-                      className="flex-1 bg-[#050507] border border-neutral-800 rounded-xl py-2 px-3 text-xs text-neutral-300 font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(sidecarApiKey);
-                        setCopiedSidecarKey(true);
-                        markStepComplete(5);
-                        setTimeout(() => setCopiedSidecarKey(false), 2000);
-                      }}
-                      className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1 transition shadow"
-                    >
-                      {copiedSidecarKey ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                      <span>{copiedSidecarKey ? 'Copied' : 'Copy'}</span>
-                    </button>
-                  </div>
-                </div>
-
+            <div className="p-5 rounded-2xl bg-[#121215] border border-neutral-800 space-y-3">
+              <label className="block text-xs font-mono text-neutral-400 uppercase">Your Sidecar API Authentication Token</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={sidecarApiKey}
+                  className="flex-1 bg-[#050507] border border-neutral-800 rounded-xl py-2 px-3 text-xs text-neutral-300 font-mono"
+                />
                 <button
                   type="button"
-                  onClick={() => markStepComplete(5)}
-                  className="w-full py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center justify-center gap-2 shadow transition"
+                  onClick={() => {
+                    navigator.clipboard.writeText(sidecarApiKey);
+                    setCopiedSidecarKey(true);
+                    markStepComplete(5);
+                    setTimeout(() => setCopiedSidecarKey(false), 2000);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1 transition shadow"
                 >
-                  <Download className="w-4 h-4 text-black" />
-                  <span>Download Extension Package</span>
+                  {copiedSidecarKey ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedSidecarKey ? 'Copied' : 'Copy Token'}</span>
                 </button>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-[#121215] border border-neutral-800 space-y-3">
-                <div className="text-xs font-bold text-white flex items-center gap-2">
-                  <Info className="w-4 h-4 text-neutral-300" />
-                  <span>Outlook Quoting Instructions</span>
-                </div>
-                <ol className="text-xs text-neutral-400 space-y-2 pl-5 list-decimal font-sans">
-                  <li>Install the extension in Chrome or Outlook.</li>
-                  <li>Paste your Sidecar API token generated on the left.</li>
-                  <li>Open any shipper email and click <b>"Apex Co-Pilot Quote"</b>.</li>
-                  <li>View live rates from XPO/Saia/Estes and reply in 1 click.</li>
-                </ol>
               </div>
             </div>
           </div>
         )}
 
-        {/* BOTTOM ACTION BAR FOR ONBOARDING STEP NAVIGATION */}
-        <div className="p-6 rounded-3xl bg-[#09090b] border border-neutral-800 flex items-center justify-between gap-4 shadow-2xl">
+        {/* Bottom Navigation Controls */}
+        <div className="p-4 rounded-2xl bg-[#09090b] border border-neutral-800 flex items-center justify-between gap-4 shadow-xl">
           <button
             type="button"
             disabled={currentStep === 1}
             onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
-            className="px-5 py-2.5 rounded-xl bg-[#121215] hover:bg-neutral-800 text-white font-sans font-bold text-xs border border-neutral-800 flex items-center gap-2 transition disabled:opacity-30 disabled:pointer-events-none"
+            className="px-4 py-2 rounded-xl bg-[#121215] hover:bg-neutral-800 text-white font-sans font-bold text-xs border border-neutral-800 flex items-center gap-1.5 transition disabled:opacity-30 disabled:pointer-events-none"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Previous Step</span>
+            <span>Previous</span>
           </button>
-
-          <div className="text-xs font-mono text-neutral-400 hidden sm:block">
-            Step {currentStep} of 5
-          </div>
 
           {currentStep < 5 ? (
             <button
@@ -1057,7 +719,7 @@ function IntegrationPageContent() {
                 markStepComplete(currentStep);
                 setCurrentStep((prev) => Math.min(5, prev + 1));
               }}
-              className="px-6 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-2 shadow-xl transition"
+              className="px-5 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1.5 shadow transition"
             >
               <span>Next Step →</span>
             </button>
@@ -1065,26 +727,21 @@ function IntegrationPageContent() {
             <button
               type="button"
               onClick={handleFinishOnboarding}
-              className="px-6 py-3 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-2 shadow-xl transition"
+              className="px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-sans font-bold text-xs flex items-center gap-1.5 shadow transition"
             >
-              <span>Complete Onboarding &amp; Open Software Dashboard</span>
+              <span>Complete Setup &amp; Open Dashboard</span>
               <ArrowRight className="w-4 h-4 text-black" />
             </button>
           )}
         </div>
       </main>
-
-      {/* STANDALONE FOOTER */}
-      <footer className="w-full max-w-6xl mx-auto px-6 py-6 text-center text-xs text-neutral-500 z-10 border-t border-neutral-900">
-        © 2026 Apex Freight Operating System • Standalone Data Integration Wizard
-      </footer>
     </div>
   );
 }
 
 export default function IntegrationPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#050507] text-white p-8">Loading Integration Wizard...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#050507] text-white p-8">Loading Integration Hub...</div>}>
       <IntegrationPageContent />
     </Suspense>
   );

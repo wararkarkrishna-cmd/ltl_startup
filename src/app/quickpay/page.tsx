@@ -1,11 +1,18 @@
-import React from 'react';
-import { QuickPayManagementDashboard } from '../../components/quickpay/QuickPayManagementDashboard';
+'use client';
 
-export const metadata = {
-  title: 'Carrier QuickPay Fintech & Double-Entry Ledger | Apex LTL OS',
-  description: 'Manage instant carrier disbursements, E-SIGN contracts, double-entry financial ledger, and Form 1099-NEC tax compliance.',
-};
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function QuickPayPage() {
-  return <QuickPayManagementDashboard />;
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/invoices?tab=quickpay');
+  }, [router]);
+
+  return (
+    <div className="p-8 text-center text-neutral-400 font-mono text-xs">
+      Forwarding to Financial Center (QuickPay)...
+    </div>
+  );
 }
